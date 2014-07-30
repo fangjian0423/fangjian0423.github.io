@@ -1,0 +1,14 @@
+menu:
+  Archives: /archives
+  About: /about
+rss: 
+
+archive_date_format: MMM DD
+fancybox: true
+
+duoshuo_shortname:
+
+google_analytics:
+favicon: /favicon.ico
+
+duoshuo_shortname: fangjian0423

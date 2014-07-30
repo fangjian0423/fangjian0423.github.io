@@ -1,0 +1,8 @@
+<div class="copyright">
+  <% if (config.author){ %>
+  &copy; <%= new Date().getFullYear() %> <a href="<%- config.root %>"><%= config.author %></a>
+  <% } else { %>
+  &copy; <%= new Date().getFullYear() %> <a href="<%- config.root %>"><%= config.title %></a>
+  <% } %>
+</div>
+<div class="clearfix"></div>
