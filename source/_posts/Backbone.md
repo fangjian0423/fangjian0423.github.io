@@ -1,9 +1,9 @@
 title: Backbone小记录
-date: 2014-08-06 21:04:12
+date: 2014-08-06 09:49:50
 tags: [JavaScript,Backbone]
 description: 记录学习Backbone中的一些知识
----
 
+--------------
 ## 前言 ##
 这两天看了下[Backbone.js](http://backbonejs.org/)的知识，大概了解了这个框架的一些知识。 写篇博客总结一下。
 
