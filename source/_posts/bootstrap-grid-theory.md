@@ -1,7 +1,12 @@
 title: bootstrap学习系列之表格布局原理
 date: 2015-03-08 22:07:24
-tags: [bootstrap,css]
-description: 介绍一下bootstrap的grid表格布局的原理
+tags:
+- bootstrap
+- css
+categories:
+- bootstrap
+description: 分析一下bootstrap中表格布局的原理 ...
+
 ----------------
 
 分析一下bootstrap中表格布局的原理。

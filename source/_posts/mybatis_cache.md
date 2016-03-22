@@ -1,7 +1,11 @@
 title: 通过源码分析MyBatis的缓存
 date: 2014-12-10 14:34:05
-tags: [MyBatis,cache]
-description: 介绍MyBatis中缓存的概念，并通过源码进行分析
+tags:
+- mybatis
+- cache
+categories:
+- mybatis
+description: MyBatis支持声明式数据缓存（declarative data caching）。当一条SQL语句被标记为“可缓存”后，首次执行它时从数据库获取的所有数据会被存储在一段高速缓存中 ...
 ----------------
 
 前方高能！ 本文内容有点多，通过实际测试例子+源码分析的方式解剖MyBatis缓存的概念，对这方面有兴趣的小伙伴请继续看下去~

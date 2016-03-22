@@ -1,7 +1,13 @@
 title: logstash搭建日志追踪系统
 date: 2014-11-01 22:40:05
-tags: [logstash,elasticsearch,kibana,log]
-description: 介绍logstash、elasticsearch开源框架，并搭建日志追踪系统
+tags:
+- logstash
+- elasticsearch
+- kibana
+categories:
+- elasticsearch
+description: logstash是一个用来管理事件和日志的工具，它的作用是收集日志，解析日志，存储日志为以后使用 ...
+
 ----------------
 
 ## 前言 ##

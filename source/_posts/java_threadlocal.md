@@ -1,7 +1,13 @@
 title: ThreadLocal原理及其实际应用
 date: 2014-11-22 20:35:21
-tags: [Java,ThreadLocal,SpringMVC]
-description: 介绍ThreadLocal及其ThreadLocal在SpringMVC框架中的应用
+tags:
+- java
+- threadlocal
+- springmvc
+categories: 
+- java
+description: java猿在面试中，经常会被问到1个问题：java实现同步有哪几种方式？ ...
+
 ----------------
 
 ## 前言 ##

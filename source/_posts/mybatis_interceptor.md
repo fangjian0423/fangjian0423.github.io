@@ -1,7 +1,10 @@
 title: MyBatis拦截器原理探究
 date: 2014-12-15 22:43:05
-tags: [MyBatis,cache,interceptor]
-description: 介绍MyBatis中拦截器的概念以及使用
+tags:
+- mybatis
+categories: 
+- mybatis
+description: MyBatis提供了一种插件(plugin)的功能，虽然叫做插件，但其实这是拦截器功能。那么拦截器拦截MyBatis中的哪些内容呢 ...
 ----------------
 
 

@@ -1,7 +1,11 @@
 title: jdk源码分析之HashMap
-date: 2015-02-13 112:47:32
-tags: [jdk,map,HashMap]
-description: 介绍jdk内部的HashMap相关的知识
+date: 2015-02-13 12:47:32
+tags:
+- jdk
+- map
+categories: jdk
+description: Map是一个映射键和值的对象。类似于Python中的字典 ...
+
 ----------------
 
 ## 前言 ##

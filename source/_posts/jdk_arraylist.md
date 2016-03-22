@@ -1,7 +1,11 @@
 title: jdk源码分析之ArrayList
 date: 2015-01-16 21:07:44
-tags: [jdk,list,ArrayList]
-description: 介绍jdk内部的ArrayList相关的知识
+tags:
+- jdk
+- list
+categories: jdk
+description: list是一种有序的集合(an ordered collection), 通常也会被称为序列(sequence)，使用list可以精确地控制每个元素的插入，可以通过索引值找到对应list中的各个项，也可以在list中查询元素..
+
 ----------------
 
 ## 前言 ##

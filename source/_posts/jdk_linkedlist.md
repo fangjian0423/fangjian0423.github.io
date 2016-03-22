@@ -1,7 +1,11 @@
 title: jdk源码分析之LinkedList
 date: 2015-01-17 16:43:37
-tags: [jdk,list,LinkedList]
-description: 介绍jdk内部的LinkedList相关的知识
+tags:
+- jdk
+- list
+categories:
+- jdk
+description: ArrayList是一个单向链表，LinkedList则是一个双向链表 ...
 ----------------
 
 ## 前言 ##

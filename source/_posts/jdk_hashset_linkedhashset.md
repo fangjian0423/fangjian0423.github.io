@@ -1,7 +1,10 @@
 title: jdk源码分析之HashSet, LinkedHashSet
 date: 2015-02-21 23:43:37
-tags: [jdk,set]
-description: 介绍jdk内部的HashSet, LinkedHashSet相关的知识
+tags:
+- jdk
+- set
+categories: jdk
+description: 合跟数组不一样，数组中的元素可以重复，而集合中的元素却不可以重复 ...
 ----------------
 
 ## 前言 ##

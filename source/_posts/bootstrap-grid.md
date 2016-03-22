@@ -1,7 +1,11 @@
 title: bootstrap学习系列之表格布局
 date: 2015-01-11 00:07:24
-tags: [bootstrap,css]
-description: 介绍一下bootstrap的grid表格相关的知识
+tags:
+- bootstrap
+- css
+categories:
+- bootstrap
+description: bootstrap框架不用多说了，本文来讲讲bootstrap中的grid相关的知识 ...
 ----------------
 
 bootstrap框架不用多说了，本文来讲讲bootstrap中的grid相关的知识。

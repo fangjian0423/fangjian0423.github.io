@@ -1,7 +1,11 @@
 title: css 盒子模型
 date: 2015-03-07 20:51:12
-tags: [css,boxmodel]
-description: 介绍css中的盒子模型
+tags:
+- css
+- boxmodel
+categories:
+- css
+description: 盒子模型由margin, border, padding和元素内部的内容(Content)组成 ...
 ----------------
 
 废话不多讲，直接进入主题。

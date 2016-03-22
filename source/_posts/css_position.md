@@ -1,7 +1,9 @@
 title: css position属性记录
 date: 2015-03-01 19:23:54
-tags: [css,layout]
-description: 介绍css中的各种布局
+tags:
+- css
+categories: css
+description: html文档中是基于流式布局的，可以使用position属性修改元素的布局方式 ...
 ----------------
 
 ## 前言 ##

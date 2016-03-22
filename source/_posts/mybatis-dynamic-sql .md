@@ -1,7 +1,11 @@
 title: MyBatis动态SQL底层原理分析
 date: 2014-09-26 15:49:50
-tags: [java,MyBatis]
-description: MyBatis动态sql底层原理分析
+tags:
+- java
+- mybatis
+categories: 
+- mybatis
+description: MyBatis动态SQL底层原理分析
 -------------
 
 

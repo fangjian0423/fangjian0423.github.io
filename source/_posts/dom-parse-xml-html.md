@@ -1,7 +1,12 @@
 title: 简单谈谈dom解析xml和html
 date: 2014-09-21 09:49:50
-tags: [Dom,JavaScript,Java]
-description: 记录学习dom规范及java和javascript中的实现
+tags:
+- dom
+- javascript
+- java
+categories:
+- jvm
+description: 文件对象模型是W3C组织推荐的处理可扩展标志语言的标准编程接口 ...
 
 -----------
 ## 前言 ##

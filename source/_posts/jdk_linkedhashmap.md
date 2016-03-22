@@ -1,7 +1,10 @@
 title: jdk源码分析之LinkedHashMap
 date: 2015-02-21 01:53:23
-tags: [jdk,map,LinkedHashMap]
-description: 介绍jdk内部的LinkedHashMap相关的知识
+tags:
+- jdk
+- map
+categories: jdk
+description: LinkedHashMap是一种会记录插入顺序的Map，HashMap由于hash函数的关系，它是无序的，而LinkedHashMap则是一种会保存插入顺序的哈希表 ...
 ----------------
 
 ## 前言 ##

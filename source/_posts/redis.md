@@ -1,7 +1,11 @@
 title: Redis简介-安装-入门
 date: 2014-08-16 09:49:50
-tags: [cache,Redis]
-description: 学习Redis的记录
+tags:
+- cache
+- redis
+categories:
+- cache
+description: Redis是完全开源免费的，遵守BSD协议，先进的key - value持久化产品。它通常被称为数据结构服务器 ...
 
 ---------------
 ## 前言 ##

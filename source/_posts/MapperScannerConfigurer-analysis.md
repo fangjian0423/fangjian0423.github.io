@@ -1,7 +1,12 @@
 title: Spring与Mybatis整合的MapperScannerConfigurer处理过程源码分析
 date: 2014-09-06 21:55:12
-tags: [Mybatis,Spring]
-description: 分析mybatis与spring整合的MapperScannerConfigurer的底层原理
+tags:
+- mybatis
+- spring
+categories: 
+- mybatis
+description: 本文将分析mybatis与spring整合的MapperScannerConfigurer的底层原理 ...
+
 ---
 
 ## 前言 ##

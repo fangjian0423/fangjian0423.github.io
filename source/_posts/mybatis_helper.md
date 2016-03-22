@@ -1,7 +1,10 @@
 title: mybatis-helper介绍
 date: 2015-01-06 00:32:24
-tags: [mybatis]
-description: 介绍一下最近写的mybatis-helper
+tags:
+- mybatis
+categories:
+- mybatis
+description: 写了个mybatis-helper小东西 ...
 ----------------
 
 最近没事写了一个[mybatis-helper](https://github.com/fangjian0423/mybatis-helper)这么个小东西。

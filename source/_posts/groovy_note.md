@@ -1,7 +1,11 @@
 title: groovy基本概念学习笔记
 date: 2015-02-06 23:43:57
-tags: [groovy,jvm]
-description: 介绍一下groovy的基本语法
+tags:
+- groovy
+- jvm
+categories:
+- jvm
+description: groovy是一种基于JVM的动态语言，能够与java代码很好地结合，可以使用Java语言编写的库 ...
 ----------------
 
 groovy是一种基于JVM的动态语言，能够与java代码很好地结合，可以使用Java语言编写的库。 
@@ -128,3 +132,18 @@ list的findAll方法，find方法，groupBy方法。
 
     def now = new Date()
     now.set([hourOfDay: 1, minute: 30, second: 45])
+
+12.metaClass的使用
+
+groovy不像javascript，javascript中定义一个对象，然后可以给这个对象的实例动态地插入任何属性和方法。
+
+groovy定义好了一个类，如何给这个类的实例动态地添加属性和方法呢， 那就是使用metaClass。
+
+    class Person {
+      String name
+      int age
+    }
+
+    Person p = new Person()
+    p.hobby = 'music' // 会报错，因为Person类没有hobby属性
+    p.metaClass.hobby = 'music' // 不会报错，动态添加属性

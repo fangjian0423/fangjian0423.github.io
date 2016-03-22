@@ -1,7 +1,11 @@
 title: java动态代理浅析
 date: 2014-08-16 15:49:50
-tags: [java,proxy,cglib]
-description: 记录java动态代理的一些实现，包括jdk自带的动态代理和第三方库cglib
+tags:
+- java
+- proxy
+- cglib
+categories: java
+description: 近在公司看到了mybatis与spring整合中MapperScannerConfigurer的使用，该类通过反向代理自动生成基于接口的动态代理类 ...
 
 -------------
 
