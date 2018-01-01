@@ -5,7 +5,7 @@ tags:
 - javascript
 - java
 categories:
-- jvm
+- java
 description: 文件对象模型是W3C组织推荐的处理可扩展标志语言的标准编程接口 ...
 
 -----------

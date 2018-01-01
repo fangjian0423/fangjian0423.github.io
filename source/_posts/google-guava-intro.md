@@ -4,7 +4,7 @@ tags:
 - guava
 - java
 categories:
-- jvm
+- java
 description: Guava是一个Google开发的基于java的扩展项目，提供了很多有用的工具类，可以让java代码更加优雅，更加简洁 ...
 
 ---------------

@@ -4,7 +4,7 @@ tags:
 - groovy
 - jvm
 categories:
-- jvm
+- groovy
 description: groovy是一种基于JVM的动态语言，能够与java代码很好地结合，可以使用Java语言编写的库 ...
 ----------------
 

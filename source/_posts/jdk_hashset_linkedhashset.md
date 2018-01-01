@@ -1,105 +1,102 @@
-title: jdk源码分析之HashSet, LinkedHashSet
-date: 2015-02-21 23:43:37
+title: jdk HashSet, LinkedHashSet工作原理分析
+date: 2016-03-30 00:46:33
 tags:
 - jdk
 - set
 categories: jdk
-description: 合跟数组不一样，数组中的元素可以重复，而集合中的元素却不可以重复 ...
+
 ----------------
 
-## 前言 ##
 
-Set是一个集合。
+Set是一个没有包括重复数据的集合，跟List一样，他们都继承自Collection。
 
-集合跟数组不一样，数组中的元素可以重复，而集合中的元素却不可以重复。
+Java中的Set接口最主要的实现类就是HashSet和LinkedHashSet。
 
-## HashSet的源码分析 ##
+<!--more-->
+
+## HashSet原理分析 ##
 
 首先看下HashSet的属性。
 
-HashSet只有两个属性：
+HashSet内部有个HashMap属性和一个对象属性：
 
     private transient HashMap<E,Object> map;
-
+    
+    // HashSet内部使用HashMap进行处理，由于Set只需要键值对中的键，而不需要值，所有的值都用这个对象
     private static final Object PRESENT = new Object();
 
-1个map对象，这个map的key为泛型类型，也就是声明Set的那个泛型，value是一个Object类型。
+HashSet的构造函数中也提供了HashMap的capacity，loadFactor这些参数。
 
-PRESENT是一个静态final类型的Object实例，final类型也表示这个实例不会再次被实例化。
+### add方法 ###
 
-接下来看下HashSet的几个重要方法。
-
-
-### boolean add(E e) ###
-
-** 添加元素到HashSet集合里 **
+调用HashMap的put操作完成Set的add操作。
 
     public boolean add(E e) {
-        return map.put(e, PRESENT)==null;
+        return map.put(e, PRESENT)==null;  // HashMap put成功返回true，否则false
     }
 
-可以看到，添加元素到集合里的方法是将元素作为key，然后以PRESENT为value，丢入到map里的。
-
-这样的话，当添加重复的元素的时候，由于HashMap中对于有重复的键值，不会新增一个项，因此HashSet中的重复元素不会被添加。
-
+HashMap相关的put操作在之前的博客中已经介绍过了，这里就不分析了。
 
 ### boolean remove(Object o) ###
 
-** 删除集合中的元素 **
+调用HashMap的remove操作完成。
 
 	public boolean remove(Object o) {
-        return map.remove(o)==PRESENT;
+        return map.remove(o)==PRESENT; // 对应的节点移除成功返回true，否则false
     }
 
-调用map的remove方法。
+### 一个HashSet例子 ###
 
-
-### boolean contains(Object o) ###
-
-** 查看集合中是否存在对象的元素 **
-
-	public boolean contains(Object o) {
-        return map.containsKey(o);
-    }
+	Set<String> set = new HashSet<String>(5);
+    set.add("java");
+    set.add("golang");
+    set.add("python");
+    set.add("ruby");
+    set.add("scala");
+    set.add("c");
     
-使用hashmap的containsKey方法。
+    for(String str : set) {
+		System.out.println(str);
+	}
+    
+这个例子中set中的HashMap内部结构如下图所示：
 
-## HashSet总结 ##
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap03.jpg)
+
+### HashSet总结 ###
 
 1. HashSet内部使用HashMap，HashSet集合内部所有的操作基本上都是基于HashMap完成的
 2. HashSet中的元素是无序的，这是因为它内部使用HashMap进行存储，而HashMap添加键值对的时候是根据hash函数得到数组的下标的
 
-## LinkedHashSet源码分析 ##
+## LinkedHashSet原理分析 ##
 
-LinkedHashSet继承自HashSet，仅仅覆盖了spliterator方法。
+LinkedHashSet继承自HashSet，它的构造函数会调用父类HashSet的构造函数：
 
 	public LinkedHashSet(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor, true);
     }
 
-    public LinkedHashSet(int initialCapacity) {
-        super(initialCapacity, .75f, true);
-    }
-
-    public LinkedHashSet() {
-        super(16, .75f, true);
-    }
-
-    public LinkedHashSet(Collection<? extends E> c) {
-        super(Math.max(2*c.size(), 11), .75f, true);
-        addAll(c);
-    }
-
-LinkedHashSet的4个构造方法都调用了父类的同一个方法，也就是HashSet的构造方法：
-
 	HashSet(int initialCapacity, float loadFactor, boolean dummy) {
+		// map使用LinkedHashMap构造，LinkedHashMap是HashMap的子类，accessOrder为false，即使用插入顺序
         map = new LinkedHashMap<>(initialCapacity, loadFactor);
     }
     
-HashSet的这个构造方法将内部的HashMap属性用LinkedHashMap构造。 由于LinkedHashMap的这个构造方法的迭代顺序是插入顺序，因此LinkedHashSet也就是一个会记录插入顺序的集合。
+### 一个LinkedHashSet例子 ###
 
-## LinkedHashSet总结 ##
+	Set<String> set = new LinkedHashSet<String>(5);
+    set.add("java");
+    set.add("golang");
+    set.add("python");
+    set.add("ruby");
+    set.add("scala");
+    for(String str : set) {
+        System.out.println(str);
+    }
+    
+这个例子中set中的LinkedHashMap内部结构如下图所示：
 
-1. LinkedHashSet继自HashSet，仅仅覆盖了spliterator方法，其他方法都跟HashSet相同
-2. LinkedHashSet的4个人构造方法都调用了同一个HashSet的构造方法，HashSet的这个构造方法会把内部的HashMap属性实例化成LinkedHashMap。 所以说LinkedHashSet内部是使用LinkedHashMap完成各个操作的。
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedhashmap02.jpg)
 
+### LinkedHashSet总结 ###
+
+1. LinkedHashSet继自HashSet，但是内部的map是使用LinkedHashMap构造的，并且accessOrder为false，使用查询顺序。所以LinkedHashSet遍历的顺序就是插入顺序。

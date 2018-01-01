@@ -5,7 +5,7 @@ tags:
 - frm
 - orm
 categories:
-- jvm
+- scala
 description: 近看到了一个FRM的框架Slick。 FRM的意思是Functional Relational Mapping， 一种基于函数式的ORM ...
 
 ---------------

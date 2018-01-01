@@ -1,14 +1,12 @@
-title: jdk源码分析之HashMap
-date: 2015-02-13 12:47:32
+title: jdk HashMap工作原理分析
+date: 2016-03-29 01:49:58
 tags:
 - jdk
 - map
 categories: jdk
-description: Map是一个映射键和值的对象。类似于Python中的字典 ...
 
 ----------------
 
-## 前言 ##
 
 Map是一个映射键和值的对象。类似于Python中的字典。
 
@@ -16,23 +14,36 @@ HashMap为什么会出现呢?
 
 因为数组这种数据结构，虽然遍历简单，但是插入和删除操作复杂，需要移动数组内部的元素；链表这种数据结构，插入和删除操作简单，但是查找复杂，只能一个一个地遍历。
 
-有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没数组快，插入没链表快。
+有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没链表快，查询没数组快。
 
-哈希表这个东西，学过数据结构的都应该知道。
+wiki上就是这么定义哈希表的：
 
-下图是用拉链法实现的哈希表，Java中的HashMap就是使用这种数据结构。
+散列表（Hash table，也叫哈希表），是根据关键字（Key value）而直接访问在内存存储位置的数据结构。也就是说，它通过计算一个关于键值的函数，将所需查询的数据映射到表中一个位置来访问记录，这加快了查找速度。这个映射函数称做散列函数，存放记录的数组称做散列表。
 
-一个数组，数组上的各个项存储着链表的表头。
 
-![](http://images.cnblogs.com/cnblogs_com/fangjian0423/603237/o_HashMap.png)
+<!--more-->
 
-## HashMap的源码分析 ##
+有几个概念要解释一下：
 
-HashMap是Map接口的重要实现类之一。
+1. 如果有1个关键字为k，它是通过一种函数f(k)得到散列表的地址，然后把值放到这个地址上。这个函数f就称为散列函数，也叫哈希函数。
+2. 对于不同的关键字，得到了同一地址，即k1 != k2，但是f(k1) = f(k2)。这种现象称为冲突，
+3. 若对于关键字集合中的任一个关键字，经散列函数映象到地址集合中任何一个地址的概率是相等的，则称此类散列函数为均匀散列函数
+
+散列函数有好几种实现，分别有直接定址法、随机数法、除留余数法等，在[wiki散列表](https://zh.wikipedia.org/wiki/%E5%93%88%E5%B8%8C%E8%A1%A8)上都有介绍。
+
+散列表的冲突解决方法，也有好几种，有开放定址法、单独链表法、再散列等。
+
+Java中的HashMap采用的冲突解决方法是使用单独链表法，如下图所示：
+
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap01.png)
+
+## HashMap原理分析 ##
+
+HashMap是jdk中Map接口的实现类之一，是一个散列表的实现。
 
 HashMap中的key和value都可以为null，且它的方法都没有synchronized。 其他方法的实现大部分跟HashTable一致。HashTable的相关源码不在这里介绍，基本上跟HashTable一致。
 
-HashMap有个内部静态类Node，这个Node就是拉链法哈希表上的数组上存储的链表节点，它有4个属性，hash表示哈希值，key表示键，value表示值, next表示这个节点的下一个节点，它并没有prev节点，这点与之前的截图一致：
+HashMap有个内部静态类Node，这个Node就是为了解决冲突而设计的链表中的节点的概念。它有4个属性，hash表示哈希地址，key表示关键字，value表示值, next表示这个节点的下一个节点，是一个单项链表：
 
 	static class Node<K,V> implements Map.Entry<K,V> {
         final int hash;
@@ -47,89 +58,71 @@ HashMap有个内部静态类Node，这个Node就是拉链法哈希表上的数�
             this.next = next;
         }
 
-        public final K getKey()        { return key; }
-        public final V getValue()      { return value; }
-        public final String toString() { return key + "=" + value; }
-
-        public final int hashCode() {
-            return Objects.hashCode(key) ^ Objects.hashCode(value);
-        }
-
-        public final V setValue(V newValue) {
-            V oldValue = value;
-            value = newValue;
-            return oldValue;
-        }
-
-        public final boolean equals(Object o) {
-            if (o == this)
-                return true;
-            if (o instanceof Map.Entry) {
-                Map.Entry<?,?> e = (Map.Entry<?,?>)o;
-                if (Objects.equals(key, e.getKey()) &&
-                    Objects.equals(value, e.getValue()))
-                    return true;
-            }
-            return false;
-        }
+        ...
     }
+    
+### 在分析HashMap源码之前，先看一个HashMap使用例子 ###
 
-这个Node节点类的属性有一个hash值，一个键值key，一个value还有一个表示下一个节点的Node类属性。它实现了Map接口内部的Entry接口。
+	Map<String, Integer> map = new HashMap<String, Integer>(5);
+	map.put("java", 1);
+    map.put("golang", 2);
+    map.put("python", 3);
+    map.put("ruby", 4);
+    map.put("scala", 5);
+    
+上面这段代码执行之后会生成下面这张哈希表。
+
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap05.jpg)
+
+至于为什么会生成这样的哈希表，会在后面分析源码中讲解。
 
 ### HashMap的属性 ###
 
-然后是HashMap的几个重要的属性:
+HashMap的几个重要的属性:
 
-	transient Node<K,V>[] table;
+	transient Node<K,V>[] table; // 哈希表数组
 
-    transient int size;
+    transient int size; // 键值对个数
 
-    transient int modCount;
+    int threshold; // 阀值。 值 = 容量 * 加载因子。默认值为12(16(默认容量) * 0.75(默认加载因子))。当哈希表中的键值对个数超过该值时，会进行扩容
 
-    int threshold;
+    final float loadFactor; // 加载因子，默认是0.75
+    
+有2个重要的特性影响着HashMap的性能，分别是capacity(容量)和load factor(加载因子)。
 
-    final float loadFactor;
+其中capacity表示哈希表bucket的数量，HashMap的默认值是16。load factor加载因子表示当一个map填满了达到这个比例之后的bucket时候，和ArrayList一样，将会创建原来HashMap大小的两倍的bucket数组，来重新调整map的大小，并将原来的对象放入新的bucket数组中。这个过程也叫做重哈希。默认的load factor为0.75 。
 
-table属性是一个数组，是一个Node类型数组，这就是之前分析的哈希表的结构。size表示这个map中键值对的个数。modCount跟迭代器相关，关于迭代器部分的知识到时候会在一篇文章中介绍。threshold表示阀值，它的值是容量*加载因子。loadFactor表示加载因子。
+### HashMap的操作 ###
 
+分析一下HashMapput键值对的过程，是如何找到bucket的，遇到哈希冲突的时候是如何使用链表法的。
 
-### HashMap的重要方法 ###
-
-#### V put(K key, V value) ####
-
-** 把一对键值对丢入到HashMap中 **
+#### put操作 ####
 
 	public V put(K key, V value) {
+		// 第一个参数就是关键字key的哈希值
         return putVal(hash(key), key, value, false, true);
     }
-
-put方法调用putVal方法，并调用了一个hash方法将key转换成了一个hash值。
-
-	static final int hash(Object key) {
-        int h;
-        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
-    }
-
-这个hash方法会算出这个key的hash值。
-
+    
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)
-            n = (tab = resize()).length;
+            n = (tab = resize()).length; // 哈希表是空的话，重新构建，进行扩容
         if ((p = tab[i = (n - 1) & hash]) == null)
-            tab[i] = newNode(hash, key, value, null);
-        else {
+            tab[i] = newNode(hash, key, value, null); // 没有hash冲突的话，直接在对应位置上构造一个新的节点即可
+        else { // 如果哈希表当前位置上已经有节点的话，说明有hash冲突
             Node<K,V> e; K k;
+            // 关键字跟哈希表上的首个节点济宁比较
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
+            // 如果使用的是红黑树，用红黑树的方式进行处理
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
-            else {
+            else { // 跟链表进行比较
                 for (int binCount = 0; ; ++binCount) {
-                    if ((e = p.next) == null) {
-                        p.next = newNode(hash, key, value, null);
+                    if ((e = p.next) == null) { // 一直遍历链表，直到找到最后一个
+                        p.next = newNode(hash, key, value, null); // 构造链表上的新节点
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
                         break;
@@ -140,7 +133,7 @@ put方法调用putVal方法，并调用了一个hash方法将key转换成了一�
                     p = e;
                 }
             }
-            if (e != null) { // existing mapping for key
+            if (e != null) { // 如果找到了节点，说明关键字相同，进行覆盖操作，直接返回旧的关键字的值
                 V oldValue = e.value;
                 if (!onlyIfAbsent || oldValue == null)
                     e.value = value;
@@ -149,62 +142,34 @@ put方法调用putVal方法，并调用了一个hash方法将key转换成了一�
             }
         }
         ++modCount;
-        if (++size > threshold)
+        if (++size > threshold) // 如果目前键值对个数已经超过阀值，重新构建
             resize();
-        afterNodeInsertion(evict);
+        afterNodeInsertion(evict); // 节点插入以后的钩子方法
         return null;
     }
 
+#### get操作 ####
 
-putVal方法首先会判断哈希表内部的数组是否已存在，不存在的话会调用resize方法扩大哈希表内部的数组长度。
-
-接下来会使用 (n - 1) & hash 的方式得到数组的索引值，这里的n就是HashMap内部数组的length长度，使用n-1可以避免数组长度跃界。
-
-然后判断这个索引下是否有节点。
-
-没有的话使用newNode方法构造一个新的节点作为开始节点，这个新的节点是起始节点，所以下一个节点为null(next属性为null)。 newNode方法如下， 就是直接构造一个节点，然后赋值给对应数组下标下的项。
-
-    Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
-        return new Node<>(hash, key, value, next);
-    }
-
-有的话执行else下的代码。
-
-else下的代码的意思：
-
-if：如果新的key值和数组上第一个节点的key值和新的key的hash值和第一个节点的hash值或者两者key值equals。 那么说明这个新的key跟第一个节点的key一致，然后把第一个节点的引用赋值给变量e。
-
-else if：如果第一个节点是一个红黑树的节点，那么使用putTreeVal方法将节点的引用赋值给变量e。
-
-else：开始各个节点，如果发现遍历节点的下一个节点为null，那么构造一个新的节点并作为当前遍历节点的next节点。否则判断遍历节点的hash值是否重复，重复的话赋值给变量e。接下来处理哈希值重复的数据。
-
-如果put方法新增了节点，判断判断Map中总的键值对个数是否大于阀值(threshold)，大于的话调用resize方法扩展长度。
-
-resize方法会扩展数组的长度，增大为两倍， 还会扩展threshold为原来的两倍。
-
-
-#### V get(Object key) ####
-
-** 根据键值，得到这个键值上对应的value **
+get操作关键点就是怎么在哈希表上取数据，理解了put操作之后，get方法很容易理解了：
 
 	public V get(Object key) {
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? null : e.value;
     }
 
-使用getNode方法得带这个键值上对应的节点， getNode方法的参数是键值的hash值和键值自身。
+getNode方法就说明了如何取数据：
 
 	final Node<K,V> getNode(int hash, Object key) {
         Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
         if ((tab = table) != null && (n = tab.length) > 0 &&
-            (first = tab[(n - 1) & hash]) != null) {
-            if (first.hash == hash && // always check first node
-                ((k = first.key) == key || (key != null && key.equals(k))))
+            (first = tab[(n - 1) & hash]) != null) { // 如果哈希表容量为0或者关键字没有命中，直接返回null
+            if (first.hash == hash &&  // 关键字命中的话比较第一个节点
+                ((k = first.key) == key || (key != null && key.equals(k)))) 
                 return first;
             if ((e = first.next) != null) {
-                if (first instanceof TreeNode)
+                if (first instanceof TreeNode) // 以红黑树的方式查找
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
-                do {
+                do { // 遍历链表查找
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
                         return e;
@@ -214,116 +179,157 @@ resize方法会扩展数组的长度，增大为两倍， 还会扩展threshold�
         return null;
     }
 
-很明显，这个getNode方法的作用就是根据hash值得到数组上的链表，然后遍历这个链表进行比较，最终拿到对应的值，没找到符合条件的值的话返回null。
 
-这里键值比较的方法如下：
+#### hash过程和resize过程分析 ####
 
-	(k = first.key) == key || (key != null && key.equals(k))
-    
-** 键值的hash值相等或者键值的hash值不等并且equals方法相等 **
+hash过程在HashMap里就是一个hash方法：
 
-#### int size() ####
-
-** 返回map内部键值对的个数 **
-
-	public int size() {
-        return size;
+	static final int hash(Object key) {
+        int h;
+        // 使用hashCode的值和hashCode的值无符号右移16位做异或操作
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
     
-#### boolean containsKey(Object key) ####
+这段代码是什么意思呢？ 我们以文中的那个demo为例，说明"java"这个关键字是如何找到对应bucket的过程。
 
-** 根据键值判断是否存在对应的节点 **
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap06.jpg)
 
-	public boolean containsKey(Object key) {
-        return getNode(hash(key), key) != null;
+从上图可以看到，hash方法得到的hash值是根据关键字的hashCode的高16位和低16位进行异或操作得到的一个值。
+
+这个值再与哈希表容量-1值进行与操作得到最终的bucket索引值。
+
+	(n - 1) & hash
+
+hashCode的高16位与低16位进行异或操作主要是设计者想了一个顾全大局的方法(综合考虑了速度、作用、质量)来做的。
+
+如果链表的数量大了，HashMap会把哈希表转换成红黑树来进行处理，本文不讨论这部分内容。
+
+
+现在回过头来看例子，为什么初始化了一个容量为5的HashMap，但是哈希表的容量为8，而且阀值为6？
+
+因为HashMap的构造函数初始化threshold的时候调用了tableSizeFor方法，这个方法会把容量改成2的幂的整数，主要是为了哈希表散列更均匀。
+
+	// 定位bucket索引的最后操作。如果n为奇数，n-1就是偶数，偶数的话转成二进制最后一位是0，相反如果是奇数，最后一位是1，这样产生的索引值将更均匀
+	(n - 1) & hash
+
+tableSizeFor方法如下：
+
+	this.threshold = tableSizeFor(initialCapacity);
+
+	// 保证thresold为2的幂
+	static final int tableSizeFor(int cap) {
+        int n = cap - 1;
+        n |= n >>> 1;
+        n |= n >>> 2;
+        n |= n >>> 4;
+        n |= n >>> 8;
+        n |= n >>> 16;
+        return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
     }
+    
+阀值为6是因为之后进行resize操作的时候更新了阀值
 
-根据键值使用getNode方法得到节点，然后判断节点是否存在
+	阀值 = 容量 * 加载因子 = 8 * 0.75 = 6
+    
+    
+HashMap的扩容会把原先哈希表的容量扩大两倍。扩大之后，会对节点重新进行处理。
 
-#### boolean containsValue(Object value) ####
+哈希表上的节点的状态有3种，分别是单节点，无节点，链表，扩容对于这3种状态的处理方式如下：
 
-** 根据值判断是否存在对应的节点 **
+以8节点为原先容量，扩容为16容量讲解。
 
-	public boolean containsValue(Object value) {
-        Node<K,V>[] tab; V v;
-        if ((tab = table) != null && size > 0) {
-            for (int i = 0; i < tab.length; ++i) {
-                for (Node<K,V> e = tab[i]; e != null; e = e.next) {
-                    if ((v = e.value) == value ||
-                        (value != null && value.equals(v)))
-                        return true;
-                }
+1. 单节点：由于容量扩大两倍，相当于左移1位。扩容前与00000111[7，n - 1 = 8 - 1]进行与操作。扩容后与00001111[15, n - 1 = 16 - 1]进行与操作。所以最终的结果要是还是在原位置，要么在原位置 +8(+old capacity) 位置
+2. 无节点：不处理
+3. 链表：遍历各个节点，每个节点的处理方式跟单节点一样，结果分成2种，还在原位置和原位置 +8 位置
+
+单节点处理示意图如下，这么设计的原因就是不需要再次计算hash值，只需要移动位置(+old capacity)即可：
+
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap07.jpg)   
+
+下图是一个HashMap扩容之后的效果图（省去了索引为7橙色链表的虚线，太多线条了）：
+
+![](http://7x2wh6.com1.z0.glb.clouddn.com/hashmap08.jpg)   
+
+哈希表扩容是使用resize方法完成：
+
+	final Node<K,V>[] resize() {
+        Node<K,V>[] oldTab = table;
+        int oldCap = (oldTab == null) ? 0 : oldTab.length;
+        int oldThr = threshold;
+        int newCap, newThr = 0;
+        if (oldCap > 0) { // 如果老容量大于0，说明哈希表中已经有数据了，然后进行扩容
+            if (oldCap >= MAXIMUM_CAPACITY) { // 超过最大容量的话，不扩容
+                threshold = Integer.MAX_VALUE;
+                return oldTab;
             }
+            else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY && // 容量加倍
+                     oldCap >= DEFAULT_INITIAL_CAPACITY) // 如果老的容量超过默认容量的话
+                newThr = oldThr << 1; // 阀值加倍
         }
-        return false;
-    }
-
-遍历map内部数组和链表，然后判断各个链表上键值对的值是否与参数相等。
-
-判断条件：
-
-	(v = e.value) == value || (value != null && value.equals(v))
-
-判断是根据值的内存地址是否相等或者值的equals方法是否相等。
-
-#### V remove(Object key) ####
-
-** 根据键值移除节点 **
-
-	public V remove(Object key) {
-        Node<K,V> e;
-        return (e = removeNode(hash(key), key, null, false, true)) == null ?
-            null : e.value;
-    }
-
-remove方法内部调用removeNode方法。
-
-	final Node<K,V> removeNode(int hash, Object key, Object value,
-                               boolean matchValue, boolean movable) {
-        Node<K,V>[] tab; Node<K,V> p; int n, index;
-        if ((tab = table) != null && (n = tab.length) > 0 &&
-            (p = tab[index = (n - 1) & hash]) != null) {
-            Node<K,V> node = null, e; K k; V v;
-            if (p.hash == hash &&
-                ((k = p.key) == key || (key != null && key.equals(k))))
-                node = p;
-            else if ((e = p.next) != null) {
-                if (p instanceof TreeNode)
-                    node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
-                else {
-                    do {
-                        if (e.hash == hash &&
-                            ((k = e.key) == key ||
-                             (key != null && key.equals(k)))) {
-                            node = e;
-                            break;
+        else if (oldThr > 0) // 根据thresold初始化数组
+            newCap = oldThr;
+        else {               // 使用默认配置
+            newCap = DEFAULT_INITIAL_CAPACITY;
+            newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+        }
+        if (newThr == 0) {
+            float ft = (float)newCap * loadFactor;
+            newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
+                      (int)ft : Integer.MAX_VALUE);
+        }
+        threshold = newThr;
+        @SuppressWarnings({"rawtypes","unchecked"})
+            Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        table = newTab;
+        if (oldTab != null) {
+            for (int j = 0; j < oldCap; ++j) { // 扩容之后进行rehash操作
+                Node<K,V> e;
+                if ((e = oldTab[j]) != null) {
+                    oldTab[j] = null;
+                    if (e.next == null)
+                        newTab[e.hash & (newCap - 1)] = e; // 单节点扩容
+                    else if (e instanceof TreeNode)
+                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap); // 红黑树方式处理
+                    else { // 链表扩容
+                        Node<K,V> loHead = null, loTail = null;
+                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> next;
+                        do {
+                            next = e.next;
+                            if ((e.hash & oldCap) == 0) {
+                                if (loTail == null)
+                                    loHead = e;
+                                else
+                                    loTail.next = e;
+                                loTail = e;
+                            } 
+                            else {
+                                if (hiTail == null)
+                                    hiHead = e;
+                                else
+                                    hiTail.next = e;
+                                hiTail = e;
+                            }
+                        } while ((e = next) != null);
+                        if (loTail != null) {
+                            loTail.next = null;
+                            newTab[j] = loHead;
                         }
-                        p = e;
-                    } while ((e = e.next) != null);
+                        if (hiTail != null) {
+                            hiTail.next = null;
+                            newTab[j + oldCap] = hiHead;
+                        }
+                    }
                 }
             }
-            if (node != null && (!matchValue || (v = node.value) == value ||
-                                 (value != null && value.equals(v)))) {
-                if (node instanceof TreeNode)
-                    ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
-                else if (node == p)
-                    tab[index] = node.next;
-                else
-                    p.next = node.next;
-                ++modCount;
-                --size;
-                afterNodeRemoval(node);
-                return node;
-            }
         }
-        return null;
+        return newTab;
     }
-
-先根据键的hash值找到对应的链表表头，然后遍历链表找出对应的节点，找到之后处理对应的链表顺序。 size减一，也就是键值对的个数减一。
-
 
 ## HashMap注意的地方 ##
 
-1. HashMap采用的是拉链式哈希表数据结构
+1. HashMap底层是个哈希表，使用拉链法解决冲突
 2. HashMap内部存储的数据是无序的，这是因为HashMap内部的数组的下表是根据hash值算出来的
+3. HashMap允许key为null
+4. HashMap不是一个线程安全的类
 

@@ -1,33 +1,31 @@
-title: jdk源码分析之LinkedList
-date: 2015-01-17 16:43:37
+title: jdk LinkedList工作原理分析
+date: 2016-03-27 17:35:27
 tags:
 - jdk
-- list
+- collection
 categories:
 - jdk
-description: ArrayList是一个单向链表，LinkedList则是一个双向链表 ...
-----------------
 
-## 前言 ##
 
-ArrayList是一个单向链表，LinkedList则是一个双向链表。
+---------------
 
-双向链表的设计跟单项链表不一样，单项链表只是在内部维护一个数组属性即可。
 
-双向链表不使用数组这个概念，而是在内部定义了一个叫做Node类型的内部类，这个Node就是一个节点，这个节点有3个属性，分别是元素(当前节点要表示的值), 前节点(当前节点之前位置上的一个节点)，后节点(当前节点后面位置的一个节点)。 
+List接口的实现类之一ArrayList的内部实现是一个数组，而另外一个实现LinkedList内部实现是使用双向链表。
 
-LinkedList关于数据的插入，删除操作都会处理这些节点的前后关系。
+LinkedList在内部定义了一个叫做Node类型的内部类，这个Node就是一个节点，链表中的节点，这个节点有3个属性，分别是元素item(当前节点要表示的值), 前节点prev(当前节点之前位置上的一个节点)，后节点next(当前节点后面位置的一个节点)。 
 
-这是两者最大的区别。
+LinkedList关于数据的插入，删除操作都会处理这些节点的前后关系。而不像ArrayList那样只需要移动元素的位置即可。
+
+<!--more-->
 
 ## 源码分析 ##
 
-在分析LinkedList之前，我们先看下它里面的内部类Node，也就是节点类：
+在分析LinkedList之前，我们先看下它里面的内部类Node，也就是节点的定义：
 
 	private static class Node<E> {
-        E item;
-        Node<E> next;
-        Node<E> prev;
+        E item; // 节点所表示的值
+        Node<E> next; // 后节点
+        Node<E> prev; // 前节点
 
         Node(Node<E> prev, E element, Node<E> next) {
             this.item = element;
@@ -35,162 +33,139 @@ LinkedList关于数据的插入，删除操作都会处理这些节点的前后�
             this.prev = prev;
         }
     }
-   
-构造函数有3个参数，分别是前一个节点，元素值，后一个节点。
-
-3个属性，元素代表的值，前一个节点，后一个节点。
+  
 
 LinkedList的3个属性：
 
-	transient int size = 0;
+	transient int size = 0; // 集合链表内节点数量
 
-    transient Node<E> first;
+    transient Node<E> first; // 集合链表的首节点
 
-    transient Node<E> last;
+    transient Node<E> last; // 集合链表的尾节点
     
-size表示这个列表当前的长度, first属性和last属性都是一个Node类型的实例，也就是一个节点。 看名字也知道，一个是第一个节点，另外一个是最后一个节点。
-
 ### add(E e) ###
 
-** 添加元素到列表的最后一个位置 **
+** 添加元素到链表的最后一个位置 **
 
 	public boolean add(E e) {
         linkLast(e);
         return true;
     }
-    
-add方法内部调用linkLast方法。
 
 	void linkLast(E e) {
         final Node<E> l = last;
-        final Node<E> newNode = new Node<>(l, e, null);
-        last = newNode;
-        if (l == null)
+        final Node<E> newNode = new Node<>(l, e, null); // 由于是添加元素的链表尾部，所以也就是这个新的节点是最后1个节点，它的前节点肯定是目前链表的尾节点，它的后节点为null
+        last = newNode; // 尾节点变成新的节点
+        if (l == null) // 如果一开始尾节点还没设置，那么说明这个新的节点是第一个节点，那么首节点也就是这个第一个节点
             first = newNode;
-        else
+        else // 否则，说明新节点不是第一个节点，处理节点前后关系
             l.next = newNode;
-        size++;
+        size++; // 节点数量+1
         modCount++;
     }
 
-首先先拿到列表中的最后一个节点，然后构造一个新的节点，这个新的节点的前一个元素就是刚才拿到的列表中的最后一个节点，然后属性last也就是最后一个节点赋值成新构造的这个节点，接下来做了一个判断，如果当前列表的最后一个节点为null，那么说明这个列表当前没有元素，于是这个新构造的节点赋值给了第一个节点。否则的话，最后一个节点的下一个节点就是这个新构造的节点。之后列表长度+1(size++)。
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedlist01.jpg)
 
-总体来说，这个add方法的速度很快，几乎不消耗时间。
+上图第一个图就表示一个已经有1，2这2个节点的LinkedList调用add方法，第二个图表示添加一个值为3的元素后的情况。原先的尾节点2的后节点变成的新节点3，新节点3的前节点是原先的尾节点2，新节点3的后节点为null。同时链表的尾节点变成了3.
 
 ### add(int index, E element) ###
 
 ** 添加元素到列表中的指定位置 **
 
 	public void add(int index, E element) {
-        checkPositionIndex(index);
+        checkPositionIndex(index); // 检查索引的合法性，不能超过链表个数，不能小于0
 
-        if (index == size)
+        if (index == size) // 如果是在链表尾部插入节点，那么直接调用linkLast方法，上面已经分析过
             linkLast(element);
-        else
+        else // 不在链表尾部插入节点的话，调用linkBefore方法，参数为要插入的元素值和节点对象
             linkBefore(element, node(index));
     }
+    
+先看一下node方法是如何根据索引找到对应的节点的：
 
-首先会判断当前的索引位置是否合法。接下来判断参数索引是否跟列表长度相等， 相等的话说明这个位置就是最后一个位置，那么执行linkLast方法，这个方法之前刚分析过。 如果不是最后一个位置，那么执行linkBefore方法。先看下执行linkBefore方法传入参数的时候调用的一个node方法。
 
 	Node<E> node(int index) {
-        // assert isElementIndex(index);
-
+		// 用了一个小算法，如果索引比链表数量的一半还要小，从前往后找，这样只需要花O(n/2)的时间获取节点
         if (index < (size >> 1)) {
             Node<E> x = first;
             for (int i = 0; i < index; i++)
                 x = x.next;
             return x;
-        } else {
+        } else { // 否则从后往前找
             Node<E> x = last;
             for (int i = size - 1; i > index; i--)
                 x = x.prev;
             return x;
         }
     }
-    
-node(index)方法的作用是根据索引值，得到该索引下的那个节点。
 
-这个使用了一个小算法：**如果索引值比当前列表长度的一半还要小，那么从第一个元素开始遍历，找到index位置上的元素；否则从最后一个元素开始遍历，找到index位置上的元素**
-
-	void linkBefore(E e, Node<E> succ) {
-        // assert succ != null;
+	void linkBefore(E e, Node<E> succ) { // succ节点表示要新插入节点应该在的位置
         final Node<E> pred = succ.prev;
-        final Node<E> newNode = new Node<>(pred, e, succ);
-        succ.prev = newNode;
-        if (pred == null)
+        final Node<E> newNode = new Node<>(pred, e, succ); // 1：新节点的前节点就是succ节点的前节点，新节点的后节点是succ节点
+        succ.prev = newNode; // 2：succ的前节点就是新节点
+        if (pred == null)	// prev=null表示succ节点就是head首节点，这样的话只需要重新set一下首节点即可，首节点的后节点在步骤1以及设置过了
             first = newNode;
-        else
-            pred.next = newNode;
-        size++;
+        else // succ不是首节点的话执行步骤3
+            pred.next = newNode; // 3：succ节点的前节点的后节点就是新节点
+        size++; // 节点数量+1
         modCount++;
-    }    
+    } 
     
-这个方法的参数e就是新节点的元素值，succ参数是要新插入的节点的那个位置上的现有节点。
+上面代码中注释的1，2，3点就在下图中表示：
 
-处理过程：没啥好说的，处理的就是节点位置的一系列变化。
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedlist02.jpg)
 
-addAll方法也就是处理一些位置的变化，有兴趣的读者可自行查看源码。
-
-LinkedList还提供了2个不一样的add方法，分别是addFirst和addLast方法，作用分别是插入第一个节点和插入最后一个节点。
+LinkedList还提供了2种特殊的add方法，分别是addFirst和addLast方法，处理添加首节点和尾节点，原理都是差不多的，处理链表之间的关联关系即可。
 
 ### remove(int index) ###
 
 ** 移除指定位置上的节点 **
 
 	public E remove(int index) {
-        checkElementIndex(index);
+        checkElementIndex(index); // 检查索引的合法性，不能超过链表个数，不能小于0 
         return unlink(node(index));
     }
 
-首先会检查下标值的合法性，然后调用unlink方法:
-
 	E unlink(Node<E> x) {
-        // assert x != null;
         final E element = x.item;
         final Node<E> next = x.next;
         final Node<E> prev = x.prev;
 
-        if (prev == null) {
+        if (prev == null) { // 特殊情况，删除的是头节点
             first = next;
         } else {
-            prev.next = next;
-            x.prev = null;
+            prev.next = next; // 1
+            x.prev = null; // 1
         }
 
-        if (next == null) {
+        if (next == null) { // 特殊情况，删除的是尾节点
             last = prev;
         } else {
-            next.prev = prev;
-            x.next = null;
+            next.prev = prev; // 2
+            x.next = null; // 2
         }
 
-        x.item = null;
-        size--;
+        x.item = null; // 3
+        size--; // 链表数量减一
         modCount++;
         return element;
     }
-
-把要移除的节点的前后节点处理一下。移除节点的前一个节点的后一个节点是移除节点的后一个节点。移除节点的后一个节点的前一个节点是移除节点的前一个节点。然后判断一下是否是第一个节点的问题，之后将移除节点上的前后节点的属性值和它的元素值都设置为null。列表长度-1(size--)。
+    
+上面代码中注释的1，2，3点就在下图中表示：
+    
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedlist03.jpg)
 
 ### get(int index) ###
 
 ** 得到索引位置上的元素 **
 
 	public E get(int index) {
-        checkElementIndex(index);
-        return node(index).item;
+        checkElementIndex(index); // 检查索引的合法性，不能超过链表个数，不能小于0 
+        return node(index).item; // 直接找到节点，返回节点的元素值即可
     }
-
-找到对应的节点，拿出元素值即可。
-
-先讲这么多吧，其他方法就不一一看了。数据结构了解就行了。
 
 ## LinkedList和ArrayList的比较  ##
 
-1. LinkedList和ArrayList的设计理念完全不一样，ArrayList基于数组，而LinkedList基于节点。
-2. 两者的使用场景不同，ArrayList适用于频繁遍历，但是不怎么操作数据的场合。LinkedList适用于频繁操作数据，不频繁遍历的场合。 刚好相反。 为什么说LinkedList不适合频繁遍历，那是因为LinkedList要遍历节点的话只能从第一个或最后一个节点开始遍历，一个一个找。而ArrayList完全不需要，因为ArrayList内部维护着一个数组，遍历的话仅仅从数组上的索引开始找即可。
-3. 两者的数据结构不同，ArrayList是一个单项的链表，而LinkedList是一个双向的链表。
-
-## 使用LinkedList要注意的点 ##
-
-LinkedList在频繁遍历数据的场合下不适合使用。
+1. LinkedList和ArrayList的设计理念完全不一样，ArrayList基于数组，而LinkedList基于节点，也就是链表。所以LinkedList内部没有容量这个概念，因为是链表，链表是无界的
+2. 两者的使用场景不同，ArrayList适用于读多写少的场合。LinkedList适用于写多读少的场合。 刚好相反。 那是因为LinkedList要找节点的话必须要遍历一个一个节点，直到找到为止。而ArrayList完全不需要，因为ArrayList内部维护着一个数组，直接根据索引拿到需要的元素即可。
+3. 两个都是List接口的实现类，都是一种集合

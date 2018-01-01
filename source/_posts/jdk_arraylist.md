@@ -1,299 +1,203 @@
-title: jdk源码分析之ArrayList
-date: 2015-01-16 21:07:44
+title: jdk ArrayList工作原理分析
+date: 2016-03-27 13:33:17
 tags:
 - jdk
-- list
+- collection
 categories: jdk
-description: list是一种有序的集合(an ordered collection), 通常也会被称为序列(sequence)，使用list可以精确地控制每个元素的插入，可以通过索引值找到对应list中的各个项，也可以在list中查询元素..
 
 ----------------
 
-## 前言 ##
 
 list是一种有序的集合(an ordered collection), 通常也会被称为序列(sequence)，使用list可以精确地控制每个元素的插入，可以通过索引值找到对应list中的各个项，也可以在list中查询元素。
-
-list跟set不同，list允许出现重复的数据，list还允许内部出现null的项。
 
 以前的几段话摘自jdk文档的说明。
 
 其实list就相当于一个动态的数组，也就是链表，普通的数组长度大小都是固定的，而list是一个动态的数组，当list的长度满了，再次插入数据到list当中的时候，list会自动地扩展它的长度。
 
-C，C++中有链表的概念，它们可以使用结构体和指针来定义一个链表。 这样链表插入数据的时候可以加入新的结构体。 但是Java中没有指针这个概念，只能通过其他方式来实现。 比如数组。
+<!--more-->
 
 ## ArrayList源码分析 ##
 
 首先我们先分析一个List接口的实现类之一，也是最常用的ArrayList的源码。
 
-ArrayList其实就是一个单向链表。
+ArrayList底层使用一个数组完成数据的添加，查询，删除，修改。这个数组就是下面提到的elementData。
 
-这里分析的代码是基于jdk1.8的。
+这里分析的代码是基于jdk1.7的。
 
 ArrayList类的属性如下：
 
-    private static final Object[] EMPTY_ELEMENTDATA = {};
-	  private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
-    transient Object[] elementData;
-    private int size;
+    private static final int DEFAULT_CAPACITY = 10; // 集合的默认容量
+	private static final Object[] EMPTY_ELEMENTDATA = {}; // 一个空集合数组，容量为0
+    private transient Object[] elementData; // 存储集合数据的数组，默认值为null
+	private int size; // ArrayList集合中数组的当前有效长度，比如数组的容量是5，size是1 表示容量为5的数组目前已经有1条记录了，其余4条记录还是为空
 
-属性size表示这个集合的有效长度；Object[] elementData这个数组是这个集合的全部元素；EMPTY_ELEMENTDATA表示一个共享的空数组，主要是为了让所有的空集合共享使用的；DEFAULTCAPACITY_EMPTY_ELEMENTDATA表示共享的空数组，是为了给有默认大小的空集合使用的。
-(transient关键字表示这个属性不会被序列化)
-
-接下来是ArrayList的构造函数分析：
+接下来看一下ArrayList的构造函数：
 
 ArrayList有3个构造函数，分别是
 
-    public ArrayList(int initialCapacity) {
-      if (initialCapacity > 0) {
-        this.elementData = new Object[initialCapacity];
-      } else if (initialCapacity == 0) {
-        this.elementData = EMPTY_ELEMENTDATA;
-      } else {
-          throw new IllegalArgumentException("Illegal Capacity: "+
-                                              initialCapacity);
-      }
+    public ArrayList(int initialCapacity) { // 带有集合容量参数的构造函数
+    	// 调用父类AbstractList的方法构造函数
+        super();
+        if (initialCapacity < 0) // 如果集合的容量小于0，这明显是个错误数值，直接抛出异常
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        this.elementData = new Object[initialCapacity]; // 初始化elementData属性，确定容量
     }
 
-简单分析一下，这个构造函数的参数是一个initialCapacity整型类型的参数。这个initialCapacity看名字也知道，就是个初始化容量的意思。 如果这个值比0大，那么内部的elementData数组属性会被初始化；如果这个值等于0，那么内部的elementData会被赋值成EMPTY_ELEMENTDATA，也就是之前分析属性的时候说的让空集合共享使用的一个空数组；如果这个值小于0，抛异常。
-
-    public ArrayList() {
-        this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
+    public ArrayList() { // 没有参数的构造函数
+	    super(); // 调用父类AbstractList的方法构造函数
+        this.elementData = EMPTY_ELEMENTDATA; // 让elementData和ArrayList的EMPTY_ELEMENTDATA这个空数组使用同一个引用
     }
 
-如果构造ArrayList没有传递任何参数，那么内部的elementData属性会被赋值成DEFAULTCAPACITY_EMPTY_ELEMENTDATA。
-
-    public ArrayList(Collection<? extends E> c) {
-        elementData ArrayList= c.toArray();
-        if ((size = elementData.length) != 0) {
-            // c.toArray might (incorrectly) not return Object[] (see 6260652)
-            if (elementData.getClass() != Object[].class)
-                elementData = Arrays.copyOf(elementData, size, Object[].class);
-        } else {
-            // replace with empty array.
-            this.elementData = EMPTY_ELEMENTDATA;
-        }
+    public ArrayList(Collection<? extends E> c) { // 参数是一个集合的构造函数
+    	elementData = c.toArray(); // elementData直接使用参数集合内部的数组
+        size = elementData.length; // 初始化数组当前有效长度
+        // c.toArray方法可能不会返回一个Object[]结果，需要做一层判断。这个一个Java的bug，可以在http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6260652查看
+        if (elementData.getClass() != Object[].class)
+            elementData = Arrays.copyOf(elementData, size, Object[].class);
     }
-
-这个构造函数的参数是一个集合接口类型。如果这个集合内部的元素大于0，那么这些元素会被拷贝到ArrayList内部的elementData属性中，否则elementData属性使用共享的空数组。
-
-接下来我们比较一下jdk1.6的ArrayList。
-
-jdk1.6的ArrayList只有两个属性：
-
-    private transient Object[] elementData;
-    private int size;
-
-它的构造函数：
-
-    public ArrayList(int initialCapacity) {
-      super();
-      if (initialCapacity < 0)
-      throw new IllegalArgumentException("Illegal Capacity: "
-      + initialCapacity);
-      this.elementData = new Object[initialCapacity];
-    }
-
-这个构造函数跟1.8版本的区别不大，就是空list的时候，1.8版本的把共享的空数组赋值给elementData。
-
-    public ArrayList() {
-      this(10);
-    }
-
-这个构造函数跟1.8版本的相差就大了。他会在内部默认初始化一个10个长度的数组，而1.8版本的是使用一个空的数组赋值给elementData。
-
-    public ArrayList(Collection<? extends E> c) {
-      elementData = c.toArray();
-      size = elementData.length;
-      // c.toArray might (incorrectly) not return Object[] (see 6260652)
-      if (elementData.getClass() != Object[].class)
-      elementData = Arrays.copyOf(elementData, size, Object[].class);
-    }
-
-这个构造函数跟1.8版本的差别是1.8版本下如果这个Collection参数中元素个数为0,那么elementData会被赋值成共享的空数组。
 
 接下来挑几个重要的方法讲解一下：
 
 ### add(E e) 方法 ###
 
-这个方法的作用就是把 **元素添加到列表的最后面** ，我先把add方法的结论讲一下(由于ArrayList是一个动态的数组，当添加元素当数组的时候，肯定需要判断一下数组的长度是否够长，不够长的话会做一些处理)：
-
-我觉得可以使用下面这个公式来表示ArrayList内部数组长度的增加算法：
-
-**新的长度 = max(数组长度 + 数组长度 / 2, 新的长度)**
-
-这个算法有个前提条件：**新的长度 > 数组长度**
-
-**这里新的长度不固定，比如add方法: 这个新的长度的就是当前数组有效长度+1; 比如addAll方法: 这个新的长度就是当前数组有效长度+Collection集合长度**
-
-**这里的有效数组长度指的是ArrayList内部的size属性。**
+这个方法的作用就是把 **元素添加到集合的最后面** 
 
 源码：
 
-add方法jdk1.8版本：
-
-    public boolean add(E e) {
-      ensureCapacityInternal(size + 1);  // Increments modCount!!
-      elementData[size++] = e;
-      return true;
+	public boolean add(E e) {
+        ensureCapacityInternal(size + 1);  // 调用ensureCapacityInternal，参数是集合当前的长度。确保集合容量够大，不够的话需要扩容
+        elementData[size++] = e; // 数组容量够的话，直接添加元素到数组最后一个位置即可，同时修改集合当前有效长度
+        return true;
     }
+    
+	private void ensureCapacityInternal(int minCapacity) {
+        if (elementData == EMPTY_ELEMENTDATA) { // 如果数组是个空数组，说明调用的是无参的构造函数
+        	// 如果调用的是无参构造函数，说明数组容量为0，那就需要使用默认容量
+            minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
 
-添加元素到列表的最后，这里的ensureCapacityInternal方法会处理数组长度不够长的问题，它的参数是当前数组的长度+1。
-
-    private void ensureCapacityInternal(int minCapacity) {
-      if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
-        minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
-      }
-
-      ensureExplicitCapacity(minCapacity);
-    }
-
-如果当前对象是使用无參的构造函数实现的，那么取10(DEFAULT_CAPACITY)和参数的较大值，然后用这个值调用ensureExplicitCapacity方法。否则，直接调用ensureExplicitCapacity方法。
-
+        ensureExplicitCapacity(minCapacity);
+    }    
+    
     private void ensureExplicitCapacity(int minCapacity) {
-      modCount++;
+        modCount++;
 
-      // overflow-conscious code
-      if (minCapacity - elementData.length > 0)
-        grow(minCapacity);
+        // 如果集合需要的最小长度比数组容量要大，那么就需要扩容，已经放不下了
+        if (minCapacity - elementData.length > 0)
+            grow(minCapacity);
+    }
+    
+    private void grow(int minCapacity) { // 扩容的实现
+        int oldCapacity = elementData.length;
+        int newCapacity = oldCapacity + (oldCapacity >> 1); // 长度扩大1.5倍
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+		// 将数组拷贝到新长度的数组中
+        elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
-如果要加的元素的下标值比当前数组长度要大的话(minCapacity参数代表当前数组的最后一个元素的下标值， 只有一个情况特殊，那就是使用无參的构造函数构造之后第一次调用，这个时候minCapacity为10)
 
-    private void grow(int minCapacity) {
-      // overflow-conscious code
-      int oldCapacity = elementData.length;
-      int newCapacity = oldCapacity + (oldCapacity >> 1);
-      if (newCapacity - minCapacity < 0)
-      newCapacity = minCapacity;
-      if (newCapacity - MAX_ARRAY_SIZE > 0)
-      newCapacity = hugeCapacity(minCapacity);
-      // minCapacity is usually close to size, so this is a win:
-      elementData = Arrays.copyOf(elementData, newCapacity);
-    }
+以下面这段代码讲解一下扩容的机制：
 
-这个就是数组长度动态计算的算法。
+	// 初始化一个容量为5的数组
+	ArrayList<Integer> list = new ArrayList<Integer>(5);
+    list.add(1);
+    list.add(2);
+    list.add(3);
+    list.add(4);
+    list.add(5);
+    // 当添加第6个元素的时候，数组进行了扩容，扩容1.5倍(5+5/2=7)
+    list.add(6);
+    
+    
+![](http://7x2wh6.com1.z0.glb.clouddn.com/arraylist01.jpg)
 
-下面是我写的一些测试代码和注释，有兴趣的可以验证一下：
-
-    @Test
-    public void testNoParamConstructor() {
-      // 不带参数的构造函数第一次add之后，会分配10个长度给内部elementData数组属性
-      // 接下来每次add，会都判断数组长度是否不够，不够的话 新的长度 = max(当前数组长度 + 当前数组长度 / 2, 当前数组长度 + 1)
-      // 比如，实例化之后。第一次add，数组长度分配了10个空间，当添加第11个的时候，数组长度不够，这也时候会分配15个(11 + 11 / 2)和11个的较大值，然后分配了11个。
-      // 然后elementData有15个空间，当添加第16个的时候，分配22(15 + 15 / 2)个。 以此类推， 22个不够的时候分配33个，33个不够的时候分配49个。
-      ArrayList list = new ArrayList();
-
-      int count = 164;
-      for (int i = 1; i <= count; i++) {
-        list.add(i);
-      }
-      System.out.println("done");
-    }
-
-    @Test
-    public void testKnowSize() {
-      // 带长度的原理。 只不过一开始不会分配10个空间，而是参数穿进来的空间大小。
-      // 比如传入0, 0个空间，第一次add, 选择0(0 + 0 / 2)和1(0+1)的较大值，取1,分配1个空间
-      // 再次添加的时候，选择1(1+1/2)和2(1+1)的较大值，取2,分配2个空间
-      // 再次添加的时候，选择3(2+2/2)和3(2+1)的较大值，取3,分配3个空间
-      // 再次添加的时候，选择4(3+3/2)和4(3+1)的较大值，取4,分配4个空间
-      // 再次添加的时候，选择6(4+4/2)和5(4+1)的较大值，取6,分配6个空间  以此类推...
-      ArrayList list = new ArrayList(0);
-      list.add(1);
-      list.add(2);
-      list.add(3);
-      list.add(4);
-      list.add(5);
-      System.out.println("done");
-    }
-
-    @Test
-    public void testValidAdd() {
-      // 虽然list内部的elementData长度为5,但是有效长度为0。 所以add的时候不会增加长度。
-      ArrayList list = new ArrayList(5);
-      list.add("1");
-    }
-
+上图2个白色的空间就是扩容出来的，添加第6个元素之后，最后一个元素没被设置。
 
 ### add(int index, E element) 方法 ###
 
-这个方法的作用是 **在指定位置插入数据**
+这个方法的作用是 **在指定位置插入数据**，该方法的缺点就是如果集合数据量很大，移动元素位置将会话费不少时间：
 
     public void add(int index, E element) {
-      rangeCheckForAdd(index);
+        rangeCheckForAdd(index); // 检查索引位置的正确的，不能小于0也不能大于数组有效长度
 
-      ensureCapacityInternal(size + 1);  // Increments modCount!!
-      System.arraycopy(elementData, index, elementData, index + 1,
-                       size - index);
-        elementData[index] = element;
-        size++;
+        ensureCapacityInternal(size + 1);  // 扩容检测
+        System.arraycopy(elementData, index, elementData, index + 1,
+                         size - index); // 移动数组位置，数据量很大的话，性能变差
+        elementData[index] = element; // 指定的位置插入数据
+        size++; // 数组有效长度+1
     }
+    
+![](http://7x2wh6.com1.z0.glb.clouddn.com/arraylist03.jpg)
 
-rangeCheckForAdd方法是验证参数index是否ok，index < 0 或 index > 数组最后一个下标值的话，直接抛出IndexOutOfBoundsException异常。ensureCapacityInternal方法之前分析add(E e)的时候已经分析过了。接下来的一句代码就是将index下标值的数据全部往后移一位，然后index下标值的数据使用新的素质，元素长度+1(size++)。
+上图就表示要在容量为5的数组中的第4个位置插入6这个元素，会进行3个步骤：
+
+1. 容量为5，再次加入元素，需要扩容，扩容出2个白色的空间
+2. 扩容之后，5和4这2个元素都移到后面那个位置上
+3. 移动完毕之后空出了第4个位置，插入元素6
 
 ### remove(int index) ###
 
 remove方法就是 **移除对应坐标值上的数据**
 
     public E remove(int index) {
-      rangeCheck(index);
+      rangeCheck(index); // 检查索引值是否合法
 
       modCount++;
-      E oldValue = elementData(index);
+      E oldValue = elementData(index); // 得到对应索引位置上的元素
 
-      int numMoved = size - index - 1;
+      int numMoved = size - index - 1; // 需要移动的数量
       if (numMoved > 0)
           System.arraycopy(elementData, index+1, elementData, index,
-                           numMoved);
-      elementData[--size] = null; // clear to let GC do its work
+                           numMoved); // 从后往前移，留出最后一个元素
+      elementData[--size] = null; // 清楚对应位置上的对象，让gc回收
 
       return oldValue;
     }
 
-首先先检查坐标值是否合法，然后得到对应坐标上的元素，之后index下标值之后的数据全部往前移。
+比如要移除5个元素中的第3个元素，首先要把4和5这2个位置的元素分别set到3和4这2个位置上，set完之后最后一个位置也就是第5个位置set为null。
 
-测试代码：
-
-    @Test
-    public void testRemove() {
-      ArrayList list = new ArrayList();
-      list.add("1");
-      list.add("2");
-      list.add("1");
-      list.add("3");
-      list.remove(0);
-      // remove方法只会删除第一个匹配的元素，之后的元素下标都向前移。 所以"1"的下标值从2变成了1，且只有1个"1"元素
-      System.out.println(list.indexOf("1")); // 输出 1
-    }
+![](http://7x2wh6.com1.z0.glb.clouddn.com/arraylist02.jpg)
 
 ### remove(Object o) ###
 
  **找出数组中的元素，然后移除**
 
+	// 跟remove索引元素一样，这个方法是根据equals比较
     public boolean remove(Object o) {
         if (o == null) {
+        	// ArrayList允许元素为null，所以对null值的删除在这个分支里进行
             for (int index = 0; index < size; index++)
                 if (elementData[index] == null) {
-                    fastRemove(index) {
-        modCount++;
-        int numMoved = size - index - 1;
-        if (numMoved > 0)
-            System.arraycopy(elementData, index+1, elementData, index,
-                             numMoved);
-        elementData[--size] = null; // clear to let GC do its work
+                    fastRemove(index);
+                    return true;
+                }
+        } else {
+        	// 效率比较低，需要从第1个元素开始遍历直到找到equals相等的元素后才进行删除，删除同样需要移动元素
+            for (int index = 0; index < size; index++)
+                if (o.equals(elementData[index])) {
+                    fastRemove(index);
+                    return true;
+                }
+        }
+        return false;
     }
-
+    
 ### clear ###
 
-**清除list中的所有数据**。 没啥好说的，遍历数组，每一项设置为null，然后让GC去回收。 之后将size设置为0。
+**清除list中的所有数据**
 
     public void clear() {
       modCount++;
 
-      // clear to let GC do its work
+      // 遍历集合数据，全部set为null
       for (int i = 0; i < size; i++)
           elementData[i] = null;
 
-      size = 0;
+      size = 0; // 数组有效长度变成0
     }
 
 ### set(int index, E element) ###
@@ -301,10 +205,10 @@ remove方法就是 **移除对应坐标值上的数据**
 **用element值替换下标值为index的值**
 
     public E set(int index, E element) {
-      rangeCheck(index);
+      rangeCheck(index); // 检查索引值是否合法
 
-      E oldValue = elementData(index);
-      elementData[index] = element;
+      E oldValue = elementData(index); 
+      elementData[index] = element; // 直接替换
       return oldValue;
     }
 
@@ -313,35 +217,9 @@ remove方法就是 **移除对应坐标值上的数据**
 **得到下标值为index的元素**
 
     public E get(int index) {
-        rangeCheck(index);
+        rangeCheck(index); // 检查索引值是否合法
 
-        return elementData(index);
-    }
-
-### indexOf(Object) ###
-
-**根据参数对象，如果是null对象，找出数组上第一个为null对着的元素，然后返回下标值。如果不是null对象，参数对象equals数组元素为true的话，返回对应的下标**
-
-    public int indexOf(Object o) {
-        if (o == null) {
-            for (int i = 0; i < size; i++)
-                if (elementData[i]==null)
-                  return i;
-        } else {
-            for (int i = 0; i < size; i++)
-                if (o.equals(elementData[i]))
-                    return i;
-        }
-        return -1;
-    }
-  
-
-### contains(Object o) ###
-
-**查看数组中是否存在对象** 内部使用indexOf方法
-
-    public boolean contains(Object o) {
-        return indexOf(o) >= 0;
+        return elementData(index); // 直接返回下标值
     }
 
 ### addAll ###
@@ -351,35 +229,11 @@ remove方法就是 **移除对应坐标值上的数据**
     public boolean addAll(Collection<? extends E> c) {
         Object[] a = c.toArray();
         int numNew = a.length;
-        ensureCapacityInternal(size + numNew);  // Increments modCount
-        System.arraycopy(a, 0, elementData, size, numNew);
-        size += numNew;
+        ensureCapacityInternal(size + numNew);  // 扩容检测
+        System.arraycopy(a, 0, elementData, size, numNew); // 直接在数组后面添加新的数组中的所有元素
+        size += numNew; // 更新有效长度
         return numNew != 0;
     }
-
-首先先得到Collection参数内部数组的长度，然后调用ensureCapacityInternal方法确保内部数据的长度，然后在内部数组的最后添加新的数组。
-
-
-在列表的指定位置添加一个Collection集合。
-
-    public boolean addAll(int index, Collection<? extends E> c) {
-      rangeCheckForAdd(index);
-
-      Object[] a = c.toArray();
-      int numNew = a.length;
-      ensureCapacityInternal(size + numNew);  // Increments modCount
-
-      int numMoved = size - index;
-      if (numMoved > 0)
-      System.arraycopy(elementData, index, elementData, index + numNew,
-        numMoved);
-
-        System.arraycopy(a, 0, elementData, index, numNew);
-        size += numNew;
-        return numNew != 0;
-    }
-
-首先先判断下标值是否合法。然后调用ensureCapacityInternal方法确保内部数据的长度，然后在index坐标位置的元素都往后移参数Collection集合内部数组的长度，然后空闲的位置加入新集合的数据。
 
 ### toArray ###
 
@@ -389,15 +243,9 @@ remove方法就是 **移除对应坐标值上的数据**
         return Arrays.copyOf(elementData, size);
     }
 
-
-以前分析的一些方法都会处理一个叫做modCount的int类型的属性，这个属性的ArrayList的父类AbstractList中定义的。
-
-据说这个modCount跟ArrayList的迭代器有关，现在还不清楚。。 以后看迭代器相关的源码的时候我再继续这个话题。
-
-
 ## ArrayList的注意点 ##
 
 1. 当数据量很大的时候，ArrayList内部操作元素的时候会移动位置，很耗性能
 2. ArrayList虽然可以自动扩展长度，但是数据量一大，扩展的也多，会造成很多空间的浪费
-3. ArrayList有一个内部私有类，SubList。ArrayList提供一个subList方法用于构造这个SubList。这里需要注意的是SubList和ArrayList使用的数据引用是同一个对象，在SubList中操作数据和在ArrayList中操作数据都会影响对方。
+3. ArrayList有一个内部私有类，SubList。ArrayList提供一个subList方法用于构造这个SubList。这里需要注意的是SubList和ArrayList使用的数据引用是同一个对象，在SubList中操作数据和在ArrayList中操作数据都会影响双方。
 4. ArrayList允许加入null元素

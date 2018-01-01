@@ -1,9 +1,10 @@
 title: macos中jdk版本切换
 date: 2015-03-30 00:51:12
-tags: [macos,jdk]
+tags:
+- java
+- mac
 categories:
-- macos
-- jdk
+- java
 description: 简单记录一下macos中的jdk版本切换问题 ...
 ----------------
 

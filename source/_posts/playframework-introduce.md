@@ -4,7 +4,7 @@ tags:
 - scala
 - playframework
 categories:
-- jvm
+- scala
 description: play的controller需要继承Controller，controller中的每个方法都是一个Action ...
 
 ----------------

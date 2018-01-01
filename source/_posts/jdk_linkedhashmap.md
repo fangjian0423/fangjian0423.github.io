@@ -1,17 +1,19 @@
-title: jdk源码分析之LinkedHashMap
-date: 2015-02-21 01:53:23
+title: jdk LinkedHashMap工作原理分析
+date: 2016-03-29 19:23:23
 tags:
 - jdk
 - map
 categories: jdk
-description: LinkedHashMap是一种会记录插入顺序的Map，HashMap由于hash函数的关系，它是无序的，而LinkedHashMap则是一种会保存插入顺序的哈希表 ...
+
+
 ----------------
 
-## 前言 ##
 
-LinkedHashMap是一种会记录插入顺序的Map，HashMap由于hash函数的关系，它是无序的，而LinkedHashMap则是一种会保存插入顺序的哈希表。
+LinkedHashMap是一种会记录插入顺序的Map，内部维护着一个accessOrder属性，用于表示map数据的迭代顺序是基于访问顺序还是插入顺序。
 
-## LinkedHashMap解析 ##
+<!--more-->
+
+## LinkedHashMap原理分析 ##
 
 首先是LinkedHashMap的定义：
 
@@ -19,9 +21,9 @@ LinkedHashMap是一种会记录插入顺序的Map，HashMap由于hash函数的�
         extends HashMap<K,V>
             implements Map<K,V>
 
-LinkedHashMap继承HashMap，实现Map接口。
+LinkedHashMap继承HashMap，实现Map接口，所以它的结构跟HashMap是一样的，使用链表法解决哈希冲突的哈希表，基本操作跟HashMap也是一样的，就是多了一点额外的步骤用于处理链表。
 
-接下来是LinkedHashMap的内部类Entry：
+LinkedHashMap有个内部类Entry，这个Entry就是链表中的节点，继承自HashMap.Node，多出了2个属性before和after，所以LinkedHashMap内部链表的节点是双向的，代码如下：
 
 	static class Entry<K,V> extends HashMap.Node<K,V> {
         Entry<K,V> before, after;
@@ -29,122 +31,56 @@ LinkedHashMap继承HashMap，实现Map接口。
             super(hash, key, value, next);
         }
     }
-    
-Entry内部类继承HashMap的内部类Node，HashMap内部类Node也就是哈希表上的数组上的节点。
 
-Node表示单向节点，而这个Entry则表示双向节点。
+另外LinkedHashMap还有两个重要的属性head，tail，这2个属性用于存储插入的节点，形成一个双向链表：
 
-LinkedHashMap有两个重要的属性：
-
+	// 首节点
 	transient LinkedHashMap.Entry<K,V> head;
 
+	// 尾节点
     transient LinkedHashMap.Entry<K,V> tail;
     
-head表示插入的第一个节点，tail标志最后一个节点。
-
-LinkedHashMap继承自HashMap，大多数方法是使用HashMap的方法，只是覆盖了几个方法。
-
-比如 **V put(K key, V value)** 方法
-
-put方法还是使用HashMap的put方法，put方法内部调用putVal方法。
-
-putVal方法遇到需要构造一个新的节点的时候会调用newNode方法，HashMap有自己的newNode方法：
-
-	Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
-        return new Node<>(hash, key, value, next);
-    }
     
-HashMap构造新节点仅仅是实例化了HashMap内部的Node对象，创建了一个新的节点。
+跟HashMap一样，下面这个例子对应的LinkedHashMap结构图示如下所示，accessOrder为false，使用插入顺序：
 
-LinkedHashMap覆盖了这个newNode方法：
+	Map<String, Integer> map = new LinkedHashMap<String, Integer>(5);
+	map.put("java", 1);
+    map.put("golang", 2);
+    map.put("python", 3);
+    map.put("ruby", 4);
+    map.put("scala", 5);
+    
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedhashmap02.jpg)
+    
+### put操作 ###
+
+
+LinkedHashMap没有覆盖HashMap的put方法，所以put操作跟HashMap是一样的。但是它覆盖了newNode方法，也就是说构造新节点的时候，LinkedHashMap跟HashMap是不一样的：
 
 	Node<K,V> newNode(int hash, K key, V value, Node<K,V> e) {
+		// 使用Entry双向链表构造节点，而不是HashMap的Node单向链表
         LinkedHashMap.Entry<K,V> p =
             new LinkedHashMap.Entry<K,V>(hash, key, value, e);
-        linkNodeLast(p);
+        linkNodeLast(p); // 更新双向链表，这一操作在HashMap里面是没有的
         return p;
     }
-而LinkedHashMap则是创建了Entry对象，也就是一个双向节点，Entry继承自Node，所以也是一个Node类型。这里构建了一个Entry节点之后调用了linkNodeLast方法。
+    
+另外，LinkedHashMap重写了afterNodeInsertion这个钩子方法，在put一个关键字不存在的节点之后会调用这个方法：
 
-	private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
-        LinkedHashMap.Entry<K,V> last = tail; // 新插入的节点肯定是最后一个节点
-        tail = p;
-        if (last == null) // 最后一个节点为null的话表示这是第一次构建节点，因此head也就是刚构建的节点
-            head = p;
-        else {
-            p.before = last;  // 新构建的节点的前一个节点是之前最后一个插入节点
-            last.after = p;   // 之前最后一个节点的后一个节点是新构建的节点
+	void afterNodeInsertion(boolean evict) { // possibly remove eldest
+        LinkedHashMap.Entry<K,V> first;
+        // removeEldestEntry方法LinkedHashMap永远返回false，一些使用缓存策略的Map会覆盖这个方法，比如jackson的LRUMap，会移除最老的节点，也就是首节点
+        if (evict && (first = head) != null && removeEldestEntry(first)) {
+            K key = first.key;
+            removeNode(hash(key), key, null, false, true);
         }
     }
     
-linkNodeLast方法的作用就是更新head和tail这两个属性，确保键值对的插入顺序。
-
-**boolean containsValue(Object value)**方法也被覆盖了。
-
-HashMap的containsValue方法：
-
-	public boolean containsValue(Object value) {
-        Node<K,V>[] tab; V v;
-        if ((tab = table) != null && size > 0) {
-            for (int i = 0; i < tab.length; ++i) {
-                for (Node<K,V> e = tab[i]; e != null; e = e.next) {
-                    if ((v = e.value) == value ||
-                        (value != null && value.equals(v)))
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-    
-HashMap遍历键值对的时候是根据数组来遍历。
-    
-LinkedHashMap的containsValue方法：
-
-	public boolean containsValue(Object value) {
-        for (LinkedHashMap.Entry<K,V> e = head; e != null; e = e.after) {
-            V v = e.value;
-            if (v == value || (value != null && value.equals(v)))
-                return true;
-        }
-        return false;
-    }
-
-而LinkedHashMap则是根据head属性来遍历，也就是根据第一个节点来遍历。
-
-
-
-** LinkedHashMap内部还有个boolean类型的属性accessOrder，accessOrder为false表示迭代顺序是插入顺序，为true表示迭代顺序是访问顺序 **
-
-插入顺序很简单，就是put方法插入的时候的顺序。
-
-那什么是访问顺序呢？   下面分析一下。
-
-首先是LinkedHashMap的get方法，get方法覆盖了HashMap的get方法。
-
-HashMap的get方法：
-
-	public V get(Object key) {
-        Node<K,V> e;
-        return (e = getNode(hash(key), key)) == null ? null : e.value;
-    }
-    
-LinkedHashMap的get方法：
-
-	public V get(Object key) {
-        Node<K,V> e;
-        if ((e = getNode(hash(key), key)) == null)
-            return null;
-        if (accessOrder)
-            afterNodeAccess(e);
-        return e.value;
-    }
-    
-HashMap的get方法仅仅是找到对应的节点，而LinkedHashMap的get方法不但查找节点，而且如果这个LinkedHashMap的迭代顺序是访问顺序，那么会调用afterNodeAccess方法：
+put操作如果关键字已经存在，会调用afterNodeAccess这个钩子方法：
 
 	void afterNodeAccess(Node<K,V> e) { // move node to last
         LinkedHashMap.Entry<K,V> last;
-        if (accessOrder && (last = tail) != e) {
+        if (accessOrder && (last = tail) != e) { // 如果使用访问顺序并且访问的不是尾节点
             LinkedHashMap.Entry<K,V> p =
                 (LinkedHashMap.Entry<K,V>)e, b = p.before, a = p.after;
             p.after = null;
@@ -166,28 +102,108 @@ HashMap的get方法仅仅是找到对应的节点，而LinkedHashMap的get方法
             ++modCount;
         }
     }
+    
 
-这个afterNodeAccess方法会调整LinkedHashMap内部的节点顺序，把参数e，也就是get方法获取的那个节点放到了最后一个位置，也就是tail属性。 **被访问的节点放到了最后的位置**， 这就是最近最少使用算法，最近使用的节点放到了双向链表的尾部，使用越多的节点越在双向链表的后面，使用越少的节点放到了双向链表的前面。
+### get操作 ###    
+    
+LinkedHashMap复写了get方法：
 
-
-这个afterNodeAccess方法还在其他方法中被调用，比如put方法，当map插入数据的时候，如果这个key已经存在，那么使用新的数据覆盖旧的数据，同时把这个操作过的节点放到双向链表的结尾；比如replace方法，使用新值替换旧值的时候，操作过的节点会被放到双向链表的结尾。
-
-accessOrder属性只能在下面这个LinkedHashMap的构造函数中指定。 LinkedHashMap的其他构造函数都会设置accessOrder为false。
-
-	public LinkedHashMap(int initialCapacity,
-                         float loadFactor,
-                         boolean accessOrder) {
-        super(initialCapacity, loadFactor);
-        this.accessOrder = accessOrder;
+	public V get(Object key) {
+        Node<K,V> e;
+        if ((e = getNode(hash(key), key)) == null)
+            return null;
+        if (accessOrder) // 使用访问顺序的话，调用afterNodeAccess方法
+            afterNodeAccess(e);
+        return e.value;
     }
     
-** 因此访问顺序可以理解为节点的操作顺序，操作越近操作，越在链表的后方。 **
+### remove操作 ###   
+
+
+LinkedHashMap的remove方法没有复写HashMap的remove方法，但是同样实现了afterNodeRemoval这个钩子方法：
+
+	// 更新双向链表
+	void afterNodeRemoval(Node<K,V> e) { // unlink
+        LinkedHashMap.Entry<K,V> p =
+            (LinkedHashMap.Entry<K,V>)e, b = p.before, a = p.after;
+        p.before = p.after = null;
+        if (b == null)
+            head = a;
+        else
+            b.after = a;
+        if (a == null)
+            tail = b;
+        else
+            a.before = b;
+    }
+    
+    
+### accessOrder属性分析 ###
+
+LinkedHashMap默认情况下，accessOrder属性为false，也就是使用插入顺序，这个插入顺序是根据LinkedHashMap内部的一个双向链表实现的。如果accessOrder为true，也就是使用访问顺序，那么afterNodeAccess这个钩子方法内部的逻辑会被执行，将会修改双向链表的结构，再来看一下这个方法的具体逻辑：
+
+	void afterNodeAccess(Node<K,V> e) { // move node to last
+        LinkedHashMap.Entry<K,V> last;
+        if (accessOrder && (last = tail) != e) { // 使用访问顺序，把节点移动到双向链表的最后面，如果已经在最后面了，不需要进行移动
+            LinkedHashMap.Entry<K,V> p =
+                (LinkedHashMap.Entry<K,V>)e, b = p.before, a = p.after;
+            p.after = null;
+            if (b == null)
+                head = a; // 特殊情况，处理头节点
+            else
+                b.after = a; // 节点处理
+            if (a != null)
+                a.before = b; // 节点处理
+            else
+                last = b; // 特殊情况，处理尾节点
+            if (last == null)
+                head = p;
+            else {
+                p.before = last; // 尾节点处理
+                last.after = p;
+            }
+            tail = p;
+            ++modCount;
+        }
+    }
+    
+
+afterNodeAccess在使用get方法或者put方法遇到关键字已经存在的情况下，会被触发，一个例子如下：
+
+	Map<String, Integer> map = new LinkedHashMap<String, Integer>(5, 0.75f, true);
+    map.put("java", 1);
+    map.put("golang", 2);
+    map.put("python", 3);
+    map.put("ruby", 4);
+    map.put("scala", 5);
+    System.out.println(map.get("ruby"));
+    
+上面这段代码，LinkedHashMap的accessOrder属性为true，使用访问顺序，最后调用了get方法，触发afterNodeAccess方法，修改双向链表，效果如下：
+
+
+![](http://7x2wh6.com1.z0.glb.clouddn.com/linkedhashmap03.jpg)
+    
+    
+## 注意点 ##
+
+LinkedHashMap使用访问顺序并且进行遍历的时候，如果使用如下代码，会发生ConcurrentModificationException异常：
+
+	for(String str : map.keySet()) {
+    	System.out.println(map.get(str));
+    }
+    
+不应该这么使用，而是应该直接读取value：
+
+	for(Integer it : map.values()) {
+    	System.out.println(it);
+    }
+    
+具体可以参考[stackoverflow上的这篇帖子](http://stackoverflow.com/questions/16180568/concurrentmodificationexception-with-linkedhashmap)。
+    
     
 ## 总结 ##
 
-1. LinkedHashMap也是一种使用拉链式哈希表的数据结构，只不过添加了两个属性：**链表头部和链表尾部**， 而且**LinkedHashMap内部的链表都是双向链表**。
+1. LinkedHashMap也是一种使用拉链式哈希表的数据结构，除了哈希表，它内部还维护着一个双向链表，用于处理访问顺序和插入顺序的问题
 
-2. LinkedHashMap继承自HashMap，大多数的方法都是跟HashMap一样的，只不过覆盖了一些方法。
-
-3. LinkedHashMap的accessOrder属性决定哈希表的迭代顺序， **accessOrder为true表示迭代顺序为访问顺序，accessOrder为false表示迭代顺序为插入数据顺序**
+2. LinkedHashMap继承自HashMap，大多数的方法都是跟HashMap一样的，不过覆盖了一些方法
 
