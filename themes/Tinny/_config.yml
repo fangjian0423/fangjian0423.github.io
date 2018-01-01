@@ -3,6 +3,7 @@ menu:
   Home: /
   Archives: /archives
   About: /about
+  Rss: /atom.xml
 ## you can create `tags` and `categories` folders in `../source`.
 ## And create a `index.md` file in each of them.
 ## set `front-matter`as
@@ -12,9 +13,12 @@ menu:
 
 #### Widgets
 widgets: 
+- blogroll
 - category
 - archive
 - tag
+
+baidu_tongji: true
 
 excerpt_link: 阅读全文
 
@@ -61,10 +65,10 @@ fancybox: false
 #### Author information
 author:
   google_plus:  ## eg:116338260303228776998 for https://plus.google.com/u/0/116338260303228776998
-  intro_line1: Hello, This is my Blog.  ## eg: "Hello ,I'm Larry Page in Google."
-  intro_line2: Welcome!  ## eg: "This is my blog,believe it or not."
+  intro_line1: 吃饭睡觉写代码  ## eg: "Hello ,I'm Larry Page in Google."
+  intro_line2: Format
   weibo: 2952387973       ## e.g. 436062867 for http://weibo.com/436062867
-  twitter:      ## e.g. yangjiansky for https://twitter.com/yangjiansky
+  twitter: fangjian0423     ## e.g. yangjiansky for https://twitter.com/yangjiansky
   github: fangjian0423       ## e.g. A-limon for https://github.com/A-limon
   facebook:     ## e.g. yangjian for https://favebook.com/yangjian
   tsina:        ## e.g. 1664838973  Your weibo ID,It will be used in share button.

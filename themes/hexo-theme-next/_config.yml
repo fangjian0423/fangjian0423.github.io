@@ -19,9 +19,13 @@ rss: /atom.xml
 
 links_title: 友情链接
 links:
+  Spring4All社区: http://spring4all.com/
+  泥瓦匠BYSocket: http://www.bysocket.com/
   xtutu: http://xtutu.me/
   Felix: http://blog.zlf.me
   WhiteAmber: http://stockgraph.net/
+  yuzhouwan: http://www.yuzhouwan.com
+  斗图: http://www.animeimg.club/
 
 # ---------------------------------------------------------------
 # Menu Settings
@@ -290,9 +294,9 @@ facebook_sdk:
 # Show number of visitors to each article.
 # You can visit https://leancloud.cn get AppID and AppKey.
 leancloud_visitors:
-  enable: false
-  app_id: #<app_id>
-  app_key: #<app_key>
+  enable: true
+  app_id: j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz
+  app_key: 9xlMXFV1I8vh3NoBMzCIwsH5
 
 # Show PV/UV of the website/page with busuanzi.
 # Get more information on http://ibruce.info/2015/04/04/busuanzi/
@@ -319,6 +323,10 @@ busuanzi_count:
 baidu_push: false
 
 
+reward_comment: 如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！
+#alipay: http://7x2wh6.com1.z0.glb.clouddn.com/alipay.png
+wechatpay: http://7x2wh6.com1.z0.glb.clouddn.com/wechat.png
+
 
 #! ---------------------------------------------------------------
 #! DO NOT EDIT THE FOLLOWING SETTINGS
@@ -339,7 +347,7 @@ fancybox: true
 # Be aware that you should use the same version as internal ones to avoid potential problems.
 vendors:
   # Internal path prefix. Please do not edit it.
-  _internal: vendors
+  _internal: lib
 
   # Internal version: 2.1.3
   jquery:
@@ -370,3 +378,10 @@ images: images
 
 # Theme version
 version: 5.0.1
+
+#local_search:
+# enable: true
+
+passage_end_tag:
+  enabled: true
+
