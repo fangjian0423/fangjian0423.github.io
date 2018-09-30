@@ -1,0 +1,1140 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="algorithm," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="堆的概念： n个元素序列 { k1, k2, k3, k4, k5, k6 …. kn } 当且仅当满足以下关系时才会被称为堆： ki &amp;lt;= k2i,ki &amp;lt;= k2i+1 或者 ki &amp;gt;= k2i,ki &amp;gt;= k2i+1 (i = 1,2,3,4 .. n/2) 如果数组的下表是从0开始，那么需要满足  ki &amp;lt;= k2i+1,ki &amp;lt;= k2i+2 或者 k">
+<meta name="keywords" content="algorithm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="堆、二叉堆、堆排序">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/04/09/heap-heapsort/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="堆的概念： n个元素序列 { k1, k2, k3, k4, k5, k6 …. kn } 当且仅当满足以下关系时才会被称为堆： ki &amp;lt;= k2i,ki &amp;lt;= k2i+1 或者 ki &amp;gt;= k2i,ki &amp;gt;= k2i+1 (i = 1,2,3,4 .. n/2) 如果数组的下表是从0开始，那么需要满足  ki &amp;lt;= k2i+1,ki &amp;lt;= k2i+2 或者 k">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap01.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap02.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap03.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap04.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap05.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="堆、二叉堆、堆排序">
+<meta name="twitter:description" content="堆的概念： n个元素序列 { k1, k2, k3, k4, k5, k6 …. kn } 当且仅当满足以下关系时才会被称为堆： ki &amp;lt;= k2i,ki &amp;lt;= k2i+1 或者 ki &amp;gt;= k2i,ki &amp;gt;= k2i+1 (i = 1,2,3,4 .. n/2) 如果数组的下表是从0开始，那么需要满足  ki &amp;lt;= k2i+1,ki &amp;lt;= k2i+2 或者 k">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap01.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> 堆、二叉堆、堆排序 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                堆、二叉堆、堆排序
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-09T17:42:18+08:00" content="2016-04-09">
+              2016-04-09
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/algorithm/" itemprop="url" rel="index">
+                    <span itemprop="name">algorithm</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/09/heap-heapsort/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/09/heap-heapsort/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/04/09/heap-heapsort/" class="leancloud_visitors" data-flag-title="堆、二叉堆、堆排序">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>堆的概念：</p>
+<p>n个元素序列 { k1, k2, k3, k4, k5, k6 …. kn } 当且仅当满足以下关系时才会被称为堆：</p>
+<pre><code>ki &lt;= k2i,ki &lt;= k2i+1 或者 ki &gt;= k2i,ki &gt;= k2i+1 (i = 1,2,3,4 .. n/2)
+</code></pre><p>如果数组的下表是从0开始，那么需要满足 </p>
+<pre><code>ki &lt;= k2i+1,ki &lt;= k2i+2 或者 ki &gt;= k2i+1,ki &gt;= k2i+2 (i = 0,1,2,3 .. n/2)
+</code></pre><p>比如 { 1,3,5,10,15,9 } 这个序列就满足 [1 &lt;= 3; 1 &lt;= 5],  [3 &lt;= 10; 3 &lt;= 15], [5 &lt;= 9] 这3个条件，这个序列就是一个堆。</p>
+<p>所以堆其实是一个序列(数组)，如果这个序列满足上述条件，那么就把这个序列看成堆。</p>
+<p>堆的实现通常是通过构造二叉堆，因为二叉堆应用很普遍，当不加限定时，堆通常指的就是二叉堆。</p>
+<a id="more"></a>
+<p>二叉堆的概念：</p>
+<p>二叉堆是一种特殊的堆，是一棵完全二叉树或者是近似完全二叉树，同时二叉堆还满足堆的特性：父节点的键值总是保持固定的序关系于任何一个子节点的键值，且每个节点的左子树和右子树都是一个二叉堆。</p>
+<p>当父节点的键值总是大于或等于任何一个子节点的键值时为最大堆。 当父节点的键值总是小于或等于任何一个子节点的键值时为最小堆。</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap01.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10" alt=""></p>
+<p>上图中的最小堆对应的序列是： [1,3,5,9,10,15]  满足最小堆的特性(父节点的键值小于或等于任何一个子节点的键值，并且也满足堆的性质 [1 &lt;= 3; 1 &lt;= 5], [3 &lt;= 9; 3 &lt;= 10], [5 &lt;= 15])</p>
+<p>上图中的最大堆对应的序列是： [15,10,9,7,5,3]  满足最大堆的特性(父节点的键值大于或等于任何一个子节点的键值，并且也满足堆的性质 [15 &gt;= 10; 15 &gt;= 9], [10 &gt;= 7; 10 &gt;= 5], [9 &gt;= 3])</p>
+<h2 id="堆的操作"><a href="#堆的操作" class="headerlink" title="堆的操作"></a>堆的操作</h2><h3 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h3><p>堆排序指的是对堆这种数据结构进行排序的一种算法。其基本思想如下，以最大堆为例：</p>
+<ol>
+<li>将数组序列构建成最大堆[ A1, A2, A3 .. An]，这个堆是一个刚初始化无序区，同时有序区为空</li>
+<li>堆顶元素A1与最后一个元素An进行交换，得到新的有序区[An]，无序区变成[A1 … An-1]</li>
+<li>交换之后可能导致[A1 … An-1]这个无序区不是一个最大堆，[A1 … An-1]无序区重新调整成最大堆。重复步骤2，A1与An-1进行交换，得到新的有序区[An,An-1]，无序区变成[A1 … An-2].. 不断重复，直到有序区的个数为n-1才结束排序过程</li>
+</ol>
+<p>构造堆的过程如下(以最大堆为例)：</p>
+<p>从最后一个非叶子节点开始调整，遍历节点和2个子节点，选择键值最大的节点的键值代替父节点的键值，如果进行了调整，调整之后的两个子节点可能不符合堆特性，递归调整。一直直到调整完根节点。</p>
+<p>以序列[3,5,15,9,10,1]为例进行的堆排序：</p>
+<p>首先第1步先把数组转换成完全二叉树：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap02.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10" alt=""></p>
+<p>接下来是第2、3步构造有序区和无序区：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap03.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10" alt=""></p>
+<p>构造完之后有序区的元素依次是：1，3，5，9，10，15</p>
+<p>简单地使用java写一下堆排序：</p>
+<pre><code>public class HeapSort {
+
+    public static void maxHeapify(int[] arr, int size, int index) {
+        int leftSonIndex = 2 * index + 1;
+        int rightSonIndex = 2 * index + 2;
+        int temp = index;
+        if(index &lt;= size / 2) {
+            if(leftSonIndex &lt; size &amp;&amp; arr[temp] &lt; arr[leftSonIndex]) {
+                temp = leftSonIndex;
+            }
+            if(rightSonIndex &lt; size &amp;&amp; arr[temp] &lt; arr[rightSonIndex]) {
+                temp = rightSonIndex;
+            }
+            // 左右子节点的值存在比父节点的值更大
+            if(temp != index) {
+                swap(arr, index, temp); // 交换值
+                maxHeapify(arr, size, temp); // 递归调整
+            }
+        }
+    }
+
+    public static void heapSort(int[] arr, int size) {
+        // 构造成最大堆
+        buildMaxHeap(arr, arr.length);
+        for(int i = size - 1; i &gt; 0; i --) {
+            // 先交换堆顶元素和无序区最后一个元素
+            swap(arr, 0, i);
+            // 重新调整无序区
+            buildMaxHeap(arr, i - 1);
+        }
+    }
+
+    public static void buildMaxHeap(int[] arr, int size) {
+        for(int i = size / 2; i &gt;= 0; i --) { // 最后一个非叶子节点开始调整
+            maxHeapify(arr, size, i);
+        }
+    }
+
+    public static void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
+    public static void main(String[] args) {
+        int[] arr = { 3, 5, 15, 9, 10, 1};
+        System.out.println(&quot;before build: &quot; + Arrays.toString(arr)); // before build: [3, 5, 15, 9, 10, 1]
+        buildMaxHeap(arr, arr.length);
+        System.out.println(&quot;after build: &quot; + Arrays.toString(arr)); // after build: [15, 10, 3, 9, 5, 1]
+        heapSort(arr, arr.length);
+        System.out.println(&quot;after sort: &quot; + Arrays.toString(arr)); // after sort: [1, 3, 5, 9, 10, 15]
+    }
+
+}
+</code></pre><h3 id="添加"><a href="#添加" class="headerlink" title="添加"></a>添加</h3><p>在最大堆[ 15,10,9,7,5,3 ]上添加一个新的元素 11 ，执行的步骤如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap04.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10" alt=""></p>
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>在最大堆[ 15,10,9,7,5,3 ]上删除元素 10 ，执行的步骤如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/heap05.jpg?imageView2/1/w/10000/h/10000/q/100|watermark/2/text/ZmFuZ2ppYW4wNDIzLmdpdGh1Yi5pbw==/font/5a6L5L2T/fontsize/500/fill/I0VGRUZFRg==/dissolve/100/gravity/SouthEast/dx/10/dy/10" alt=""></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/04/09/heap-heapsort/">http://fangjian0423.github.io/2016/04/09/heap-heapsort/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/algorithm/" rel="tag">#algorithm</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/08/jdk_treeset/" rel="next" title="jdk TreeSet工作原理分析">
+                <i class="fa fa-chevron-left"></i> jdk TreeSet工作原理分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/10/jdk_priorityqueue/" rel="prev" title="jdk PriorityQueue优先队列工作原理分析">
+                jdk PriorityQueue优先队列工作原理分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#堆的操作"><span class="nav-number">1.</span> <span class="nav-text">堆的操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#堆排序"><span class="nav-number">1.1.</span> <span class="nav-text">堆排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加"><span class="nav-number">1.2.</span> <span class="nav-text">添加</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除"><span class="nav-number">1.3.</span> <span class="nav-text">删除</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/04/09/heap-heapsort/';
+      var disqus_title = "堆、二叉堆、堆排序";
+      var disqus_url = 'http://fangjian0423.github.io/2016/04/09/heap-heapsort/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

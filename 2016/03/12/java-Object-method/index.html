@@ -1,0 +1,1330 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,jdk," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Java中的Object类是所有类的父类，它提供了11个方法，分别是getClass，hashCode，clone，toString，notify，notifyAll，wait，finalze等方法 ...">
+<meta name="keywords" content="java,jdk">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java根类Object的方法说明">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/03/12/java-Object-method/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Java中的Object类是所有类的父类，它提供了11个方法，分别是getClass，hashCode，clone，toString，notify，notifyAll，wait，finalze等方法 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java根类Object的方法说明">
+<meta name="twitter:description" content="Java中的Object类是所有类的父类，它提供了11个方法，分别是getClass，hashCode，clone，toString，notify，notifyAll，wait，finalze等方法 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Java根类Object的方法说明 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java根类Object的方法说明
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-12T17:44:59+08:00" content="2016-03-12">
+              2016-03-12
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/12/java-Object-method/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/03/12/java-Object-method/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/12/java-Object-method/" class="leancloud_visitors" data-flag-title="Java根类Object的方法说明">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Java中的Object类是所有类的父类，它提供了以下11个方法：</p>
+<ol>
+<li>public final native Class&lt;?&gt; getClass()</li>
+<li>public native int hashCode()</li>
+<li>public boolean equals(Object obj)</li>
+<li>protected native Object clone() throws CloneNotSupportedException</li>
+<li>public String toString()</li>
+<li>public final native void notify()</li>
+<li>public final native void notifyAll()</li>
+<li>public final native void wait(long timeout) throws InterruptedException</li>
+<li>public final void wait(long timeout, int nanos) throws InterruptedException </li>
+<li>public final void wait() throws InterruptedException</li>
+<li>protected void finalize() throws Throwable { }</li>
+</ol>
+<p>下面我们一个个方法进行分析，看这些方法到底有什么作用：</p>
+<h3 id="getClass方法"><a href="#getClass方法" class="headerlink" title="getClass方法"></a>getClass方法</h3><p>getClass方法是一个final方法，不允许子类重写，并且也是一个native方法。</p>
+<p>返回当前运行时对象的Class对象，注意这里是运行时，比如以下代码中n是一个Number类型的实例，但是java中数值默认是Integer类型，所以getClass方法返回的是java.lang.Integer：</p>
+<pre><code>&quot;str&quot;.getClass() // class java.lang.String
+&quot;str&quot;.getClass == String.class // true
+Number n = 0;
+Class&lt;? extends Number&gt; c = n.getClass(); // class java.lang.Integer
+</code></pre><h3 id="hashCode方法"><a href="#hashCode方法" class="headerlink" title="hashCode方法"></a>hashCode方法</h3><p>hashCode方法也是一个native方法。</p>
+<p>该方法返回对象的哈希码，主要使用在哈希表中，比如JDK中的HashMap。</p>
+<p>哈希码的通用约定如下：</p>
+<ol>
+<li>在java程序执行过程中，在一个对象没有被改变的前提下，无论这个对象被调用多少次，hashCode方法都会返回相同的整数值。对象的哈希码没有必要在不同的程序中保持相同的值。</li>
+<li>如果2个对象使用equals方法进行比较并且相同的话，那么这2个对象的hashCode方法的值也必须相等。</li>
+<li>如果根据equals方法，得到两个对象不相等，那么这2个对象的hashCode值不需要必须不相同。但是，不相等的对象的hashCode值不同的话可以提高哈希表的性能。</li>
+</ol>
+<p>通常情况下，不同的对象产生的哈希码是不同的。默认情况下，对象的哈希码是通过将该对象的内部地址转换成一个整数来实现的。</p>
+<p>String的hashCode方法实现如下， 计算方法是 s[0]<em>31^(n-1) + s[1]</em>31^(n-2) + … + s[n-1]，其中s[0]表示字符串的第一个字符，n表示字符串长度：</p>
+<pre><code>public int hashCode() {
+    int h = hash;
+    if (h == 0 &amp;&amp; value.length &gt; 0) {
+        char val[] = value;
+
+        for (int i = 0; i &lt; value.length; i++) {
+            h = 31 * h + val[i];
+        }
+        hash = h;
+    }
+    return h;
+}
+</code></pre><p>比如”fo”的hashCode = 102 <em> 31^1 + 111 = 3273， “foo”的hashCode = 102 </em> 31^2 + 111 * 31^1 + 111 = 101574 (‘f’的ascii码为102, ‘o’的ascii码为111)</p>
+<p>hashCode在哈希表HashMap中的应用：</p>
+<pre><code>// Student类，只重写了hashCode方法
+public static class Student {
+
+    private String name;
+    private int age;
+
+    public Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+}
+
+Map&lt;Student, String&gt; map = new HashMap&lt;Student, String&gt;();
+Student stu1 = new Student(&quot;fo&quot;, 11);
+Student stu2 = new Student(&quot;fo&quot;, 22);
+map.put(stu1, &quot;fo&quot;);
+map.put(stu2, &quot;fo&quot;);
+</code></pre><p>上面这段代码中，map中有2个元素stu1和stu2。但是这2个元素是在哈希表中的同一个数组项中的位置，也就是在同一串链表中。 但是为什么stu1和stu2的hashCode相同，但是两条元素都插到map里了，这是因为map判断重复数据的条件是 <strong>两个对象的哈希码相同并且(两个对象是同一个对象或者两个对象相等[equals为true])</strong>。 所以再给Student重写equals方法，并且只比较name的话，这样map就只有1个元素了。</p>
+<pre><code>@Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Student student = (Student) o;
+    return this.name.equals(student.name);
+}
+</code></pre><p>这个例子直接说明了hashCode中通用约定的第三点：</p>
+<p>第三点：如果根据equals方法，得到两个对象不相等，那么这2个对象的hashCode值不需要必须不相同。但是，不相等的对象的hashCode值不同的话可以提高哈希表的性能。 –&gt; 上面例子一开始没有重写equals方法，导致两个对象不相等，但是这两个对象的hashCode值一样，所以导致这两个对象在同一串链表中，影响性能。</p>
+<p>当然，还有第三种情况，那就是equals方法相等，但是hashCode的值不相等。</p>
+<p>这种情况也就是违反了通用约定的第二点：</p>
+<p>第二点：<strong>如果2个对象使用equals方法进行比较并且相同的话，那么这2个对象的hashCode方法的值也必须相等。</strong> 违反这一点产生的后果就是如果一个stu1实例是Student(“fo”, 11)，stu2实例是Student(“fo”, 11)，那么这2个实例是相等的，但是他们的hashCode不一样，这样是导致哈希表中都会存入stu1实例和stu2实例，但是实际情况下，stu1和stu2是重复数据，只允许存在一条数据在哈希表中。所以这一点是非常重点的，再强调一下：<strong>如果2个对象的equals方法相等，那么他们的hashCode值也必须相等，反之，如果2个对象hashCode值相等，但是equals不相等，这样会影响性能，所以还是建议2个方法都一起重写。</strong></p>
+<h3 id="equals方法"><a href="#equals方法" class="headerlink" title="equals方法"></a>equals方法</h3><p>比较两个对象是否相等。Object类的默认实现，即比较2个对象的内存地址是否相等：</p>
+<pre><code>public boolean equals(Object obj) {
+    return (this == obj);
+}
+</code></pre><p>equals方法在非空对象引用上的特性：</p>
+<ol>
+<li>reflexive，自反性。任何非空引用值x，对于x.equals(x)必须返回true</li>
+<li>symmetric，对称性。任何非空引用值x和y，如果x.equals(y)为true，那么y.equals(x)也必须为true</li>
+<li>transitive，传递性。任何非空引用值x、y和z，如果x.equals(y)为true并且y.equals(z)为true，那么x.equals(z)也必定为true</li>
+<li>consistent，一致性。任何非空引用值x和y，多次调用 x.equals(y) 始终返回 true 或始终返回 false，前提是对象上 equals 比较中所用的信息没有被修改</li>
+<li>对于任何非空引用值 x，x.equals(null) 都应返回 false</li>
+</ol>
+<p>Object类的equals方法对于任何非空引用值x和y，当x和y引用同一个对象时，此方法才返回true。这个也就是我们常说的地址相等。</p>
+<p>注意点：如果重写了equals方法，通常有必要重写hashCode方法，这点已经在hashCode方法中说明了。</p>
+<h3 id="clone方法"><a href="#clone方法" class="headerlink" title="clone方法"></a>clone方法</h3><p>创建并返回当前对象的一份拷贝。一般情况下，对于任何对象 x，表达式 x.clone() != x 为true，x.clone().getClass() == x.getClass() 也为true。</p>
+<p>Object类的clone方法是一个protected的native方法。</p>
+<p>由于Object本身没有实现Cloneable接口，所以不重写clone方法并且进行调用的话会发生CloneNotSupportedException异常。</p>
+<h3 id="toString方法"><a href="#toString方法" class="headerlink" title="toString方法"></a>toString方法</h3><p>Object对象的默认实现，即输出类的名字@实例的哈希码的16进制：</p>
+<pre><code>public String toString() {
+    return getClass().getName() + &quot;@&quot; + Integer.toHexString(hashCode());
+}
+</code></pre><p>toString方法的结果应该是一个简明但易于读懂的字符串。建议Object所有的子类都重写这个方法。</p>
+<h3 id="notify方法"><a href="#notify方法" class="headerlink" title="notify方法"></a>notify方法</h3><p>notify方法是一个native方法，并且也是final的，不允许子类重写。</p>
+<p>唤醒一个在此对象监视器上等待的线程(监视器相当于就是锁的概念)。如果所有的线程都在此对象上等待，那么只会选择一个线程。选择是任意性的，并在对实现做出决定时发生。一个线程在对象监视器上等待可以调用wait方法。</p>
+<p>直到当前线程放弃对象上的锁之后，被唤醒的线程才可以继续处理。被唤醒的线程将以常规方式与在该对象上主动同步的其他所有线程进行竞争。例如，唤醒的线程在作为锁定此对象的下一个线程方面没有可靠的特权或劣势。</p>
+<p>notify方法只能被作为此对象监视器的所有者的线程来调用。一个线程要想成为对象监视器的所有者，可以使用以下3种方法：</p>
+<ol>
+<li>执行对象的同步实例方法</li>
+<li>使用synchronized内置锁</li>
+<li>对于Class类型的对象，执行同步静态方法</li>
+</ol>
+<p>一次只能有一个线程拥有对象的监视器。</p>
+<p>如果当前线程不是此对象监视器的所有者的话会抛出IllegalMonitorStateException异常</p>
+<p>注意点：</p>
+<p><strong>因为notify只能在拥有对象监视器的所有者线程中调用，否则会抛出IllegalMonitorStateException异常</strong></p>
+<h3 id="notifyAll方法"><a href="#notifyAll方法" class="headerlink" title="notifyAll方法"></a>notifyAll方法</h3><p>跟notify一样，唯一的区别就是会唤醒在此对象监视器上等待的所有线程，而不是一个线程。</p>
+<p>同样，如果当前线程不是对象监视器的所有者，那么调用notifyAll同样会发生IllegalMonitorStateException异常。</p>
+<p>以下这段代码直接调用notify或者notifyAll方法会发生IllegalMonitorStateException异常，这是因为调用这两个方法需要当前线程是对象监视器的所有者：</p>
+<pre><code>Factory factory = new Factory();
+factory.notify();
+factory.notifyAll();
+</code></pre><h3 id="wait-long-timeout-throws-InterruptedException方法"><a href="#wait-long-timeout-throws-InterruptedException方法" class="headerlink" title="wait(long timeout) throws InterruptedException方法"></a>wait(long timeout) throws InterruptedException方法</h3><p>wait(long timeout)方法同样是一个native方法，并且也是final的，不允许子类重写。</p>
+<p>wait方法会让当前线程等待直到另外一个线程调用对象的notify或notifyAll方法，或者超过参数设置的timeout超时时间。</p>
+<p><strong>跟notify和notifyAll方法一样，当前线程必须是此对象的监视器所有者，否则还是会发生IllegalMonitorStateException异常。</strong></p>
+<p>wait方法会让当前线程(我们先叫做线程T)将其自身放置在对象的等待集中，并且放弃该对象上的所有同步要求。出于线程调度目的，线程T是不可用并处于休眠状态，直到发生以下四件事中的任意一件：</p>
+<ol>
+<li>其他某个线程调用此对象的notify方法，并且线程T碰巧被任选为被唤醒的线程</li>
+<li>其他某个线程调用此对象的notifyAll方法</li>
+<li>其他某个线程调用Thread.interrupt方法中断线程T</li>
+<li>时间到了参数设置的超时时间。如果timeout参数为0，则不会超时，会一直进行等待</li>
+</ol>
+<p>所以可以理解wait方法相当于放弃了当前线程对对象监视器的所有者(也就是说释放了对象的锁)</p>
+<p>之后，线程T会被等待集中被移除，并且重新进行线程调度。然后，该线程以常规方式与其他线程竞争，以获得在该对象上同步的权利；一旦获得对该对象的控制权，该对象上的所有其同步声明都将被恢复到以前的状态，这就是调用wait方法时的情况。然后，线程T从wait方法的调用中返回。所以，从wait方法返回时，该对象和线程T的同步状态与调用wait方法时的情况完全相同。</p>
+<p>在没有被通知、中断或超时的情况下，线程还可以唤醒一个所谓的虚假唤醒 (spurious wakeup)。虽然这种情况在实践中很少发生，但是应用程序必须通过以下方式防止其发生，即对应该导致该线程被提醒的条件进行测试，如果不满足该条件，则继续等待。换句话说，等待应总是发生在循环中，如下面的示例：</p>
+<pre><code>synchronized (obj) {
+    while (&lt;condition does not hold&gt;)
+        obj.wait(timeout);
+        ... // Perform action appropriate to condition
+}
+</code></pre><p>如果当前线程在等待之前或在等待时被任何线程中断，则会抛出InterruptedException异常。在按上述形式恢复此对象的锁定状态时才会抛出此异常。</p>
+<h3 id="wait-long-timeout-int-nanos-throws-InterruptedException方法"><a href="#wait-long-timeout-int-nanos-throws-InterruptedException方法" class="headerlink" title="wait(long timeout, int nanos) throws InterruptedException方法"></a>wait(long timeout, int nanos) throws InterruptedException方法</h3><p>跟wait(long timeout)方法类似，多了一个nanos参数，这个参数表示额外时间（以毫微秒为单位，范围是 0-999999）。 所以超时的时间还需要加上nanos毫秒。</p>
+<p>需要注意的是 wait(0, 0)和wait(0)效果是一样的，即一直等待。</p>
+<h3 id="wait-throws-InterruptedException方法"><a href="#wait-throws-InterruptedException方法" class="headerlink" title="wait() throws InterruptedException方法"></a>wait() throws InterruptedException方法</h3><p>跟之前的2个wait方法一样，只不过该方法一直等待，没有超时时间这个概念。</p>
+<p>以下这段代码直接调用wait方法会发生IllegalMonitorStateException异常，这是因为调用wait方法需要当前线程是对象监视器的所有者：</p>
+<pre><code>Factory factory = new Factory();
+factory.wait();
+</code></pre><p>一般情况下，wait方法和notify方法会一起使用的，wait方法阻塞当前线程，notify方法唤醒当前线程，一个使用wait和notify方法的生产者消费者例子代码如下：</p>
+<pre><code>public class WaitNotifyTest {
+
+    public static void main(String[] args) {
+        Factory factory = new Factory();
+        new Thread(new Producer(factory, 5)).start();
+        new Thread(new Producer(factory, 5)).start();
+        new Thread(new Producer(factory, 20)).start();
+        new Thread(new Producer(factory, 30)).start();
+        new Thread(new Consumer(factory, 10)).start();
+        new Thread(new Consumer(factory, 20)).start();
+        new Thread(new Consumer(factory, 5)).start();
+        new Thread(new Consumer(factory, 5)).start();
+        new Thread(new Consumer(factory, 20)).start();
+    }
+
+}
+
+class Factory {
+
+    public static final Integer MAX_NUM = 50;
+
+    private int currentNum = 0;
+
+    public void consume(int num) throws InterruptedException {
+        synchronized (this) {
+            while(currentNum - num &lt; 0) {
+                this.wait();
+            }
+            currentNum -= num;
+            System.out.println(&quot;consume &quot; + num + &quot;, left: &quot; + currentNum);
+            this.notifyAll();
+        }
+    }
+
+    public void produce(int num) throws InterruptedException {
+        synchronized (this) {
+            while(currentNum + num &gt; MAX_NUM) {
+                this.wait();
+            }
+            currentNum += num;
+            System.out.println(&quot;produce &quot; + num + &quot;, left: &quot; + currentNum);
+            this.notifyAll();
+        }
+    }
+
+}
+
+class Producer implements Runnable {
+    private Factory factory;
+    private int num;
+    public Producer(Factory factory, int num) {
+        this.factory = factory;
+        this.num = num;
+    }
+    @Override
+    public void run() {
+        try {
+            factory.produce(num);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+class Consumer implements Runnable {
+    private Factory factory;
+    private int num;
+    public Consumer(Factory factory, int num) {
+        this.factory = factory;
+        this.num = num;
+    }
+    @Override
+    public void run() {
+        try {
+            factory.consume(num);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+</code></pre><p>注意的是Factory类的produce和consume方法都将Factory实例锁住了，锁住之后线程就成为了对象监视器的所有者，然后才能调用wait和notify方法。</p>
+<p>输出：</p>
+<pre><code>produce 5, left: 5
+produce 20, left: 25
+produce 5, left: 30
+consume 10, left: 20
+produce 30, left: 50
+consume 20, left: 30
+consume 5, left: 25
+consume 5, left: 20
+consume 20, left: 0
+</code></pre><h3 id="finalize方法"><a href="#finalize方法" class="headerlink" title="finalize方法"></a>finalize方法</h3><p>finalize方法是一个protected方法，Object类的默认实现是不进行任何操作。 </p>
+<p>该方法的作用是实例被垃圾回收器回收的时候触发的操作，就好比 “死前的最后一波挣扎”。</p>
+<p>直接写个弱引用例子：</p>
+<pre><code>Car car = new Car(9999, &quot;black&quot;);
+WeakReference&lt;Car&gt; carWeakReference = new WeakReference&lt;Car&gt;(car);
+
+int i = 0;
+while(true) {
+    if(carWeakReference.get() != null) {
+        i++;
+        System.out.println(&quot;Object is alive for &quot;+i+&quot; loops - &quot;+carWeakReference);
+    } else {
+        System.out.println(&quot;Object has been collected.&quot;);
+        break;
+    }
+}
+
+class Car {
+    private double price;
+    private String colour;
+
+    public Car(double price, String colour){
+        this.price = price;
+        this.colour = colour;
+    }
+
+    // get set method
+
+    @Override
+    protected void finalize() throws Throwable {
+        System.out.println(&quot;i will be destroyed&quot;);
+    }
+}
+</code></pre><p>输出：</p>
+<pre><code>....
+Object is alive for 26417 loops - java.lang.ref.WeakReference@7c2f1622
+Object is alive for 26418 loops - java.lang.ref.WeakReference@7c2f1622
+Object is alive for 26419 loops - java.lang.ref.WeakReference@7c2f1622
+Object is alive for 26420 loops - java.lang.ref.WeakReference@7c2f1622
+Object is alive for 26421 loops - java.lang.ref.WeakReference@7c2f1622
+Object is alive for 26422 loops - java.lang.ref.WeakReference@7c2f1622
+Object has been collected.
+i will be destroyed
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/03/12/java-Object-method/">http://fangjian0423.github.io/2016/03/12/java-Object-method/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/jdk/" rel="tag">#jdk</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/02/21/avro-intro/" rel="next" title="Avro介绍">
+                <i class="fa fa-chevron-left"></i> Avro介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/16/java-AtomicInteger-analysis/" rel="prev" title="Java AtomicInteger原理分析">
+                Java AtomicInteger原理分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#getClass方法"><span class="nav-number">1.</span> <span class="nav-text">getClass方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hashCode方法"><span class="nav-number">2.</span> <span class="nav-text">hashCode方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#equals方法"><span class="nav-number">3.</span> <span class="nav-text">equals方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#clone方法"><span class="nav-number">4.</span> <span class="nav-text">clone方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#toString方法"><span class="nav-number">5.</span> <span class="nav-text">toString方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#notify方法"><span class="nav-number">6.</span> <span class="nav-text">notify方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#notifyAll方法"><span class="nav-number">7.</span> <span class="nav-text">notifyAll方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wait-long-timeout-throws-InterruptedException方法"><span class="nav-number">8.</span> <span class="nav-text">wait(long timeout) throws InterruptedException方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wait-long-timeout-int-nanos-throws-InterruptedException方法"><span class="nav-number">9.</span> <span class="nav-text">wait(long timeout, int nanos) throws InterruptedException方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wait-throws-InterruptedException方法"><span class="nav-number">10.</span> <span class="nav-text">wait() throws InterruptedException方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#finalize方法"><span class="nav-number">11.</span> <span class="nav-text">finalize方法</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/03/12/java-Object-method/';
+      var disqus_title = "Java根类Object的方法说明";
+      var disqus_url = 'http://fangjian0423.github.io/2016/03/12/java-Object-method/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

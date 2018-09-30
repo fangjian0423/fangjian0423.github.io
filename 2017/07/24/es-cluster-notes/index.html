@@ -1,0 +1,1188 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,elasticsearch," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Elasticsearch内部提供了一个rest接口用于查看集群内部的健康状况： 1curl -XGET http://localhost:9200/_cluster/health response结果： 12345&amp;#123;  &quot;cluster_name&quot;: &quot;format-es&quot;,  &quot;status&quot;: &quot;green&quot;,  ...&amp;#125; 这里的status有3种状态，分别是green(">
+<meta name="keywords" content="big data,elasticsearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch集群知识笔记">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/07/24/es-cluster-notes/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Elasticsearch内部提供了一个rest接口用于查看集群内部的健康状况： 1curl -XGET http://localhost:9200/_cluster/health response结果： 12345&amp;#123;  &quot;cluster_name&quot;: &quot;format-es&quot;,  &quot;status&quot;: &quot;green&quot;,  ...&amp;#125; 这里的status有3种状态，分别是green(">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-shards-one-node-2.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-shards-two-nodes.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-create-doc.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-retrieve-doc.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-partial-update-doc.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-nodes-info.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-nodes-info-yellow.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Elasticsearch集群知识笔记">
+<meta name="twitter:description" content="Elasticsearch内部提供了一个rest接口用于查看集群内部的健康状况： 1curl -XGET http://localhost:9200/_cluster/health response结果： 12345&amp;#123;  &quot;cluster_name&quot;: &quot;format-es&quot;,  &quot;status&quot;: &quot;green&quot;,  ...&amp;#125; 这里的status有3种状态，分别是green(">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-shards-one-node-2.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Elasticsearch集群知识笔记 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Elasticsearch集群知识笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-24T21:20:20+08:00" content="2017-07-24">
+              2017-07-24
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/elasticsearch/" itemprop="url" rel="index">
+                    <span itemprop="name">elasticsearch</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/24/es-cluster-notes/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/07/24/es-cluster-notes/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/07/24/es-cluster-notes/" class="leancloud_visitors" data-flag-title="Elasticsearch集群知识笔记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Elasticsearch内部提供了一个rest接口用于查看集群内部的健康状况：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cluster/health</span><br></pre></td></tr></table></figure>
+<p>response结果：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"cluster_name"</span>: <span class="string">"format-es"</span>,</span><br><span class="line">  <span class="attr">"status"</span>: <span class="string">"green"</span>,</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的status有3种状态，分别是green(所有主分片和复制分片都可用)，yellow(所有主分片可用，但不是所有复制分片都可用)和red(不是所有主分片可用)。</p>
+<a id="more"></a>
+<h2 id="分片-Shard"><a href="#分片-Shard" class="headerlink" title="分片(Shard)"></a>分片(Shard)</h2><p>Elasticsearch中的索引(index)是由分片(shard)构成的。</p>
+<p>比如我们集群中有个索引users，该索引由3个分片组成，那么这个users索引中的文档数据将分布在这3个分片中。</p>
+<p>users索引中的文档是根据下面这个规则确定该文档属于哪个分片：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shard = hash(routing) % number_of_primary_shards <span class="comment">// routing值默认是文档的_id，number_of_primary_shards是索引的主分片个数</span></span><br></pre></td></tr></table></figure>
+<p>这个routing默认是文档的_id，可以自定义(文章后面部分会举例说明)。</p>
+<p>这3个分片可以进行复制，复制是为了实现容错性，比如复制1份，那么一共就需要6个分片(3个主分片+3个主分片复制出来的复制分片)。</p>
+<p>users索引的创建命令(主分片3个，复制1份)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT http://localhost:9200/users -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">	"settings": &#123;</span></span><br><span class="line"><span class="string">		"number_of_shards": 3,</span></span><br><span class="line"><span class="string">		"number_of_replicas": 1</span></span><br><span class="line"><span class="string">	&#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br></pre></td></tr></table></figure>
+<p>创建完users索引之后，es集群(单节点)分片情况如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-shards-one-node-2.png" alt=""></p>
+<p>由于users索引有3个分片，es内部会创建出3个分片，分别是P0、P1和P2(大写P指的是primary)，且这3个分片都是主分片。users索引需要对分片进行复制1份，所以这3个主分片都需要复制1份，分别对应R0、R1和R2这3个复制分片(大写R指的是replica)。这个时候我们的集群只有1个节点node-1，所以复制分片并没有起作用(如果复制分片和主分片在同一个节点了，那么这个复制分片的意义就不存在了。复制分片的意义在于容错性，当一个节点挂了，另一个节点上的分片可以代替挂掉节点上的分片)。</p>
+<p>查看健康状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cluster/health</span><br></pre></td></tr></table></figure>
+<p>response结果：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"cluster_name"</span>: <span class="string">"format-es"</span>,</span><br><span class="line">  <span class="attr">"status"</span>: <span class="string">"yellow"</span>,</span><br><span class="line">  <span class="attr">"timed_out"</span>: <span class="literal">false</span>,</span><br><span class="line">  <span class="attr">"number_of_nodes"</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="attr">"number_of_data_nodes"</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="attr">"active_primary_shards"</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="attr">"active_shards"</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="attr">"relocating_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"initializing_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"unassigned_shards"</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="attr">"delayed_unassigned_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_pending_tasks"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_in_flight_fetch"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"task_max_waiting_in_queue_millis"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"active_shards_percent_as_number"</span>: <span class="number">50</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里可以看到，集群的状态变成了yellow。这是因为users索引中的分片需要复制1份，但是没有足够的机器用来存储复制出来的复制分片，还有其它的一些字段比如unassigned_shards字段为3，对应R0、R1和R2这3个未分配的复制分片。</p>
+<p>在集群中加入节点node-2，查看健康状况(这里使用伪集群。node-1节点对应9200端口的进程，node-2节点对应9201端口的进程)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cluster/health</span><br></pre></td></tr></table></figure>
+<p>response结果：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"cluster_name"</span>: <span class="string">"format-es"</span>,</span><br><span class="line">  <span class="attr">"status"</span>: <span class="string">"green"</span>,</span><br><span class="line">  <span class="attr">"timed_out"</span>: <span class="literal">false</span>,</span><br><span class="line">  <span class="attr">"number_of_nodes"</span>: <span class="number">2</span>,</span><br><span class="line">  <span class="attr">"number_of_data_nodes"</span>: <span class="number">2</span>,</span><br><span class="line">  <span class="attr">"active_primary_shards"</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="attr">"active_shards"</span>: <span class="number">6</span>,</span><br><span class="line">  <span class="attr">"relocating_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"initializing_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"unassigned_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"delayed_unassigned_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_pending_tasks"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_in_flight_fetch"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"task_max_waiting_in_queue_millis"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"active_shards_percent_as_number"</span>: <span class="number">100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主分片和复制分片均可用，status为green。</p>
+<p>此时，es集群分片情况如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-shards-two-nodes.png" alt=""></p>
+<p>这个时候es集群由2个节点node-1和node-2组成，并且这2个节点上具有主分片和复制分片，具有容错性。</p>
+<p>我们往users索引中插入一条文档：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST http://localhost:9200/users/normal -d '</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span> : <span class="string">"Format"</span>,</span><br><span class="line">  <span class="attr">"age"</span> : <span class="number">111</span></span><br><span class="line">&#125;</span><br><span class="line">'</span><br></pre></td></tr></table></figure>
+<p>返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0hs4LnkXxVJ5DURwXr"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"_shards"</span>: &#123;</span><br><span class="line">        <span class="attr">"total"</span>: <span class="number">2</span>,</span><br><span class="line">        <span class="attr">"successful"</span>: <span class="number">2</span>,</span><br><span class="line">        <span class="attr">"failed"</span>: <span class="number">0</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从返回的信息中可以看到，这个文档已经被创建成功，并且2个分片都成功。id由es内部自动创建，值为AV0hs4LnkXxVJ5DURwXr。</p>
+<p>读取id为AV0hs4LnkXxVJ5DURwXr的文档：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/users/normal/AV0hs4LnkXxVJ5DURwXr</span><br><span class="line"></span><br><span class="line"># 结果</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0hs4LnkXxVJ5DURwXr"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"_source"</span>: &#123;</span><br><span class="line">        <span class="attr">"name"</span>: <span class="string">"Format"</span>,</span><br><span class="line">        <span class="attr">"age"</span>: <span class="number">111</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个时候如果节点node-1挂了，读取数据：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9201/users/normal/AV0hs4LnkXxVJ5DURwXr</span><br><span class="line"></span><br><span class="line"># 结果</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0hs4LnkXxVJ5DURwXr"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"_source"</span>: &#123;</span><br><span class="line">        <span class="attr">"name"</span>: <span class="string">"Format"</span>,</span><br><span class="line">        <span class="attr">"age"</span>: <span class="number">111</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在节点node-1已经挂了的情况下还是读取到了之前插入的文档。这是因为我们users索引会复制2份，node-1节点虽然已经挂了，但是node-2节点上这个文档的数据还在，所以文档会被读取到。</p>
+<p>在node-1节点挂掉的情况下，再次插入一条文档：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST http://localhost:9201/users/normal -d '</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span> : <span class="string">"Jim"</span>,</span><br><span class="line">  <span class="attr">"age"</span> : <span class="number">66</span></span><br><span class="line">&#125;</span><br><span class="line">'</span><br></pre></td></tr></table></figure>
+<p>返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0qMto5dJHprgu99sSN"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"_shards"</span>: &#123;</span><br><span class="line">        <span class="attr">"total"</span>: <span class="number">2</span>,</span><br><span class="line">        <span class="attr">"successful"</span>: <span class="number">1</span>,</span><br><span class="line">        <span class="attr">"failed"</span>: <span class="number">0</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里看到返回的数据中，这个文档对应的分片只有1个成功插入，因为另1个分片对应的节点已经挂了。</p>
+<p>然后读取这个新插入的文档：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9201/users/normal/AV0qMto5dJHprgu99sSN</span><br><span class="line"></span><br><span class="line"># 结果</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0qMto5dJHprgu99sSN"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"_source"</span>: &#123;</span><br><span class="line">        <span class="attr">"name"</span>: <span class="string">"Jim"</span>,</span><br><span class="line">        <span class="attr">"age"</span>: <span class="number">66</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后node-1节点恢复(节点恢复之后，es内部会自动从数据全的分片中复制数据到数据少的分片上，保证高可用)，然后读取数据：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/users/normal/AV0qMto5dJHprgu99sSN</span><br><span class="line"></span><br><span class="line"># 结果</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="attr">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="attr">"_id"</span>: <span class="string">"AV0qMto5dJHprgu99sSN"</span>,</span><br><span class="line">    <span class="attr">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"_source"</span>: &#123;</span><br><span class="line">        <span class="attr">"name"</span>: <span class="string">"Jim"</span>,</span><br><span class="line">        <span class="attr">"age"</span>: <span class="number">66</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ES中文档的新建、删除和修改都是先在主分片上完成的，在主分片上完成这些操作以后，才会进行复制操作。比如有3个节点node-1、node-2和node-3，索引blogs有2个主分片，并且复制2份，集群结构如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes.png" alt=""></p>
+<p>当进行新建文档的时候过程如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-create-doc.png" alt=""></p>
+<ol>
+<li>客户端给master节点node-1发送新建文档的请求</li>
+<li>node-1节点根据文档的_id，确定该文档属于属于分片1。分片1的主分片在节点node-2上，故将请求转发到node-2</li>
+<li>node-2上的主分片P1处理文档成功，然后转发请求到node-1和node-3节点上的复制节点上。当所有的复制节点报告成功后，node-2节点报告成功到请求的节点，请求节点再返回给客户端</li>
+</ol>
+<p>当进行检索文档的时候过程如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-retrieve-doc.png" alt=""></p>
+<ol>
+<li>客户端给master节点node-1发送检索文档的请求</li>
+<li>node-1节点根据文档的_id，确定该文档属于分片0。分片0在3个节点中都存在，本次请求中使用节点node-2，于是将请求转发给node-2节点</li>
+<li>node-2节点得到文档数据，并返回给node-1节点，node-1节点返回给客户端</li>
+</ol>
+<p>这里es集群会使用轮询的策略对读取不同节点上的分片中的文档数据，比如针对上图中的查询，下次查询就会读取node-3节点上的R0分片中的文档。</p>
+<p>当对文档进行局部更新的时候过程如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-3-nodes-partial-update-doc.png" alt=""></p>
+<ol>
+<li>客户端给master节点node-1发送局部更新文档的请求</li>
+<li>node-1节点根据文档的_id，确定该文档属于分片1，并发现找到分片1的主分片在node-2节点上，转发请求到node-2节点上</li>
+<li>node-2节点在主分片P1中找出对应id的文档，修改文档内部的_source属性，之后对文档重建索引。如果这个文档已经被其它进程修改，会重试步骤3 retry_on_conflict 次数(retry_on_conflict可通过参数设置)</li>
+<li>如果步骤3执行成功，node-2节点转发新版本的文档给node-1和node-3节点上的复制分片，这2个节点对文档进行重建索引。一旦node-1和node-3节点上的复制分片处理成功，node-2节点返回成功给node-1节点，node-1节点返回给客户端</li>
+</ol>
+<h2 id="节点-Node"><a href="#节点-Node" class="headerlink" title="节点(Node)"></a>节点(Node)</h2><p>在分布式集群情况下，ES中的节点可分为4类：</p>
+<ol>
+<li>master节点：配置文件中node.master属性为true(默认为true)，就有资格被选为master节点，master节点用于控制整个集群的操作。比如创建或删除索引，管理其它非master节点等</li>
+<li>data节点：配置文件中node.data属性为true(默认为true)，就有资格被设置成data节点，data节点主要用于执行数据相关的操作。比如文档的CRUD</li>
+<li>客户端节点：配置文件中node.master属性和node.data属性均为false。该节点不能作为master节点，也不能作为data节点。可以作为客户端节点，用于响应用户的请求，把请求转发到其他节点</li>
+<li>部落节点：当一个节点配置tribe.*的时候，它是一个特殊的客户端，它可以连接多个集群，在所有连接的集群上执行搜索和其他操作</li>
+</ol>
+<h2 id="查询集群状态的Rest接口"><a href="#查询集群状态的Rest接口" class="headerlink" title="查询集群状态的Rest接口"></a>查询集群状态的Rest接口</h2><p>可以通过es内部提供的rest接口查看master节点：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cat/master?v</span><br><span class="line"></span><br><span class="line">id                     host         ip           node   </span><br><span class="line">9FINsHCpTKqcpFlnnA4Yww 10.1.251.164 10.1.251.164 node-1</span><br></pre></td></tr></table></figure>
+<p>查看节点信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cat/nodes?v</span><br><span class="line"></span><br><span class="line">host         ip           heap.percent ram.percent load node.role master name   </span><br><span class="line">10.1.251.164 10.1.251.164            6         100 5.48 d         *      node-1</span><br><span class="line">10.1.251.164 10.1.251.164            6         100 5.48 d         m      node-3</span><br><span class="line">10.1.251.164 10.1.251.164            7         100 5.48 d         m      node-2</span><br></pre></td></tr></table></figure>
+<p>或者使用<a href="https://github.com/mobz/elasticsearch-head" target="_blank" rel="noopener">head</a>插件查看节点情况。图中带有五角星的节点是master，这里users索引有3个主分片和3个复制分片(绿色框外部加粗的边框就是主分片，否则就是复制分片)：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-nodes-info.png" alt=""></p>
+<p>如果我们的集群上node-1节点由于硬盘容量不足导致不可用时，head插件情况如下(3个复制节点未被分配，健康状况为黄色)：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/es-cluster-nodes-info-yellow.png" alt=""></p>
+<p>也可使用es内部的rest接口查看分片信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET http://localhost:9200/_cat/shards?v</span><br><span class="line"></span><br><span class="line">index shard prirep state      docs store ip           node   </span><br><span class="line">users 1     p      STARTED       1 3.3kb 10.1.251.164 node-2</span><br><span class="line">users 1     r      UNASSIGNED                                </span><br><span class="line">users 2     p      STARTED       0  159b 10.1.251.164 node-2</span><br><span class="line">users 2     r      UNASSIGNED                                </span><br><span class="line">users 0     p      STARTED       2 6.6kb 10.1.251.164 node-3</span><br><span class="line">users 0     r      UNASSIGNED</span><br></pre></td></tr></table></figure>
+<p>routing参数决定如何分片(可以在index、get、delete、update、bulk等方法中使用)，我们覆盖默认的routing为_id的默认策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 执行10次</span></span><br><span class="line">curl -XPOST http://localhost:9200/users/normal?routing=1 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "Format345",</span></span><br><span class="line"><span class="string">  "age" : 456</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行1次</span></span><br><span class="line">curl -XPOST http://localhost:9200/users/normal -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "Format345",</span></span><br><span class="line"><span class="string">  "age" : 456</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用routing参数得到文档的结果(多了个_rouring属性)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"users"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"AV07AubA6HDSJNRJle0i"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 1,</span><br><span class="line">    <span class="string">"_routing"</span>: <span class="string">"1"</span>,</span><br><span class="line">    <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">"_source"</span>: &#123;</span><br><span class="line">        <span class="string">"name"</span>: <span class="string">"Format345"</span>,</span><br><span class="line">        <span class="string">"age"</span>: 456</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询文档分布情况(前面10次分布到了P2分片，后面1次分布到了P1分片)</span></span><br><span class="line">curl -XGET http://localhost:9200/_cat/shards?v</span><br><span class="line"></span><br><span class="line">index shard prirep state      docs store ip           node   </span><br><span class="line">users 1     p      STARTED       2 3.3kb 10.1.251.164 node-2</span><br><span class="line">users 1     r      UNASSIGNED                                </span><br><span class="line">users 2     p      STARTED       10  159b 10.1.251.164 node-2</span><br><span class="line">users 2     r      UNASSIGNED                                </span><br><span class="line">users 0     p      STARTED       2 6.6kb 10.1.251.164 node-3</span><br><span class="line">users 0     r      UNASSIGNED</span><br></pre></td></tr></table></figure>
+<p>官网上有更多关于<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/cat.html" target="_blank" rel="noopener">_cat api</a>和<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster.html" target="_blank" rel="noopener">_cluster api</a>相关的文档。</p>
+<h2 id="文档操作"><a href="#文档操作" class="headerlink" title="文档操作"></a>文档操作</h2><p>es中文档的操作可以使用其内部提供的rest接口，使用过程中可以指定一些参数修改默认行为。</p>
+<p>1.replication：用于设置复制分片的处理过程是同步还是异步。默认值是sync(主分片需要等待复制分片全部处理完毕)，也可以设置成async(主分片不需要等待复制分片的处理过程，但是还是会转发请求给复制分片，这个转发过程是异步的)。该参数在2.0.0版本后已经被废弃，因为异步转发给复制分片的话，不知道复制分片是否成功与否，而且复制分片在还没有处理完成的情况下由于一直过来的异步请求而导致es过载，不建议使用async</p>
+<p>2.consistency：写文档的一致性参数，可以设置成one，quorum和all；分别表示主分片可用即可、过半分片可用[公式：int( (primary + number_of_replicas) / 2 ) + 1]以及全部分片可用。比如有个blogs索引，有3个主分片，并且复制2份，当集群中的1个节点挂了，并使用all的话，将会抛出异常：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST http://localhost:9200/blogs/normal?consistency=all -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "POST-1"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 一分钟后抛出异常</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"error"</span>: &#123;</span><br><span class="line">        <span class="string">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">                <span class="string">"reason"</span>: <span class="string">"[blogs][0] Not enough active copies to meet write consistency of [ALL] (have 2, needed 3). Timeout: [1m], request: [index &#123;[blogs][normal][AV1AF1FEl7qPpRBCQMV7], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">        <span class="string">"reason"</span>: <span class="string">"[blogs][0] Not enough active copies to meet write consistency of [ALL] (have 2, needed 3). Timeout: [1m], request: [index &#123;[blogs][normal][AV1AF1FEl7qPpRBCQMV7], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"status"</span>: 503</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用默认的quorum策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST http://localhost:9200/blogs/normal -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "POST-1"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 由于集群中的节点挂了1个，所分片只有2个success</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "_index": "blogs",</span></span><br><span class="line"><span class="string">    "_type": "normal",</span></span><br><span class="line"><span class="string">    "_id": "AV1AckLfl7qPpRBCQMV_",</span></span><br><span class="line"><span class="string">    "_version": 1,</span></span><br><span class="line"><span class="string">    "_shards": &#123;</span></span><br><span class="line"><span class="string">        "total": 3,</span></span><br><span class="line"><span class="string">        "successful": 2,</span></span><br><span class="line"><span class="string">        "failed": 0</span></span><br><span class="line"><span class="string">    &#125;,</span></span><br><span class="line"><span class="string">    "created": true</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br></pre></td></tr></table></figure>
+<p><strong>consistency参数在5.0.0版本已经被弃用</strong></p>
+<p>3.timeout：当分片不足的时候，es等待的时间(等待节点重新启动，分片恢复)，默认为1分钟，可以进行修改，改成10秒：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST http://localhost:9200/blogs/normal?consistency=all&amp;timeout=10s -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "POST-1"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 10秒后抛出异常</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"error"</span>: &#123;</span><br><span class="line">        <span class="string">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">                <span class="string">"reason"</span>: <span class="string">"[blogs][1] Not enough active copies to meet write consistency of [ALL] (have 2, needed 3). Timeout: [10s], request: [index &#123;[blogs][normal][AV1AdXxsl7qPpRBCQMWB], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">        <span class="string">"reason"</span>: <span class="string">"[blogs][1] Not enough active copies to meet write consistency of [ALL] (have 2, needed 3). Timeout: [10s], request: [index &#123;[blogs][normal][AV1AdXxsl7qPpRBCQMWB], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"status"</span>: 503</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>4.version</p>
+<p>es中每个文档都有对应的版本信息，可以使用version版本参数用来实现并发情况下的乐观锁机制：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 新建一个文档</span></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/format-001 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "format-post-001"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 结果</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-001"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 1,</span><br><span class="line">    <span class="string">"_shards"</span>: &#123;</span><br><span class="line">        <span class="string">"total"</span>: 3,</span><br><span class="line">        <span class="string">"successful"</span>: 3,</span><br><span class="line">        <span class="string">"failed"</span>: 0</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># id为format-001的文档目前的version为1，进行更新</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 用version为2去更新</span></span><br><span class="line"></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/format-001?version=2 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "format-post-001-001"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 报错，版本冲突</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"error"</span>: &#123;</span><br><span class="line">        <span class="string">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">"type"</span>: <span class="string">"version_conflict_engine_exception"</span>,</span><br><span class="line">                <span class="string">"reason"</span>: <span class="string">"[normal][format-001]: version conflict, current [1], provided [2]"</span>,</span><br><span class="line">                <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">                <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"version_conflict_engine_exception"</span>,</span><br><span class="line">        <span class="string">"reason"</span>: <span class="string">"[normal][format-001]: version conflict, current [1], provided [2]"</span>,</span><br><span class="line">        <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">        <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"status"</span>: 409</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 用version为1去更新</span></span><br><span class="line"></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/format-001?version=1 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "format-post-001-001"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新成功，文档版本变成2</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-001"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 2,</span><br><span class="line">    <span class="string">"_shards"</span>: &#123;</span><br><span class="line">        <span class="string">"total"</span>: 3,</span><br><span class="line">        <span class="string">"successful"</span>: 3,</span><br><span class="line">        <span class="string">"failed"</span>: 0</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"created"</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>5.op_type：可以指定本次操作的类型，比如create操作。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建一个id为1，type为normal，在blogs索引中的文档</span></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/1?op_type=create -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "POST-2"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"1"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 1,</span><br><span class="line">    <span class="string">"_shards"</span>: &#123;</span><br><span class="line">        <span class="string">"total"</span>: 3,</span><br><span class="line">        <span class="string">"successful"</span>: 3,</span><br><span class="line">        <span class="string">"failed"</span>: 0</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 继续调用同一个操作</span></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/1?op_type=create -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "POST-2"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 报错，文档已经存在</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"error"</span>: &#123;</span><br><span class="line">        <span class="string">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">"type"</span>: <span class="string">"document_already_exists_exception"</span>,</span><br><span class="line">                <span class="string">"reason"</span>: <span class="string">"[normal][1]: document already exists"</span>,</span><br><span class="line">                <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">                <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"document_already_exists_exception"</span>,</span><br><span class="line">        <span class="string">"reason"</span>: <span class="string">"[normal][1]: document already exists"</span>,</span><br><span class="line">        <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">        <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"status"</span>: 409</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以不使用op_type操作，在url中指定。这两种方法效果是一样的</p>
+<p><a href="http://localhost:9200/blogs/normal/1/_create" target="_blank" rel="noopener">http://localhost:9200/blogs/normal/1/_create</a> 效果跟 <a href="http://localhost:9200/blogs/normal/1?op_type=create" target="_blank" rel="noopener">http://localhost:9200/blogs/normal/1?op_type=create</a> 是一样的。</p>
+<p>目前支持的op_type有create(只支持创建文档)和index(支持创建和更新文档)。</p>
+<p>6.wait_for_active_shards</p>
+<p>在5.0.0版本新引入的一个参数，表示等待活跃的分片数。作用跟consistency类似，可以设置成all或者任意正整数。</p>
+<p>比如在这种场景下：集群中有3个节点node-1、node-2和node-3，并且索引中的分片需要复制3份。那么该索引一共拥有4个分片，包括1个主分片和3个复制分片。</p>
+<p>默认情况下，索引操作只需要等待主分片可用(wait_for_active_shards为1)即可。</p>
+<p>如果node-2和node-3节点挂了，索引操作是不会受影响的(wait_for_active_shards默认为1)；如果设置了wait_for_active_shards为3，那么需要3个节点全部存活；如果设置了wait_for_active_shards为4或者all(一共4个分片，4和all是一样的效果)，那么该集群中的索引操作永远都会失败，因为集群一共就3个节点，不能处理所有的4个分片。</p>
+<p>比如设置成all，则会抛出如下错误：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"error"</span>: &#123;</span><br><span class="line">        <span class="attr">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">                <span class="attr">"reason"</span>: <span class="string">"[blogs][2] Not enough active copies to meet shard count of [ALL] (have 3, needed 4). Timeout: [1m], request: [index &#123;[blogs][normal][AV1QVDz3RpA5iuXn159C], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">"type"</span>: <span class="string">"unavailable_shards_exception"</span>,</span><br><span class="line">        <span class="attr">"reason"</span>: <span class="string">"[blogs][2] Not enough active copies to meet shard count of [ALL] (have 3, needed 4). Timeout: [1m], request: [index &#123;[blogs][normal][AV1QVDz3RpA5iuXn159C], source[&#123;\n  \"name\" : \"POST-1\"\n&#125;]&#125;]"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"status"</span>: <span class="number">503</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>wait_for_active_shards的默认值可以在定义索引的时候进行设置，也可以动态地进行修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT http://localhost:9200/blogs/_settings -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">	"index.write.wait_for_active_shards": 3</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br></pre></td></tr></table></figure>
+<p>7.自动生成id</p>
+<p>创建文档的时候，可以不指定id，es会自动为你生成1个id，需要注意的话需要使用POST方式，而不是PUT方式。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">curl -XPOST http://localhost:9200/blogs/normal -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "name" : "my-post"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"AV1Pj6MdAuPf3r3i0ysL"</span>, <span class="comment"># 自动生成的id</span></span><br><span class="line">    <span class="string">"_version"</span>: 1,</span><br><span class="line">    <span class="string">"_shards"</span>: &#123;</span><br><span class="line">        <span class="string">"total"</span>: 3,</span><br><span class="line">        <span class="string">"successful"</span>: 3,</span><br><span class="line">        <span class="string">"failed"</span>: 0</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>8.文档的局部更新</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 新建文档</span></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/format-doc-001 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "title" : "springboot in action",</span></span><br><span class="line"><span class="string">  "author" : "Format"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行全更新操作</span></span><br><span class="line">curl -XPUT http://localhost:9200/blogs/normal/format-doc-001 -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "create_at": "2017-07-18"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文档</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/format-doc-001</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-doc-001"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 2,</span><br><span class="line">    <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">"_source"</span>: &#123;</span><br><span class="line">        <span class="string">"create_at"</span>: <span class="string">"2017-07-18"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用文档局部更新</span></span><br><span class="line"></span><br><span class="line">curl -XPOST http://localhost:9200/blogs/normal/format-doc-001/_update -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "doc": &#123;</span></span><br><span class="line"><span class="string">  	"title" : "springboot in action",</span></span><br><span class="line"><span class="string">	  "author" : "Format"</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文档</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/format-doc-001</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-doc-001"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 3,</span><br><span class="line">    <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">"_source"</span>: &#123;</span><br><span class="line">        <span class="string">"create_at"</span>: <span class="string">"2017-07-18"</span>,</span><br><span class="line">        <span class="string">"author"</span>: <span class="string">"Format"</span>,</span><br><span class="line">        <span class="string">"title"</span>: <span class="string">"springboot in action"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用脚本局部更新</span></span><br><span class="line">curl -XPOST http://localhost:9200/blogs/normal/format-doc-001/_update -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "script" : "ctx._source.views = 0; ctx._source.tags = [new_tag]",</span></span><br><span class="line"><span class="string">  "params": &#123;</span></span><br><span class="line"><span class="string">  	"new_tag": "java"</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文档</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/format-doc-001</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-doc-001"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 3,</span><br><span class="line">    <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">"_source"</span>: &#123;</span><br><span class="line">        <span class="string">"create_at"</span>: <span class="string">"2017-07-18"</span>,</span><br><span class="line">        <span class="string">"author"</span>: <span class="string">"Format"</span>,</span><br><span class="line">        <span class="string">"title"</span>: <span class="string">"springboot in action"</span>,</span><br><span class="line">        <span class="string">"tags"</span>: [</span><br><span class="line">            <span class="string">"java"</span></span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"views"</span>: 0</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用脚本局部更新新创建的文档</span></span><br><span class="line">curl -XPOST http://localhost:9200/blogs/normal/format-doc-002/_update -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "script" : "ctx._source.views+=1"</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 报错，因为id为format-doc-002的文档不存在</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"error"</span>: &#123;</span><br><span class="line">        <span class="string">"root_cause"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">"type"</span>: <span class="string">"document_missing_exception"</span>,</span><br><span class="line">                <span class="string">"reason"</span>: <span class="string">"[normal][format-doc-002]: document missing"</span>,</span><br><span class="line">                <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">                <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"document_missing_exception"</span>,</span><br><span class="line">        <span class="string">"reason"</span>: <span class="string">"[normal][format-doc-002]: document missing"</span>,</span><br><span class="line">        <span class="string">"shard"</span>: <span class="string">"0"</span>,</span><br><span class="line">        <span class="string">"index"</span>: <span class="string">"blogs"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"status"</span>: 404</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加上upsert参数(设置字段的初始值)</span></span><br><span class="line"></span><br><span class="line">curl -XPOST http://localhost:9200/blogs/normal/format-doc-002/_update -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  "script" : "ctx._source.views+=1",</span></span><br><span class="line"><span class="string">  "upsert": &#123;</span></span><br><span class="line"><span class="string">       "views": 1</span></span><br><span class="line"><span class="string">   &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文档</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/format-doc-002</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">    <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">    <span class="string">"_id"</span>: <span class="string">"format-doc-002"</span>,</span><br><span class="line">    <span class="string">"_version"</span>: 1,</span><br><span class="line">    <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">"_source"</span>: &#123;</span><br><span class="line">        <span class="string">"views"</span>: 1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>9.检索多个文档(Multi Get API)</p>
+<p>可以在一个请求中获得多个文档数据。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在所有索引中执行mget，在参数中指定索引</span></span><br><span class="line">curl -XGET http://localhost:9200/_mget -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "docs" : [</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_index" : "blogs",</span></span><br><span class="line"><span class="string">            "_type" : "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-001"</span></span><br><span class="line"><span class="string">        &#125;,</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_index" : "blogs",</span></span><br><span class="line"><span class="string">            "_type" : "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-002"</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 结果</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"docs"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">            <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">            <span class="string">"_id"</span>: <span class="string">"format-doc-001"</span>,</span><br><span class="line">            <span class="string">"_version"</span>: 3,</span><br><span class="line">            <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="string">"_source"</span>: &#123;</span><br><span class="line">                <span class="string">"create_at"</span>: <span class="string">"2017-07-18"</span>,</span><br><span class="line">                <span class="string">"author"</span>: <span class="string">"Format"</span>,</span><br><span class="line">                <span class="string">"title"</span>: <span class="string">"springboot in action"</span>,</span><br><span class="line">                <span class="string">"tags"</span>: [</span><br><span class="line">                    <span class="string">"java"</span></span><br><span class="line">                ],</span><br><span class="line">                <span class="string">"views"</span>: 0</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">            <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">            <span class="string">"_id"</span>: <span class="string">"format-doc-002"</span>,</span><br><span class="line">            <span class="string">"_version"</span>: 1,</span><br><span class="line">            <span class="string">"found"</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="string">"_source"</span>: &#123;</span><br><span class="line">                <span class="string">"views"</span>: 1</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 基于特定的索引做mget</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/_mget -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "docs" : [</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_type" : "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-001"</span></span><br><span class="line"><span class="string">        &#125;,</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_type" : "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-002"</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 基于特定的索引和类型做mget</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/_mget -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "docs" : [</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-001"</span></span><br><span class="line"><span class="string">        &#125;,</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-002"</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 简化版的基于特定的索引和类型做mget</span></span><br><span class="line">curl -XGET http://localhost:9200/blogs/normal/_mget -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "ids": ["format-doc-001", "format-doc-002"]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 过滤source中的属性</span></span><br><span class="line">curl -XGET http://localhost:9200/_mget -d <span class="string">'</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    "docs" : [</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">        	"_index": "blogs",</span></span><br><span class="line"><span class="string">        	"_type": "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-001",</span></span><br><span class="line"><span class="string">            "_source": ["title", "author"]</span></span><br><span class="line"><span class="string">        &#125;,</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">        	"_index": "blogs",</span></span><br><span class="line"><span class="string">        	"_type": "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-002",</span></span><br><span class="line"><span class="string">            "_source": false</span></span><br><span class="line"><span class="string">        &#125;,</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">        	"_index": "blogs",</span></span><br><span class="line"><span class="string">        	"_type": "normal",</span></span><br><span class="line"><span class="string">            "_id" : "format-doc-003",</span></span><br><span class="line"><span class="string">            "_source": &#123;</span></span><br><span class="line"><span class="string">            	"include": ["title"],</span></span><br><span class="line"><span class="string">            	"exclude": ["author"]</span></span><br><span class="line"><span class="string">            &#125;</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">'</span></span><br></pre></td></tr></table></figure>
+<p>10.批量操作(bulk)</p>
+<p>批量操作可以实现同一个请求操作多个文档的过程。需要注意的是bulk操作Http Body中的格式，对文档进行处理的话需要使用换行。比如创建新文档，更新文档都需要使用换行把创建目录和文档数据进行分割。不同的操作也需要用换行进行分割，比如创建文档和删除文档。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3个批量操作，分别是创建文档，更新文档以及删除文档</span></span><br><span class="line"><span class="comment"># 创建文档的时候需要使用换行分割开创建目录和文档数据</span></span><br><span class="line"><span class="comment"># 更新文档的时候也需要使用换行分割开创建目录和文档数据</span></span><br><span class="line"><span class="comment"># 最后一个操作需要使用换行结束</span></span><br><span class="line">curl -XPOST http://localhost:9200/_bulk --d <span class="string">'</span></span><br><span class="line"><span class="string">&#123; "create": &#123; "_index": "blogs", "_type": "normal", "_id": "format-bulk-doc-001" &#125; &#125;</span></span><br><span class="line"><span class="string">&#123; "title": "Hadoop in action", "author": "Chuck Lam" &#125;</span></span><br><span class="line"><span class="string">&#123; "update": &#123; "_index": "blogs", "_type": "normal", "_id": "format-bulk-doc-001" &#125; &#125;</span></span><br><span class="line"><span class="string">&#123; "doc": &#123; "create_at": "2017-07-19" &#125; &#125;</span></span><br><span class="line"><span class="string">&#123; "delete": &#123; "_index": "blogs", "_type": "normal", "_id": "format-doc-002" &#125; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 结果</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"took"</span>: 695,</span><br><span class="line">    <span class="string">"errors"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="string">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"create"</span>: &#123;</span><br><span class="line">                <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">                <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">                <span class="string">"_id"</span>: <span class="string">"format-bulk-doc-001"</span>,</span><br><span class="line">                <span class="string">"_version"</span>: 1,</span><br><span class="line">                <span class="string">"_shards"</span>: &#123;</span><br><span class="line">                    <span class="string">"total"</span>: 3,</span><br><span class="line">                    <span class="string">"successful"</span>: 3,</span><br><span class="line">                    <span class="string">"failed"</span>: 0</span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="string">"status"</span>: 201</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"update"</span>: &#123;</span><br><span class="line">                <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">                <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">                <span class="string">"_id"</span>: <span class="string">"format-bulk-doc-001"</span>,</span><br><span class="line">                <span class="string">"_version"</span>: 2,</span><br><span class="line">                <span class="string">"_shards"</span>: &#123;</span><br><span class="line">                    <span class="string">"total"</span>: 3,</span><br><span class="line">                    <span class="string">"successful"</span>: 3,</span><br><span class="line">                    <span class="string">"failed"</span>: 0</span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="string">"status"</span>: 200</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"delete"</span>: &#123;</span><br><span class="line">                <span class="string">"_index"</span>: <span class="string">"blogs"</span>,</span><br><span class="line">                <span class="string">"_type"</span>: <span class="string">"normal"</span>,</span><br><span class="line">                <span class="string">"_id"</span>: <span class="string">"format-doc-002"</span>,</span><br><span class="line">                <span class="string">"_version"</span>: 2,</span><br><span class="line">                <span class="string">"_shards"</span>: &#123;</span><br><span class="line">                    <span class="string">"total"</span>: 3,</span><br><span class="line">                    <span class="string">"successful"</span>: 3,</span><br><span class="line">                    <span class="string">"failed"</span>: 0</span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="string">"status"</span>: 200,</span><br><span class="line">                <span class="string">"found"</span>: <span class="literal">true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/07/24/es-cluster-notes/">http://fangjian0423.github.io/2017/07/24/es-cluster-notes/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/elasticsearch/" rel="tag">#elasticsearch</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/05/mysql-index-summary/" rel="next" title="MySQL索引知识总结">
+                <i class="fa fa-chevron-left"></i> MySQL索引知识总结
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/28/springmvc-process-write-by-processon/" rel="prev" title="SpringMVC处理流程图">
+                SpringMVC处理流程图 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#分片-Shard"><span class="nav-number">1.</span> <span class="nav-text">分片(Shard)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#节点-Node"><span class="nav-number">2.</span> <span class="nav-text">节点(Node)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查询集群状态的Rest接口"><span class="nav-number">3.</span> <span class="nav-text">查询集群状态的Rest接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文档操作"><span class="nav-number">4.</span> <span class="nav-text">文档操作</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/07/24/es-cluster-notes/';
+      var disqus_title = "Elasticsearch集群知识笔记";
+      var disqus_url = 'http://fangjian0423.github.io/2017/07/24/es-cluster-notes/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

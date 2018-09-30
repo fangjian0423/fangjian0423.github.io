@@ -1,0 +1,1468 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Java提供了很多同步操作，比如synchronized关键字、wait/notifyAll、ReentrantLock、Condition、一些并发包下的工具类、Semaphore，ThreadLocal、AbstractQueuedSynchronizer等。 本文简单说明一下这几种方式的使用。">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java实现同步的几种方式">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/04/18/java-synchronize-way/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Java提供了很多同步操作，比如synchronized关键字、wait/notifyAll、ReentrantLock、Condition、一些并发包下的工具类、Semaphore，ThreadLocal、AbstractQueuedSynchronizer等。 本文简单说明一下这几种方式的使用。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/synchronize-way.jpeg">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java实现同步的几种方式">
+<meta name="twitter:description" content="Java提供了很多同步操作，比如synchronized关键字、wait/notifyAll、ReentrantLock、Condition、一些并发包下的工具类、Semaphore，ThreadLocal、AbstractQueuedSynchronizer等。 本文简单说明一下这几种方式的使用。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/synchronize-way.jpeg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Java实现同步的几种方式 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java实现同步的几种方式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-18T20:57:57+08:00" content="2016-04-18">
+              2016-04-18
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/18/java-synchronize-way/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/18/java-synchronize-way/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/04/18/java-synchronize-way/" class="leancloud_visitors" data-flag-title="Java实现同步的几种方式">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Java提供了很多同步操作，比如synchronized关键字、wait/notifyAll、ReentrantLock、Condition、一些并发包下的工具类、Semaphore，ThreadLocal、AbstractQueuedSynchronizer等。</p>
+<p>本文简单说明一下这几种方式的使用。</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/synchronize-way.jpeg" alt=""></p>
+<a id="more"></a>
+<h2 id="ReentrantLock可重入锁"><a href="#ReentrantLock可重入锁" class="headerlink" title="ReentrantLock可重入锁"></a>ReentrantLock可重入锁</h2><p>ReentrantLock可重入锁是jdk内置的一个锁对象，可以用来实现同步，基本使用方法如下：</p>
+<pre><code>public class ReentrantLockTest {
+
+    private ReentrantLock lock = new ReentrantLock();
+
+    public void execute() {
+        lock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + &quot; do something synchronize&quot;);
+            try {
+                Thread.sleep(5000l);
+            } catch (InterruptedException e) {
+                System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+                Thread.currentThread().interrupt();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        ReentrantLockTest reentrantLockTest = new ReentrantLockTest();
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                reentrantLockTest.execute();
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                reentrantLockTest.execute();
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><p>输出：</p>
+<pre><code>Thread-0 do something synchronize
+// 隔了5秒钟 输入下面
+Thread-1 do something synchronize
+</code></pre><p>这个例子表示同一时间段只能有1个线程执行execute方法。</p>
+<p>可重入锁中可重入表示的意义在于<strong>对于同一个线程，可以继续调用加锁的方法，而不会被挂起</strong>。可重入锁内部维护一个计数器，对于同一个线程调用lock方法，计数器+1，调用unlock方法，计数器-1。</p>
+<p>举个例子再次说明一下可重入的意思，在一个加锁方法execute中调用另外一个加锁方法anotherLock并不会被挂起，可以直接调用(调用execute方法时计数器+1，然后内部又调用了anotherLock方法，计数器+1，变成了2)：</p>
+<pre><code>public void execute() {
+    lock.lock();
+    try {
+        System.out.println(Thread.currentThread().getName() + &quot; do something synchronize&quot;);
+        try {
+            anotherLock();
+            Thread.sleep(5000l);
+        } catch (InterruptedException e) {
+            System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+            Thread.currentThread().interrupt();
+        }
+    } finally {
+        lock.unlock();
+    }
+}
+
+public void anotherLock() {
+    lock.lock();
+    try {
+        System.out.println(Thread.currentThread().getName() + &quot; invoke anotherLock&quot;);
+    } finally {
+        lock.unlock();
+    }
+}
+</code></pre><p>输出：</p>
+<pre><code>Thread-0 do something synchronize
+Thread-0 invoke anotherLock
+// 隔了5秒钟 输入下面
+Thread-1 do something synchronize
+Thread-1 invoke anotherLock
+</code></pre><h2 id="synchronized关键字"><a href="#synchronized关键字" class="headerlink" title="synchronized关键字"></a>synchronized关键字</h2><p>synchronized关键跟ReentrantLock一样，也支持可重入锁。但是它是一个关键字，是一种语法级别的同步方式，称为内置锁：</p>
+<pre><code>public class SynchronizedKeyWordTest {
+
+    public synchronized void execute() {
+            System.out.println(Thread.currentThread().getName() + &quot; do something synchronize&quot;);
+        try {
+            anotherLock();
+            Thread.sleep(5000l);
+        } catch (InterruptedException e) {
+            System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public synchronized void anotherLock() {
+        System.out.println(Thread.currentThread().getName() + &quot; invoke anotherLock&quot;);
+    }
+
+    public static void main(String[] args) {
+        SynchronizedKeyWordTest reentrantLockTest = new SynchronizedKeyWordTest();
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                reentrantLockTest.execute();
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                reentrantLockTest.execute();
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><p>输出结果跟ReentrantLock一样，这个例子说明内置锁可以作用在方法上。它还可以作用到变量，静态方法上。</p>
+<p>synchronized跟ReentrantLock相比，有几点局限性：</p>
+<ol>
+<li>加锁的时候不能设置超时。ReentrantLock有提供tryLock方法，可以设置超时时间，如果超过了这个时间并且没有获取到锁，就会放弃，而synchronized却没有这种功能</li>
+<li>ReentrantLock可以使用多个Condition，而synchronized却只能有1个</li>
+<li>不能中断一个试图获得锁的线程</li>
+<li>ReentrantLock可以选择公平锁和非公平锁</li>
+<li>ReentrantLock可以获得正在等待线程的个数，计数器等</li>
+</ol>
+<h2 id="Condition条件对象"><a href="#Condition条件对象" class="headerlink" title="Condition条件对象"></a>Condition条件对象</h2><p>条件对象的意义在于对于一个已经获取锁的线程，如果还需要等待其他条件才能继续执行的情况下，才会使用Condition条件对象。</p>
+<pre><code>public class ConditionTest {
+
+    public static void main(String[] args) {
+        ReentrantLock lock = new ReentrantLock();
+        Condition condition = lock.newCondition();
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                lock.lock();
+                try {
+                    System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+                    System.out.println(Thread.currentThread().getName() + &quot; wait for condition&quot;);
+                    try {
+                        condition.await();
+                        System.out.println(Thread.currentThread().getName() + &quot; continue&quot;);
+                    } catch (InterruptedException e) {
+                        System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+                        Thread.currentThread().interrupt();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                lock.lock();
+                try {
+                    System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+                    System.out.println(Thread.currentThread().getName() + &quot; sleep 5 secs&quot;);
+                    try {
+                        Thread.sleep(5000l);
+                    } catch (InterruptedException e) {
+                        System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+                        Thread.currentThread().interrupt();
+                    }
+                    condition.signalAll();
+                } finally {
+                    lock.unlock();
+                }
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><p>这个例子中thread1执行到condition.await()时，当前线程会被挂起，直到thread2调用了condition.signalAll()方法之后，thread1才会重新被激活执行。</p>
+<p>这里需要注意的是thread1调用Condition的await方法之后，thread1线程释放锁，然后马上加入到Condition的等待队列，由于thread1释放了锁，thread2获得锁并执行，thread2执行signalAll方法之后，Condition中的等待队列thread1被取出并加入到AQS中，接下来thread2执行完毕之后释放锁，由于thread1已经在AQS的等待队列中，所以thread1被唤醒，继续执行。</p>
+<h2 id="wait-notifyAll-方式"><a href="#wait-notifyAll-方式" class="headerlink" title="wait/notifyAll 方式"></a>wait/notifyAll 方式</h2><p>wait/notifyAll方式跟ReentrantLock/Condition方式的原理是一样的。</p>
+<p>Java中每个对象都拥有一个内置锁，在内置锁中调用wait，notify方法相当于调用锁的Condition条件对象的await和signalAll方法。</p>
+<p>使用wait/notifyAll实现上面的那个Condition例子：</p>
+<pre><code>public class WaitNotifyAllTest {
+
+    public synchronized void doWait() {
+        System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+        System.out.println(Thread.currentThread().getName() + &quot; wait for condition&quot;);
+        try {
+            this.wait();
+            System.out.println(Thread.currentThread().getName() + &quot; continue&quot;);
+        } catch (InterruptedException e) {
+            System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public synchronized void doNotify() {
+        try {
+            System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+            System.out.println(Thread.currentThread().getName() + &quot; sleep 5 secs&quot;);
+            Thread.sleep(5000l);
+            this.notifyAll();
+        } catch (InterruptedException e) {
+            System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public static void main(String[] args) {
+        WaitNotifyAllTest waitNotifyAllTest = new WaitNotifyAllTest();
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                waitNotifyAllTest.doWait();
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                waitNotifyAllTest.doNotify();
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><p>这里需要注意的是由于Condition是由锁创建的，所以调用wait/notifyAll方法的时候需要获得当前线程的锁，否则会发生IllegalMonitorStateException异常。</p>
+<h2 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal</h2><p>ThreadLocal是一种把变量放到线程本地的方式来实现线程同步的。</p>
+<p>比如SimpleDateFormat不是一个线程安全的类，可以使用ThreadLocal实现同步。</p>
+<pre><code>public class ThreadLocalTest {
+
+    private static ThreadLocal&lt;SimpleDateFormat&gt; dateFormatThreadLocal = new ThreadLocal&lt;SimpleDateFormat&gt;() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);
+        }
+    };
+
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Date date = new Date();
+                System.out.println(dateFormatThreadLocal.get().format(date));
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Date date = new Date();
+                System.out.println(dateFormatThreadLocal.get().format(date));
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><h2 id="Semaphore信号量"><a href="#Semaphore信号量" class="headerlink" title="Semaphore信号量"></a>Semaphore信号量</h2><p>Semaphore信号量被用于控制特定资源在同一个时间被访问的个数。类似连接池的概念，保证资源可以被合理的使用。可以使用构造器初始化资源个数：</p>
+<pre><code>public class SemaphoreTest {
+
+    private static Semaphore semaphore = new Semaphore(2);
+
+    public static void main(String[] args) {
+        for(int i = 0; i &lt; 5; i ++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        semaphore.acquire();
+                        System.out.println(Thread.currentThread().getName() + &quot; &quot; + new Date());
+                        Thread.sleep(5000l);
+                        semaphore.release();
+                    } catch (InterruptedException e) {
+                        System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+                    }
+                }
+            }).start();
+        }
+    }
+
+}
+</code></pre><p>输出：</p>
+<pre><code>Thread-1 Mon Apr 18 18:03:46 CST 2016
+Thread-0 Mon Apr 18 18:03:46 CST 2016
+Thread-3 Mon Apr 18 18:03:51 CST 2016
+Thread-2 Mon Apr 18 18:03:51 CST 2016
+Thread-4 Mon Apr 18 18:03:56 CST 2016
+</code></pre><h2 id="并发包下的工具类"><a href="#并发包下的工具类" class="headerlink" title="并发包下的工具类"></a>并发包下的工具类</h2><p>一般情况下，我们不会使用wait/notifyAll或者ReentrantLock这种比较底层的类，而是使用并发包下提供的一些工具类。</p>
+<h3 id="CountDownLatch"><a href="#CountDownLatch" class="headerlink" title="CountDownLatch"></a>CountDownLatch</h3><p>CountDownLatch是一个计数器，它的构造方法中需要设置一个数值，用来设定计数的次数。每次调用countDown()方法之后，这个计数器都会减去1，CountDownLatch会一直阻塞着调用await()方法的线程，直到计数器的值变为0。</p>
+<pre><code>public class CountDownLatchTest {
+
+    public static void main(String[] args) {
+        CountDownLatch countDownLatch = new CountDownLatch(5);
+        for(int i = 0; i &lt; 5; i ++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println(Thread.currentThread().getName() + &quot; &quot; + new Date() + &quot; run&quot;);
+                    try {
+                        Thread.sleep(5000l);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    countDownLatch.countDown();
+                }
+            }).start();
+        }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(&quot;all thread over&quot;);
+    }
+
+}
+</code></pre><p>输出：</p>
+<pre><code>Thread-2 Mon Apr 18 18:18:30 CST 2016 run
+Thread-3 Mon Apr 18 18:18:30 CST 2016 run
+Thread-4 Mon Apr 18 18:18:30 CST 2016 run
+Thread-0 Mon Apr 18 18:18:30 CST 2016 run
+Thread-1 Mon Apr 18 18:18:30 CST 2016 run
+all thread over
+</code></pre><h3 id="CyclicBarrier"><a href="#CyclicBarrier" class="headerlink" title="CyclicBarrier"></a>CyclicBarrier</h3><p>CyclicBarrier阻塞调用的线程，直到条件满足时，阻塞的线程同时被打开。</p>
+<p>调用await()方法的时候，这个线程就会被阻塞，当调用await()的线程数量到达屏障数的时候，主线程就会取消所有被阻塞线程的状态。</p>
+<p>在CyclicBarrier的构造方法中，还可以设置一个barrierAction。</p>
+<p>在所有的屏障都到达之后，会启动一个线程来运行这里面的代码。</p>
+<pre><code>public class CyclicBarrierTest {
+
+    public static void main(String[] args) {
+        Random random = new Random();
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(5);
+        for(int i = 0; i &lt; 5; i ++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int secs = random.nextInt(5);
+                    System.out.println(Thread.currentThread().getName() + &quot; &quot; + new Date() + &quot; run, sleep &quot; + secs + &quot; secs&quot;);
+                    try {
+                        Thread.sleep(secs * 1000);
+                        cyclicBarrier.await();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (BrokenBarrierException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(Thread.currentThread().getName() + &quot; &quot; + new Date() + &quot; runs over&quot;);
+                }
+            }).start();
+        }
+    }
+
+}
+</code></pre><p>相比CountDownLatch，CyclicBarrier是可以被循环使用的，而且遇到线程中断等情况时，还可以利用reset()方法，重置计数器，从这些方面来说，CyclicBarrier会比CountDownLatch更加灵活一些。        </p>
+<h2 id="AbstractQueuedSynchronizer"><a href="#AbstractQueuedSynchronizer" class="headerlink" title="AbstractQueuedSynchronizer"></a>AbstractQueuedSynchronizer</h2><p>AQS是很多同步工具类的基础，比如ReentrentLock里的公平锁和非公平锁，Semaphore里的公平锁和非公平锁，CountDownLatch里的锁等他们的底层都是使用AbstractQueuedSynchronizer完成的。</p>
+<p>基于AbstractQueuedSynchronizer自定义实现一个独占锁：</p>
+<pre><code>public class MySynchronizer extends AbstractQueuedSynchronizer {
+
+    @Override
+    protected boolean tryAcquire(int arg) {
+        if(compareAndSetState(0, 1)) {
+            setExclusiveOwnerThread(Thread.currentThread());
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean tryRelease(int arg) {
+        setState(0);
+        setExclusiveOwnerThread(null);
+        return true;
+    }
+
+    public void lock() {
+        acquire(1);
+    }
+
+    public void unlock() {
+        release(1);
+    }
+
+    public static void main(String[] args) {
+        MySynchronizer mySynchronizer = new MySynchronizer();
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mySynchronizer.lock();
+                try {
+                    System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+                    System.out.println(Thread.currentThread().getName() + &quot; will sleep 5 secs&quot;);
+                    try {
+                        Thread.sleep(5000l);
+                        System.out.println(Thread.currentThread().getName() + &quot; continue&quot;);
+                    } catch (InterruptedException e) {
+                        System.err.println(Thread.currentThread().getName() + &quot; interrupted&quot;);
+                        Thread.currentThread().interrupt();
+                    }
+                } finally {
+                    mySynchronizer.unlock();
+                }
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mySynchronizer.lock();
+                try {
+                    System.out.println(Thread.currentThread().getName() + &quot; run&quot;);
+                } finally {
+                    mySynchronizer.unlock();
+                }
+            }
+        });
+        thread1.start();
+        thread2.start();
+    }
+
+}
+</code></pre><p>MySynchronizer并没有实现可重入功能，只是简单的一个独占锁。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/04/18/java-synchronize-way/">http://fangjian0423.github.io/2016/04/18/java-synchronize-way/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/12/jdk-concurrentskiplistmap/" rel="next" title="jdk ConcurrentSkipListMap工作原理分析">
+                <i class="fa fa-chevron-left"></i> jdk ConcurrentSkipListMap工作原理分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/01/countdownlatch-cyclicbarrier-difference/" rel="prev" title="CountDownLatch和CyclicBarrier的区别">
+                CountDownLatch和CyclicBarrier的区别 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ReentrantLock可重入锁"><span class="nav-number">1.</span> <span class="nav-text">ReentrantLock可重入锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#synchronized关键字"><span class="nav-number">2.</span> <span class="nav-text">synchronized关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Condition条件对象"><span class="nav-number">3.</span> <span class="nav-text">Condition条件对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#wait-notifyAll-方式"><span class="nav-number">4.</span> <span class="nav-text">wait/notifyAll 方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ThreadLocal"><span class="nav-number">5.</span> <span class="nav-text">ThreadLocal</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Semaphore信号量"><span class="nav-number">6.</span> <span class="nav-text">Semaphore信号量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发包下的工具类"><span class="nav-number">7.</span> <span class="nav-text">并发包下的工具类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CountDownLatch"><span class="nav-number">7.1.</span> <span class="nav-text">CountDownLatch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CyclicBarrier"><span class="nav-number">7.2.</span> <span class="nav-text">CyclicBarrier</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AbstractQueuedSynchronizer"><span class="nav-number">8.</span> <span class="nav-text">AbstractQueuedSynchronizer</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/04/18/java-synchronize-way/';
+      var disqus_title = "Java实现同步的几种方式";
+      var disqus_url = 'http://fangjian0423.github.io/2016/04/18/java-synchronize-way/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

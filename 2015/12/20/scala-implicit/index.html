@@ -1,0 +1,1165 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="jvm,scala," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Scala的implicit功能很强大，可以自动地给对象&quot;添加一个属性&quot;。 这里打上引号的原因是Scala内部进行编译的时候会自动加上隐式转换函数 ...">
+<meta name="keywords" content="jvm,scala">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Scala 隐式转换和隐式参数">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/12/20/scala-implicit/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Scala的implicit功能很强大，可以自动地给对象&quot;添加一个属性&quot;。 这里打上引号的原因是Scala内部进行编译的时候会自动加上隐式转换函数 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scala 隐式转换和隐式参数">
+<meta name="twitter:description" content="Scala的implicit功能很强大，可以自动地给对象&quot;添加一个属性&quot;。 这里打上引号的原因是Scala内部进行编译的时候会自动加上隐式转换函数 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Scala 隐式转换和隐式参数 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Scala 隐式转换和隐式参数
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-12-20T15:38:22+08:00" content="2015-12-20">
+              2015-12-20
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/scala/" itemprop="url" rel="index">
+                    <span itemprop="name">scala</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/12/20/scala-implicit/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/20/scala-implicit/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/12/20/scala-implicit/" class="leancloud_visitors" data-flag-title="Scala 隐式转换和隐式参数">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Scala的implicit功能很强大，可以自动地给对象”添加一个属性”。 这里打上引号的原因是Scala内部进行编译的时候会自动加上隐式转换函数。</p>
+<p>很多Scala开源框架内部都大量使用了implicit。因为implicit真的很强大，写得好的implicit可以让代码更优雅。但个人感觉implicit也有一些缺点，比如使用了implicit之后，看源码或者使用一些library的时候无法下手，因为你根本不知道作者哪里写了implicit。这个也会对初学者造成一些困扰。</p>
+<p>比如Scala中Option就有一个implicit可以将Option转换成Iterable：</p>
+<pre><code>val list = List(1, 2)
+val map = Map(1 -&gt; 11, 2 -&gt; 22, 3 -&gt; 33)
+
+val newList = list.flatMap {
+    num =&gt; map.get(num) // map.get方法返回的是Option，可以被隐式转换成Iterable
+} 
+</code></pre><p>以下是implicit的一个小例子。</p>
+<p>比如以下一个例子，定义一个Int类型的变量num，但是赋值给了一个Double类型的数值。这时候就会编译错误：</p>
+<pre><code>val num: Int = 3.5 // Compile Error
+</code></pre><p>但是我们加了一个隐式转换之后，就没问题了:</p>
+<pre><code>implicit def double2Int(d: Double) = d.toInt
+
+val num: Int = 3.5 // 3， 这段代码会被编译成 val num: Int = double2Int(3.5)
+</code></pre><h2 id="隐式转换规则"><a href="#隐式转换规则" class="headerlink" title="隐式转换规则"></a>隐式转换规则</h2><h3 id="标记规则-Marking-Rule"><a href="#标记规则-Marking-Rule" class="headerlink" title="标记规则(Marking Rule)"></a>标记规则(Marking Rule)</h3><p>任何变量，函数或者对象都可以用implicit这个关键字进行标记，表示可以进行隐式转换。</p>
+<pre><code>implicit def intToString(x: Int) = x.toString
+</code></pre><p>编译器可能会将x + y 转换成 convert(x) + y 如果convert被标记成implicit。</p>
+<h3 id="作用域规则-Scope-Rule"><a href="#作用域规则-Scope-Rule" class="headerlink" title="作用域规则(Scope Rule)"></a>作用域规则(Scope Rule)</h3><p>在一个作用域内，一个隐式转换必须是一个唯一的标识。</p>
+<p>比如说MyUtils这个object里有很多隐式转换。x + y 不会使用MyUtils里的隐式转换。 除非import进来。 import MyUtils._</p>
+<p>Scala编译器还能在companion class中去找companion object中定义的隐式转换。</p>
+<pre><code>object Player {
+    implicit def getClub(player: Player): Club = Club(player.clubName)
+}
+
+class Player(val name: String, val age: Int, val clubName: String) {
+
+}
+
+val p = new Player(&quot;costa&quot;, 27, &quot;Chelsea&quot;)
+
+println(p.welcome) // Chelsea welcome you here!
+println(p.playerNum) // 21
+</code></pre><h3 id="一次编译只隐式转换一次-One-at-a-time-Rule"><a href="#一次编译只隐式转换一次-One-at-a-time-Rule" class="headerlink" title="一次编译只隐式转换一次(One-at-a-time Rule)"></a>一次编译只隐式转换一次(One-at-a-time Rule)</h3><p>Scala不会把 x + y 转换成 convert1(convert2(x)) + y</p>
+<h2 id="隐式转换类型"><a href="#隐式转换类型" class="headerlink" title="隐式转换类型"></a>隐式转换类型</h2><h3 id="隐式转换成正确的类型"><a href="#隐式转换成正确的类型" class="headerlink" title="隐式转换成正确的类型"></a>隐式转换成正确的类型</h3><p>这种类型是Scala编译器对隐式转换的第一选择。 比如说编译器看到一个类型的X的数据，但是需要一个类型为Y的数据，那么就会去找把X类型转换成Y类型的隐式转换。</p>
+<p>本文一开始的double2Int方法就是这种类型的隐式转换。</p>
+<pre><code>implicit def double2Int(d: Double) = d.toInt
+
+val num: Int = 3.5 // 3
+</code></pre><p>当编译器发现变量num是个Int类型，并且用Double类型给它赋值的时候，会报错。 但是在报错之前，编译器会查找Double =&gt; Int的隐式转换。然后发现了double2Int这个隐式转换函数。于是就使用了隐式转换。</p>
+<h3 id="方法调用的隐式转换"><a href="#方法调用的隐式转换" class="headerlink" title="方法调用的隐式转换"></a>方法调用的隐式转换</h3><p>比如这段代码  obj.doSomeThing。 比如obj对象没有doSomeThing这个方法，编译器会会去查找拥有doSomeThing方法的类型，并且看obj类型是否有隐式转换成有doSomeThing类型的函数。有的话就是将obj对象隐式转换成拥有doSomeThing方法的对象。</p>
+<p>以下是一个例子：</p>
+<pre><code>case class Person(name: String, age: Int) {
+    def +(num: Int) = age + num
+    def +(p: Person) = age + p.age
+  }
+
+val person = Person(&quot;format&quot;, 99)
+println(person + 1) // 100
+//  println(1 + person)  报错，因为Int的+方法没有有Person参数的重载方法
+
+implicit def personAddAge(x: Int) = Person(&quot;unknown&quot;, x)
+
+println(1 + person) // 100
+</code></pre><p>有了隐式转换方法之后，编译器检查 1 + person 表达式，发现Int的+方法没有有Person参数的重载方法。在放弃之前查看是否有将Int类型的对象转换成以Person为参数的+方法的隐式转换函数，于是找到了，然后就进行了隐式转换。</p>
+<p>Scala的Predef中也使用了方法调用的隐式转换。</p>
+<pre><code>Map(1 -&gt; 11, 2 -&gt; 22)
+</code></pre><p>上面这段Map中的参数是个二元元组。 Int没有 -&gt; 方法。 但是在Predef中定义了：</p>
+<pre><code>implicit final class ArrowAssoc[A](private val self: A) extends AnyVal {
+    @inline def -&gt; [B](y: B): Tuple2[A, B] = Tuple2(self, y)
+    def →[B](y: B): Tuple2[A, B] = -&gt;(y)
+}
+</code></pre><h3 id="隐式参数"><a href="#隐式参数" class="headerlink" title="隐式参数"></a>隐式参数</h3><p>隐式参数的意义是当方法需要多个参数的时候，可以定义一些隐式参数，这些隐式参数可以被自动加到方法填充的参数里，而不必手填充。</p>
+<pre><code>def implicitParamFunc(name: String)(implicit tiger: Tiger, lion: Lion): Unit = {
+    println(name + &quot; have a tiget and a lion, their names are: &quot; + tiger.name + &quot;, &quot; + lion.name)
+}
+
+object Zoo {
+    implicit val tiger = Tiger(&quot;tiger1&quot;)
+    implicit val lion = Lion(&quot;lion1&quot;)
+}
+
+import Zoo._
+
+implicitParamFunc(&quot;format&quot;)
+</code></pre><p>上面这个代码中implicitParamFunc中的第二个参数定义成了隐式参数。</p>
+<p>然后在Zoo对象里定义了两个隐式变量，import进来之后，调用implicitParamFunc方法的时候这两个变量被自动填充到了参数里。</p>
+<p>这里需要注意的是不仅仅方法中的参数需要被定义成隐式参数，对应的隐式参数的变量也需要被定义成隐式变量。</p>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>对象中的隐式转换可以只import自己需要的。</p>
+<pre><code>object MyUtils {
+    implicit def a ...
+    implicit def b ...
+}
+
+import MyUtils.a
+</code></pre><p>隐式转换修饰符implicit可以修饰class，method，变量，object。</p>
+<p>修饰方法和变量的隐式转换本文已经介绍过，就不继续说了。</p>
+<p>修饰class的隐式转换，它的作用跟修饰method的隐式转换类似：</p>
+<pre><code>implicit class RangeMarker(val start: Int) {
+    def --&gt;(end: Int) = start to end
+}
+
+1 --&gt; 10 // Range(1, 10)
+</code></pre><p>上段代码可以改造成使用Value Class完成类的隐式转换：</p>
+<pre><code>implicit class RangeMaker(start: Int) extends AnyVal {
+    def --&gt;(end: Int) = start to end
+}
+</code></pre><p>修饰object的隐式转换：</p>
+<pre><code>trait Calculate[T] {
+    def add(x: T, y: T): T
+}
+
+implicit object IntCal extends Calculate[Int] {
+    def add(x: Int, y: Int): Int = x + y
+}
+
+implicit object ListCal extends Calculate[List[Int]] {
+    def add(x: List[Int], y: List[Int]): List[Int] = x ::: y
+}
+
+def implicitObjMethod[T](x: T, y: T)(implicit cal: Calculate[T]): Unit = {
+    println(x + &quot; + &quot; + y + &quot; = &quot; + cal.add(x, y))
+}
+
+implicitObjMethod(1, 2) // 1 + 2 = 3
+implicitObjMethod(List(1, 2), List(3, 4)) // List(1, 2) + List(3, 4) = List(1, 2, 3, 4)
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/12/20/scala-implicit/">http://fangjian0423.github.io/2015/12/20/scala-implicit/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/jvm/" rel="tag">#jvm</a>
+          
+            <a href="/tags/scala/" rel="tag">#scala</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/07/elasticsearch-search-template/" rel="next" title="elasticsearch查询模板">
+                <i class="fa fa-chevron-left"></i> elasticsearch查询模板
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/12/23/scala-spray-json/" rel="prev" title="spray-json源码分析">
+                spray-json源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隐式转换规则"><span class="nav-number">2.</span> <span class="nav-text">隐式转换规则</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#标记规则-Marking-Rule"><span class="nav-number">2.1.</span> <span class="nav-text">标记规则(Marking Rule)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作用域规则-Scope-Rule"><span class="nav-number">2.2.</span> <span class="nav-text">作用域规则(Scope Rule)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一次编译只隐式转换一次-One-at-a-time-Rule"><span class="nav-number">2.3.</span> <span class="nav-text">一次编译只隐式转换一次(One-at-a-time Rule)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隐式转换类型"><span class="nav-number">3.</span> <span class="nav-text">隐式转换类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#隐式转换成正确的类型"><span class="nav-number">3.1.</span> <span class="nav-text">隐式转换成正确的类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方法调用的隐式转换"><span class="nav-number">3.2.</span> <span class="nav-text">方法调用的隐式转换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隐式参数"><span class="nav-number">3.3.</span> <span class="nav-text">隐式参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他"><span class="nav-number">4.</span> <span class="nav-text">其他</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/12/20/scala-implicit/';
+      var disqus_title = "Scala 隐式转换和隐式参数";
+      var disqus_url = 'http://fangjian0423.github.io/2015/12/20/scala-implicit/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

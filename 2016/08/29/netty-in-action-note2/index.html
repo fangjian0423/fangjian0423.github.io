@@ -1,0 +1,1420 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="nio,netty," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="主要记录ChannelHandler、Codec以及Bootstrap的作用，还有Netty内置的一些ChannelHandler、Codec，以及Bootstrap的分类。">
+<meta name="keywords" content="nio,netty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty in Action笔记(二)">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/08/29/netty-in-action-note2/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="主要记录ChannelHandler、Codec以及Bootstrap的作用，还有Netty内置的一些ChannelHandler、Codec，以及Bootstrap的分类。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty03.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty01.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty04.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty05.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty06.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty07.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty08.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty09.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netty in Action笔记(二)">
+<meta name="twitter:description" content="主要记录ChannelHandler、Codec以及Bootstrap的作用，还有Netty内置的一些ChannelHandler、Codec，以及Bootstrap的分类。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty03.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Netty in Action笔记(二) | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Netty in Action笔记(二)
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-29T20:36:52+08:00" content="2016-08-29">
+              2016-08-29
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/netty/" itemprop="url" rel="index">
+                    <span itemprop="name">netty</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/29/netty-in-action-note2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/29/netty-in-action-note2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/08/29/netty-in-action-note2/" class="leancloud_visitors" data-flag-title="Netty in Action笔记(二)">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>主要记录ChannelHandler、Codec以及Bootstrap的作用，还有Netty内置的一些ChannelHandler、Codec，以及Bootstrap的分类。</p>
+<a id="more"></a>
+<h2 id="第六章"><a href="#第六章" class="headerlink" title="第六章"></a>第六章</h2><p>介绍Netty中的Channel、ChannelHandler、ChannelHandlerContext以及ChannelPipeline。</p>
+<h3 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h3><p>定义：一个Channel表示一个通道，跟io中的stream的角色一样，但是有几点不同。 1. stream是单向的，只支持读或者写，channel是双向的，既支持读也支持写。2. stream是阻塞的，channel是并行的。</p>
+<p>其中Channel的生命周期状态如下：</p>
+<table>
+<thead>
+<tr>
+<th>状态说明</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>channelUnregistered</td>
+<td>channel创建之后，还未注册到EventLoop</td>
+</tr>
+<tr>
+<td>channelRegistered</td>
+<td>channel注册到了对应的EventLoop</td>
+</tr>
+<tr>
+<td>channelActive</td>
+<td>channel处于活跃状态，活跃状态表示已经连接到了远程服务器，现在可以接收和发送数据</td>
+</tr>
+<tr>
+<td>channelInactive</td>
+<td>channel未连接到远程服务器</td>
+</tr>
+</tbody>
+</table>
+<p>一个Channel正常的生命周期如下：</p>
+<p>channelRegistered -&gt; channelActice -&gt; channelInactive -&gt; channelUnregistered</p>
+<p>在另外一种特殊情况下，会发生多次channelRegistered和channelUnregistered，这是因为用户可以从EventLoop上取消注册Channel来阻止事件的执行并在之后重新注册。状态变化如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty03.png" alt=""></p>
+<h3 id="ChannelHandler"><a href="#ChannelHandler" class="headerlink" title="ChannelHandler"></a>ChannelHandler</h3><p>ChannelHandler有2种类型：</p>
+<ol>
+<li>Inbound Handler: 处理inbound数据(接收到的数据)以及所有类型的channel状态修改事件</li>
+<li>Outbound Handler: 处理outbound数据(发送出去的数据)并且可以拦截各种操作，比如bind、connect、disconnect、close、write等操作</li>
+</ol>
+<p>Inbound和Outbound Handler都属于ChannelHandler，它们都可以被添加到ChannelPipeline中，它们内部也提供了handlerAdded、handlerRemoved这两种方法分别在ChannelHandler添加到ChannelPipeline和ChannelHandler从ChannelPipeline中被删除的时候触发。</p>
+<h4 id="ChannelInboundHandler"><a href="#ChannelInboundHandler" class="headerlink" title="ChannelInboundHandler"></a>ChannelInboundHandler</h4><p>ChannelInboundHandler方法在两种情况下触发：channel状态的改变和channel接收到数据。</p>
+<p>一些方法说明：</p>
+<table>
+<thead>
+<tr>
+<th>方法名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>channelRegistered(..)</td>
+<td>Channel注册到EventLoop，并且可以处理IO请求</td>
+</tr>
+<tr>
+<td>channelUnregistered(…)</td>
+<td>Channel从EventLoop中被取消注册，并且不能处理任何IO请求</td>
+</tr>
+<tr>
+<td>channelActive(…)</td>
+<td>Channel已经连接到远程服务器，并准备好了接收数据</td>
+</tr>
+<tr>
+<td>channelInactive(…)</td>
+<td>Channel还没有连接到远程服务器</td>
+</tr>
+<tr>
+<td>channelReadComplete(…)</td>
+<td>Channel的读取操作已经完成</td>
+</tr>
+<tr>
+<td>channelRead(…)</td>
+<td>有数据可以读取的时候触发</td>
+</tr>
+<tr>
+<td>userEventTriggered(…)</td>
+<td>当用户调用Channel.fireUserEventTriggered方法的时候触发，用户可以传递一个自定义的对象当这个方法里</td>
+</tr>
+</tbody>
+</table>
+<p>ChannelInboundHandler有一个实现ChannelInboundHandlerAdapter，它实现了所有的方法，我们只需要继承这个类然后复写需要的方法即可。</p>
+<p>ChannelInboundHandler中的channelRead方法中有读取的ByteBuf。由于Netty在ByteBuf的使用上使用了池的概念，当不需要这个ByteBuf的时候需要进行资源的释放以减少内存的消耗。</p>
+<pre><code>@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) {
+      // do something
+      ReferenceCountUtil.release(msg);
+}
+</code></pre><p>Netty内部提供了一个SimpleChannelInboundHandler类，这个类读取数据会自动释放资源。它继承ChannelInboundHandlerAdapter并复写了channelRead方法，在channelRead方法里面finally代码里会自动release资源，并提供了channelRead0方法：</p>
+<pre><code>@Override
+public void channelRead0(ChannelHandlerContext ctx, Object msg) {
+      // do something, do not need release
+}
+</code></pre><p>所以一般使用ChannelInboundHandler的话，有3种方法。 </p>
+<ol>
+<li>直接实现ChannelInBoundHandler接口 </li>
+<li>继承ChannelInboundHandlerAdapter</li>
+<li>继承SimpleChannelInboundHandler</li>
+</ol>
+<p>第1种基本不用，第3种用来处理接收消息，第2种用来处理事件状态的改变</p>
+<h4 id="ChannelOutboundHandler"><a href="#ChannelOutboundHandler" class="headerlink" title="ChannelOutboundHandler"></a>ChannelOutboundHandler</h4><p>ChannelOutboundHandler方法在两种情况下触发：发送数据和拦截操作。</p>
+<p>ChannelOutboundHandler有一个强大的功能，可以按需推迟一个操作，这使得处理请求可以用到更为复杂的策略。比如，如果写数据到远端被暂停，你可以推迟flush操作，稍后再试。</p>
+<p>一些方法说明：</p>
+<table>
+<thead>
+<tr>
+<th>方法名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bind(..)</td>
+<td>请求绑定channel到本地地址</td>
+</tr>
+<tr>
+<td>connect(…)</td>
+<td>channel连接到远程地址</td>
+</tr>
+<tr>
+<td>disconnect(…)</td>
+<td>channel从远程服务器上断开</td>
+</tr>
+<tr>
+<td>close(…)</td>
+<td>关闭channel</td>
+</tr>
+<tr>
+<td>deregister(…)</td>
+<td>取消channel在eventloop上的注册</td>
+</tr>
+<tr>
+<td>read(…)</td>
+<td>在channel中读数据</td>
+</tr>
+<tr>
+<td>flush(…)</td>
+<td>flush数据到远程服务器</td>
+</tr>
+<tr>
+<td>write(…)</td>
+<td>写数据到远程服务器</td>
+</tr>
+</tbody>
+</table>
+<p>ChannelOutboundHandler有一个实现ChannelOutboundHandlerAdapter，它实现了所有的方法，我们只需要继承这个类然后复写需要的方法即可。</p>
+<p>在outboundhandler中有时候也需要释放资源，当消息被消费并且不再需要传递给下一个outbound handler的时候，调用ReferenceCountUtil.release(message)释放消息。</p>
+<p>当消息被写回去或者channel关闭的时候，这个消息的资源会被自动释放，所以没有一个类似SimpleChannelInboundHandler的概念。</p>
+<h3 id="ChannelHandlerContext"><a href="#ChannelHandlerContext" class="headerlink" title="ChannelHandlerContext"></a>ChannelHandlerContext</h3><p>当ChannelHandler被添加到ChannelPipeline中的时候，ChannelHandlerContext会被创建。<br>所以说ChannelHandlerContext属于ChannelHandler。</p>
+<p>可以通过ChannelHandlerContext的channel方法得到Channel和pipeline方法得到ChannelPipeline。</p>
+<p>ChannelHandlerContext可以被保留下来并且在其他地方进行调用，比如在其他线程，或者在handler外部进行调用。</p>
+<p>可以使用以下方法保留ChannelHandlerContext：</p>
+<pre><code>class WriterHandler extends ChannelHandlerAdapter {
+  private ChannelHandlerContext ctx;
+
+  @Override
+  public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+      this.ctx = ctx;
+  }
+
+  public void send(String msg) {
+      ctx.write(msg);
+  }
+}
+</code></pre><p>Netty中提供了一个@Sharable注解用来将一个实例的ChannelHandler添加到多个ChannelPipeline中，如果不加上这个注解，被多个ChannelPipeline使用的话会抛出异常。</p>
+<h3 id="ChannelPipeline"><a href="#ChannelPipeline" class="headerlink" title="ChannelPipeline"></a>ChannelPipeline</h3><p>多个ChannelHandler可以组成一个ChannelPipeline，里面的每个ChannelHandler可以转发给下一个ChannelHandler。</p>
+<p>ChannelPipeline内部的所有ChannelHandler的处理流程图：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty01.png" alt=""></p>
+<p>ChannelPipeline提供了多种方法用于添加或删除或代替ChannelHandler，比如addLast, addFirst, remove, replace等方法。</p>
+<h2 id="第七章"><a href="#第七章" class="headerlink" title="第七章"></a>第七章</h2><p>介绍Netty中的编码器、解码器。我们知道网络中传输的是字节-ByteBuf。我们需要对ByteBuf进行一些解码用于解码成熟悉的POJO，对ByteBuf进行编码用于网络传输。</p>
+<h3 id="Decoder"><a href="#Decoder" class="headerlink" title="Decoder"></a>Decoder</h3><p>解码器，针对的是inbound的数据，也就是读取数据的解码。</p>
+<p>2种类型：</p>
+<ol>
+<li>bytes到message的解码(ByteToMessageDecoder和ReplayingDecoder)</li>
+<li>message到message的解码(MessageToMessageDecoder)</li>
+</ol>
+<p>decoders的作用是把inbound中读取的数据从一种格式转换成另一种格式，由于decoders处理的是inbound中的数据，所以它也是ChannelInboundHandler的一种实现类。</p>
+<p>ByteToMessageDecoder和ReplayingDecoder属于bytes到message的解码。</p>
+<p>一个ByteToMessageDecoder例子，将byte转换成integer：</p>
+<pre><code>public class ToIntegerDecoder extends ByteToMessageDecoder {
+    @Override  protected void decode(ChannelHandlerContext ctx, ByteBuf in,     List&lt;Object&gt; out) throws Exception {
+        if(in.readableBytes() &gt;= 4) {
+            out.add(in.readInt());
+        }
+    }    
+}
+</code></pre><p>处理流程图如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty04.png" alt=""></p>
+<p>如果使用ReplayingDecoder，不需要进行可读字节的判断，直接添加到List里即可。跟ToIntegerDecoder实现一样的功能，ReplayingDecoder只需要这样即可。(但是有一定的局限性：1.不是所有的操作都被ByteBuf支持 2.ByteBuf.readableBytes方法大部分时间不会返回期望的值)</p>
+<pre><code>public class ToIntegerDecoder2 extends ReplayingDecoder&lt;Void&gt; {
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List&lt;Object&gt;     out) throws Exception {
+        out.add(in.readInt());
+    }
+}
+</code></pre><p>一个MessageToMessageDecoder例子，将integer转换成string：</p>
+<pre><code>public class IntegerToStringDecoder extends MessageToMessageDecoder&lt;Integer&gt; {
+    @Override
+    protected void decode(ChannelHandlerContext ctx, Integer msg, List&lt;Object&gt; out) throws Exception {
+        out.add(String.valueOf(msg));
+    }
+}
+</code></pre><p>处理流程图如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty05.png" alt=""></p>
+<h3 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h3><p>编码器，针对的是outbound的数据，也就是发送出去的数据的编码。</p>
+<p>2种类型：</p>
+<ol>
+<li>message到message的编码(MessageToMessageEncoder)</li>
+<li>message到byte的编码(MessageToByteEncoder)</li>
+</ol>
+<p>decoders的作用是把outbound中发送出去的数据从一种格式转换成另一种格式，由于eecoders处理的是outbound中的数据，所以它也是ChannelOutboundHandler的一种实现类。</p>
+<p>一个MessageToByteEncoder例子，将integer转换成byte：</p>
+<pre><code>public class IntegerToByteEncoder extends MessageToByteEncoder&lt;Integer&gt; {
+    @Override
+    protected void encode(ChannelHandlerContext ctx, Integer msg, ByteBuf out) throws Exception {
+        out.writeInt(msg);
+    }
+}
+</code></pre><p>处理流程图如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty06.png" alt=""></p>
+<p>一个MessageToMessageEncoder例子，将integer转换成string：</p>
+<pre><code>public class IntegerToStringEncoder extends MessageToMessageEncoder&lt;Integer&gt; {
+    @Override
+    protected void encode(ChannelHandlerContext ctx, Integer msg, List&lt;Object&gt; out) throws Exception {
+        out.add(String.valueOf(msg));
+    }
+}
+</code></pre><p>处理流程图如下：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty07.png" alt=""></p>
+<h3 id="Codec"><a href="#Codec" class="headerlink" title="Codec"></a>Codec</h3><p>编解码器，既支持编码器的功能，也支持解码器的功能。</p>
+<p>2种类型：</p>
+<ol>
+<li>ByteToMessageCodec：message到byte的编解码</li>
+<li>MessageToMessageCodec：message到message的编解码</li>
+</ol>
+<h3 id="CombinedChannelDuplexHandler"><a href="#CombinedChannelDuplexHandler" class="headerlink" title="CombinedChannelDuplexHandler"></a>CombinedChannelDuplexHandler</h3><p>结合解码器和编码器在一起可能会牺牲可重用性。为了避免这种方式，可以使用CombinedChannelDuplexHandler。</p>
+<p>CombinedChannelDuplexHandler也就是codec的另外一种方式，如果已经有个encoder和decoder，不需要重新写了codec，直接使用CombinedChannelDuplexHandler整合这个encoder和decoder即可。</p>
+<p>上面的ToIntegerDecoder和IntegerToByteEncoder就可以构成一个编解码器，直接使用CombinedChannelDuplexHandler即可。</p>
+<pre><code>public class CombinedByteIntegerCodec extends CombinedChannelDuplexHandler&lt;ToIntegerDecoder, IntegerToByteEncoder&gt; {
+    public CombinedByteIntegerCodec() {
+        super(new ToIntegerDecoder(), new IntegerToByteEncoder());
+    }
+}
+</code></pre><h2 id="第八章"><a href="#第八章" class="headerlink" title="第八章"></a>第八章</h2><p>主要说明jetty内置的一些ChannelHandler和Codec。</p>
+<p>使用SSL/TLS加密Netty程序的话，可以使用内置的SslHandler。</p>
+<p>要构建Http应用的话，可以使用HttpClientCodec/HttpServerCodec(http客户端和服务端的编解码)以及HttpObjectAggregator(Http的消息聚合)。</p>
+<p>可以使用HttpContentDecompressor和HttpContentCompressor对http的内容进行解压和压缩。</p>
+<p>还有一些WebSocket、SPDY，一些空置链接、超时链接等处理的内置解决方案。</p>
+<h2 id="第九章"><a href="#第九章" class="headerlink" title="第九章"></a>第九章</h2><p>主要讲解Bootstrap中Netty中的作用。</p>
+<p>之前分析过各种ChannelHandler，各种Codec，以及把这两个东西添加到Channel 的ChannelPipeline中。有了这些东西之后，该用什么把他们整合起来呢，那就是Bootstrap。</p>
+<p>Bootstrap分别ServerBootstrap(服务端)和Bootstrap(客户端)，它们都继承AbstractBootstrap。</p>
+<h3 id="Bootstrap"><a href="#Bootstrap" class="headerlink" title="Bootstrap"></a>Bootstrap</h3><p>客户端服务启动类，内部提供的一些方法如下：</p>
+<table>
+<thead>
+<tr>
+<th>方法名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>group(..)</td>
+<td>设置Bootstrap使用的EventLoopGroup，用来处理Channel的IO操作</td>
+</tr>
+<tr>
+<td>channel(..)</td>
+<td>Channel的类型，比如有NioSocketChannel, OioSocketChannel等</td>
+</tr>
+<tr>
+<td>channelFactory(..)</td>
+<td>如果Channel没有没有参数的构造函数，需要使用ChannelFactory构造Channel</td>
+</tr>
+<tr>
+<td>localAddress(..)</td>
+<td>Channel需要绑定的地址和端口，可以不调用，使用connect或者bind再进行设置</td>
+</tr>
+<tr>
+<td>option(..)</td>
+<td>一些可选的设置，使用ChannelOptions完成。比如keep-alive时间，超时时间</td>
+</tr>
+<tr>
+<td>handler(..)</td>
+<td>设置ChannelHandler处理事件</td>
+</tr>
+<tr>
+<td>clone(..)</td>
+<td>复制一个新的Bootstrap，AbstractBootstrap实现了Cloneable接口</td>
+</tr>
+<tr>
+<td>remoteAddress()..)</td>
+<td>设置远程地址，也可以在调用connect方法的时候设置</td>
+</tr>
+<tr>
+<td>connect()..)</td>
+<td>链接到远程地址</td>
+</tr>
+<tr>
+<td>bind()..)</td>
+<td>绑定本地端口</td>
+</tr>
+</tbody>
+</table>
+<p>需要注意的是如果EventLoopGroup选择的是NioEventLoopGroup，那么对应的channel需要选择NioSocketChannel，否则会抛出兼容性的错误异常。</p>
+<h3 id="ServerBootstrap"><a href="#ServerBootstrap" class="headerlink" title="ServerBootstrap"></a>ServerBootstrap</h3><p>服务端服务启动类，内部提供的一些方法如下：</p>
+<table>
+<thead>
+<tr>
+<th>方法名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>group(..)</td>
+<td>设置ServerBootstrap使用的EventLoopGroup，用来处理ServerChannel的IO操作并接收Channel</td>
+</tr>
+<tr>
+<td>channel(..)</td>
+<td>ServerChannel的类型，比如有NioServerSocketChannel, OioServerSocketChannel等</td>
+</tr>
+<tr>
+<td>channelFactory(..)</td>
+<td>如果ServerChannel没有没有参数的构造函数，需要使用ChannelFactory构造ServerChannel</td>
+</tr>
+<tr>
+<td>localAddress(..)</td>
+<td>ServerChannel需要绑定的地址和端口，可以不调用，使用connect或者bind再进行设置</td>
+</tr>
+<tr>
+<td>option(..)</td>
+<td>一些ServerChannel可选的设置，使用ChannelOptions完成。比如keep-alive时间，超时时间</td>
+</tr>
+<tr>
+<td>childOption(..)</td>
+<td>被ServerChannel接收的Channel的可选的设置，使用ChannelOptions完成</td>
+</tr>
+<tr>
+<td>handler(..)</td>
+<td>设置ServerChannel的ChannelHandler处理事件</td>
+</tr>
+<tr>
+<td>childHandler(..)</td>
+<td>设置被ServerChannel接收的Channel的ChannelHandler处理事件</td>
+</tr>
+<tr>
+<td>clone(..)</td>
+<td>复制一个新的ServerBootstrap，AbstractBootstrap实现了Cloneable接口</td>
+</tr>
+<tr>
+<td>bind()..)</td>
+<td>绑定本地端口</td>
+</tr>
+</tbody>
+</table>
+<p>ServerBootstrap的处理过程：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty08.png" alt=""></p>
+<p>ServerBootstrap调用bind绑定地址和端口的时候，会创建ServerChannel。这个ServerChannel会接收客户的各个链接，针对各个链接创建Channel。</p>
+<p>handler方法就是为ServerChannel服务的，而childHandler是给被ServerChannel接收的Channel服务器的。所以说只要服务器已起来，handler中的ChannelHandler就会触发，而有链接被ServerChannel接收之后childHandler中的ChannelHandler才会触发。</p>
+<h3 id="从一个已经存在的Channel中使用Bootstrap启动客户端"><a href="#从一个已经存在的Channel中使用Bootstrap启动客户端" class="headerlink" title="从一个已经存在的Channel中使用Bootstrap启动客户端"></a>从一个已经存在的Channel中使用Bootstrap启动客户端</h3><p>在ServerBootstrap接收到新的Channel的时候准备启动Bootstrap客户端的时候，可以使用一个全新的EventLoop用于处理Channel的IO模型。</p>
+<p>但是没有必要，可以跟ServerBootstrap共享同一个EventLoop，因为一个EventLoop是跟一个线程绑定的，如果使用了多个EventLoop的话，那就相当于需要进行线程的上下文切换，需要消耗一定的资源。</p>
+<p>1个在ServerBootstrap接收到链接之后，使用Bootstrap链接另外一个地址的处理过程：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/netty09.png" alt=""></p>
+<p>其中第3点就是ServerChannel接收到的新的Channel，第5点是Bootstrap创建的连接到远程服务器的Channel，它们使用同一个EventLoop。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/08/29/netty-in-action-note2/">http://fangjian0423.github.io/2016/08/29/netty-in-action-note2/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/nio/" rel="tag">#nio</a>
+          
+            <a href="/tags/netty/" rel="tag">#netty</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/19/netty-in-action-note1/" rel="next" title="Netty in Action笔记(一)">
+                <i class="fa fa-chevron-left"></i> Netty in Action笔记(一)
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/30/netty-custom-protocol/" rel="prev" title="使用Netty编写自定义的协议">
+                使用Netty编写自定义的协议 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#第六章"><span class="nav-number">1.</span> <span class="nav-text">第六章</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Channel"><span class="nav-number">1.1.</span> <span class="nav-text">Channel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ChannelHandler"><span class="nav-number">1.2.</span> <span class="nav-text">ChannelHandler</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ChannelInboundHandler"><span class="nav-number">1.2.1.</span> <span class="nav-text">ChannelInboundHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ChannelOutboundHandler"><span class="nav-number">1.2.2.</span> <span class="nav-text">ChannelOutboundHandler</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ChannelHandlerContext"><span class="nav-number">1.3.</span> <span class="nav-text">ChannelHandlerContext</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ChannelPipeline"><span class="nav-number">1.4.</span> <span class="nav-text">ChannelPipeline</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第七章"><span class="nav-number">2.</span> <span class="nav-text">第七章</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Decoder"><span class="nav-number">2.1.</span> <span class="nav-text">Decoder</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Encoder"><span class="nav-number">2.2.</span> <span class="nav-text">Encoder</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Codec"><span class="nav-number">2.3.</span> <span class="nav-text">Codec</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CombinedChannelDuplexHandler"><span class="nav-number">2.4.</span> <span class="nav-text">CombinedChannelDuplexHandler</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第八章"><span class="nav-number">3.</span> <span class="nav-text">第八章</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第九章"><span class="nav-number">4.</span> <span class="nav-text">第九章</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Bootstrap"><span class="nav-number">4.1.</span> <span class="nav-text">Bootstrap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ServerBootstrap"><span class="nav-number">4.2.</span> <span class="nav-text">ServerBootstrap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#从一个已经存在的Channel中使用Bootstrap启动客户端"><span class="nav-number">4.3.</span> <span class="nav-text">从一个已经存在的Channel中使用Bootstrap启动客户端</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/08/29/netty-in-action-note2/';
+      var disqus_title = "Netty in Action笔记(二)";
+      var disqus_url = 'http://fangjian0423.github.io/2016/08/29/netty-in-action-note2/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

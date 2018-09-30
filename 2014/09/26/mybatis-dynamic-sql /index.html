@@ -1,0 +1,1291 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="mybatis,java," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="MyBatis动态SQL底层原理分析">
+<meta name="keywords" content="mybatis,java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MyBatis动态SQL底层原理分析">
+<meta property="og:url" content="http://fangjian0423.github.io/2014/09/26/mybatis-dynamic-sql /index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="MyBatis动态SQL底层原理分析">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql2.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql3.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql1.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql6.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql4.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql5.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql7.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql8.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql9.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql10.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql11.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql12.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql13.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql14.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql15.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/dynamicsql16.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MyBatis动态SQL底层原理分析">
+<meta name="twitter:description" content="MyBatis动态SQL底层原理分析">
+<meta name="twitter:image" content="http://format-blog-image.qiniudn.com/dynamicsql2.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> MyBatis动态SQL底层原理分析 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MyBatis动态SQL底层原理分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-09-26T15:49:50+08:00" content="2014-09-26">
+              2014-09-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/mybatis/" itemprop="url" rel="index">
+                    <span itemprop="name">mybatis</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/09/26/mybatis-dynamic-sql /#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/09/26/mybatis-dynamic-sql /" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2014/09/26/mybatis-dynamic-sql /" class="leancloud_visitors" data-flag-title="MyBatis动态SQL底层原理分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>废话不多说，直接进入文章。<br>我们在使用mybatis的时候，会在xml中编写sql语句。<br>比如这段动态sql代码：</p>
+<pre><code>&lt;update id=&quot;update&quot; parameterType=&quot;org.format.dynamicproxy.mybatis.bean.User&quot;&gt;
+    UPDATE users
+    &lt;trim prefix=&quot;SET&quot; prefixOverrides=&quot;,&quot;&gt;
+        &lt;if test=&quot;name != null and name != &apos;&apos;&quot;&gt;
+            name = #{name}
+        &lt;/if&gt;
+        &lt;if test=&quot;age != null and age != &apos;&apos;&quot;&gt;
+            , age = #{age}
+        &lt;/if&gt;
+        &lt;if test=&quot;birthday != null and birthday != &apos;&apos;&quot;&gt;
+            , birthday = #{birthday}
+        &lt;/if&gt;
+    &lt;/trim&gt;
+    where id = ${id}
+&lt;/update&gt;
+</code></pre><p>mybatis底层是如何构造这段sql的？<br>这方面的知识网上资料不多，于是就写了这么一篇文章。<br>下面带着这个疑问，我们一步一步分析。</p>
+<h2 id="介绍MyBatis中一些关于动态SQL的接口和类"><a href="#介绍MyBatis中一些关于动态SQL的接口和类" class="headerlink" title="介绍MyBatis中一些关于动态SQL的接口和类"></a>介绍MyBatis中一些关于动态SQL的接口和类</h2><p><strong>SqlNode接口</strong>，简单理解就是xml中的每个标签，比如上述sql的update,trim,if标签：</p>
+<pre><code>public interface SqlNode {
+  boolean apply(DynamicContext context);
+}
+</code></pre><p><img src="http://format-blog-image.qiniudn.com/dynamicsql2.png" alt=""></p>
+<p><strong>SqlSource Sql源接口</strong>，代表从xml文件或注解映射的sql内容，主要就是用于创建BoundSql，有实现类DynamicSqlSource(动态Sql源)，StaticSqlSource(静态Sql源)等：</p>
+<pre><code>public interface SqlSource {
+  BoundSql getBoundSql(Object parameterObject);
+}
+</code></pre><p><img src="http://format-blog-image.qiniudn.com/dynamicsql3.png" alt=""></p>
+<p><strong>BoundSql类</strong>，封装mybatis最终产生sql的类，包括sql语句，参数，参数源数据等参数：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql1.png" alt=""></p>
+<p><strong>XNode</strong>，一个Dom API中的Node接口的扩展类。</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql6.png" alt=""></p>
+<p><strong>BaseBuilder接口及其实现类</strong>(属性，方法省略了，大家有兴趣的自己看),这些Builder的作用就是用于构造sql:</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql4.png" alt=""></p>
+<p>下面我们简单分析下其中4个Builder：</p>
+<p>1 XMLConfigBuilder</p>
+<p>解析mybatis中configLocation属性中的全局xml文件，内部会使用XMLMapperBuilder解析各个xml文件。</p>
+<p>2 XMLMapperBuilder</p>
+<p>遍历mybatis中mapperLocations属性中的xml文件中每个节点的Builder，比如user.xml，内部会使用XMLStatementBuilder处理xml中的每个节点。</p>
+<p>3 XMLStatementBuilder</p>
+<p>解析xml文件中各个节点，比如select,insert,update,delete节点，内部会使用XMLScriptBuilder处理节点的sql部分，遍历产生的数据会丢到Configuration的mappedStatements中。</p>
+<p>4 XMLScriptBuilder</p>
+<p>解析xml中各个节点sql部分的Builder。</p>
+<p><strong>LanguageDriver接口及其实现类</strong>(属性，方法省略了，大家有兴趣的自己看)，该接口主要的作用就是构造sql:</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql5.png" alt=""></p>
+<p>简单分析下XMLLanguageDriver(处理xml中的sql，RawLanguageDriver处理静态sql)：</p>
+<p>XMLLanguageDriver内部会使用XMLScriptBuilder解析xml中的sql部分。</p>
+<p>ok， 大部分比较重要的类我们都已经介绍了，下面源码分析走起。</p>
+<h2 id="源码分析走起"><a href="#源码分析走起" class="headerlink" title="源码分析走起"></a>源码分析走起</h2><p>Spring与Mybatis整合的时候需要配置SqlSessionFactoryBean，该配置会加入数据源和mybatis xml配置文件路径等信息：</p>
+<pre><code>&lt;bean id=&quot;sqlSessionFactory&quot; class=&quot;org.mybatis.spring.SqlSessionFactoryBean&quot;&gt;
+    &lt;property name=&quot;dataSource&quot; ref=&quot;dataSource&quot;/&gt;
+    &lt;property name=&quot;configLocation&quot; value=&quot;classpath:mybatisConfig.xml&quot;/&gt;
+    &lt;property name=&quot;mapperLocations&quot; value=&quot;classpath*:org/format/dao/*.xml&quot;/&gt;
+&lt;/bean&gt;
+</code></pre><p>我们就分析这一段配置背后的细节：</p>
+<p>SqlSessionFactoryBean实现了Spring的InitializingBean接口，InitializingBean接口的afterPropertiesSet方法中会调用buildSqlSessionFactory方法</p>
+<p>buildSqlSessionFactory方法内部会使用XMLConfigBuilder解析属性configLocation中配置的路径，还会使用XMLMapperBuilder属性解析mapperLocations属性中的各个xml文件。</p>
+<p>部分源码如下：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql7.png" alt=""></p>
+<p>由于XMLConfigBuilder内部也是使用XMLMapperBuilder，我们就看看XMLMapperBuilder的解析细节。</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql8.png" alt=""></p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql9.png" alt=""></p>
+<p>我们关注一下，增删改查节点的解析。</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql10.png" alt=""></p>
+<p>XMLStatementBuilder的解析：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql11.png" alt=""></p>
+<p>默认会使用XMLLanguageDriver创建SqlSource（Configuration构造函数中设置）。</p>
+<p>XMLLanguageDriver创建SqlSource：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql12.png" alt=""></p>
+<p>XMLScriptBuilder解析sql：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql13.png" alt=""></p>
+<p>得到SqlSource之后，会放到Configuration中，有了SqlSource，就能拿BoundSql了，BoundSql可以得到最终的sql。</p>
+<h2 id="实例分析"><a href="#实例分析" class="headerlink" title="实例分析"></a>实例分析</h2><p>我以以下xml的解析大概说下parseDynamicTags的解析过程：</p>
+<pre><code>&lt;update id=&quot;update&quot; parameterType=&quot;org.format.dynamicproxy.mybatis.bean.User&quot;&gt;
+    UPDATE users
+    &lt;trim prefix=&quot;SET&quot; prefixOverrides=&quot;,&quot;&gt;
+        &lt;if test=&quot;name != null and name != &apos;&apos;&quot;&gt;
+            name = #{name}
+        &lt;/if&gt;
+        &lt;if test=&quot;age != null and age != &apos;&apos;&quot;&gt;
+            , age = #{age}
+        &lt;/if&gt;
+        &lt;if test=&quot;birthday != null and birthday != &apos;&apos;&quot;&gt;
+            , birthday = #{birthday}
+        &lt;/if&gt;
+    &lt;/trim&gt;
+    where id = ${id}
+&lt;/update&gt;
+</code></pre><p>在看这段解析之前，请先了解dom相关的知识，<a href="http://www.w3school.com.cn/xmldom/index.asp" target="_blank" rel="noopener">xml dom知识</a>, <a href="http://www.cnblogs.com/fangjian0423/p/dom-parse-xml-html.html" target="_blank" rel="noopener">dom博文</a></p>
+<p>parseDynamicTags方法的返回值是一个List<sqlnode>，也就是一个Sql节点集合。SqlNode本文一开始已经介绍，分析完解析过程之后会说一下各个SqlNode类型的作用。</sqlnode></p>
+<p>1 首先根据update节点(Node)得到所有的子节点，分别是3个子节点</p>
+<p> (1)文本节点   \n   UPDATE users</p>
+<p> (2)trim子节点 <trim>…</trim></p>
+<p> (3)文本节点  \n    where id = #{id}</p>
+<p>2 遍历各个子节点</p>
+<p> (1) 如果节点类型是文本或者CDATA，构造一个TextSqlNode或StaticTextSqlNode</p>
+<p> (2) 如果节点类型是元素，说明该update节点是个动态sql，然后会使用NodeHandler处理各个类型的子节点。这里的NodeHandler是XMLScriptBuilder的一个内部接口，其实现类包括TrimHandler、WhereHandler、SetHandler、IfHandler、ChooseHandler等。看类名也就明白了这个Handler的作用，比如我们分析的trim节点，对应的是TrimHandler；if节点，对应的是IfHandler… </p>
+<p> 这里子节点trim被TrimHandler处理，TrimHandler内部也使用parseDynamicTags方法解析节点</p>
+<p>3 遇到子节点是元素的话，重复以上步骤</p>
+<p>  trim子节点内部有7个子节点，分别是文本节点、if节点、是文本节点、if节点、是文本节点、if节点、文本节点。文本节点跟之前一样处理，if节点使用IfHandler处理</p>
+<p>遍历步骤如上所示，下面我们看下几个Handler的实现细节。</p>
+<p>IfHandler处理方法也是使用parseDynamicTags方法，然后加上if标签必要的属性。 </p>
+<pre><code>private class IfHandler implements NodeHandler {
+    public void handleNode(XNode nodeToHandle, List&lt;SqlNode&gt; targetContents) {
+      List&lt;SqlNode&gt; contents = parseDynamicTags(nodeToHandle);
+      MixedSqlNode mixedSqlNode = new MixedSqlNode(contents);
+      String test = nodeToHandle.getStringAttribute(&quot;test&quot;);
+      IfSqlNode ifSqlNode = new IfSqlNode(mixedSqlNode, test);
+      targetContents.add(ifSqlNode);
+    }
+}
+</code></pre><p>TrimHandler处理方法也是使用parseDynamicTags方法，然后加上trim标签必要的属性。</p>
+<pre><code>private class TrimHandler implements NodeHandler {
+    public void handleNode(XNode nodeToHandle, List&lt;SqlNode&gt; targetContents) {
+      List&lt;SqlNode&gt; contents = parseDynamicTags(nodeToHandle);
+      MixedSqlNode mixedSqlNode = new MixedSqlNode(contents);
+      String prefix = nodeToHandle.getStringAttribute(&quot;prefix&quot;);
+      String prefixOverrides = nodeToHandle.getStringAttribute(&quot;prefixOverrides&quot;);
+      String suffix = nodeToHandle.getStringAttribute(&quot;suffix&quot;);
+      String suffixOverrides = nodeToHandle.getStringAttribute(&quot;suffixOverrides&quot;);
+      TrimSqlNode trim = new TrimSqlNode(configuration, mixedSqlNode, prefix, prefixOverrides, suffix, suffixOverrides);
+      targetContents.add(trim);
+    }
+}
+</code></pre><p>以上update方法最终通过parseDynamicTags方法得到的SqlNode集合如下：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql14.png" alt=""></p>
+<p>trim节点：</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql15.png" alt=""></p>
+<p>由于这个update方法是个动态节点，因此构造出了DynamicSqlSource。</p>
+<p>DynamicSqlSource内部就可以构造sql了:</p>
+<p><img src="http://format-blog-image.qiniudn.com/dynamicsql16.png" alt=""></p>
+<p>DynamicSqlSource内部的SqlNode属性是一个MixedSqlNode。</p>
+<p>然后我们看看各个SqlNode实现类的apply方法</p>
+<p>下面分析一下两个SqlNode实现类的apply方法实现：</p>
+<p>MixedSqlNode：</p>
+<pre><code>public boolean apply(DynamicContext context) {
+    for (SqlNode sqlNode : contents) {
+      sqlNode.apply(context);
+    }
+    return true;
+}
+</code></pre><p>MixedSqlNode会遍历调用内部各个sqlNode的apply方法。</p>
+<p>StaticTextSqlNode:</p>
+<pre><code>public boolean apply(DynamicContext context) {
+    context.appendSql(text);
+    return true;
+}
+</code></pre><p>直接append sql文本。</p>
+<p>IfSqlNode:</p>
+<pre><code>public boolean apply(DynamicContext context) {
+    if (evaluator.evaluateBoolean(test, context.getBindings())) {
+      contents.apply(context);
+      return true;
+    }
+    return false;
+}
+</code></pre><p>这里的evaluator是一个ExpressionEvaluator类型的实例，内部使用了OGNL处理表达式逻辑。</p>
+<p>TrimSqlNode:</p>
+<pre><code>public boolean apply(DynamicContext context) {
+    FilteredDynamicContext filteredDynamicContext = new FilteredDynamicContext(context);
+    boolean result = contents.apply(filteredDynamicContext);
+    filteredDynamicContext.applyAll();
+    return result;
+}
+
+public void applyAll() {
+  sqlBuffer = new StringBuilder(sqlBuffer.toString().trim());
+  String trimmedUppercaseSql = sqlBuffer.toString().toUpperCase(Locale.ENGLISH);
+  if (trimmedUppercaseSql.length() &gt; 0) {
+    applyPrefix(sqlBuffer, trimmedUppercaseSql);
+    applySuffix(sqlBuffer, trimmedUppercaseSql);
+  }
+  delegate.appendSql(sqlBuffer.toString());
+}
+
+private void applyPrefix(StringBuilder sql, String trimmedUppercaseSql) {
+  if (!prefixApplied) {
+    prefixApplied = true;
+    if (prefixesToOverride != null) {
+      for (String toRemove : prefixesToOverride) {
+        if (trimmedUppercaseSql.startsWith(toRemove)) {
+          sql.delete(0, toRemove.trim().length());
+          break;
+        }
+      }
+    }
+    if (prefix != null) {
+      sql.insert(0, &quot; &quot;);
+      sql.insert(0, prefix);
+    }
+  }
+}
+</code></pre><p>TrimSqlNode的apply方法也是调用属性contents(一般都是MixedSqlNode)的apply方法，按照实例也就是7个SqlNode，都是StaticTextSqlNode和IfSqlNode。 最后会使用FilteredDynamicContext过滤掉prefix和suffix。  </p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>大致讲解了一下mybatis对动态sql语句的解析过程，其实回过头来看看不算复杂，还算蛮简单的。 之前接触mybaits的时候遇到刚才分析的那一段动态sql的时候总是很费解。</p>
+<pre><code>&lt;update id=&quot;update&quot; parameterType=&quot;org.format.dynamicproxy.mybatis.bean.User&quot;&gt;
+    UPDATE users
+    &lt;trim prefix=&quot;SET&quot; prefixOverrides=&quot;,&quot;&gt;
+        &lt;if test=&quot;name != null and name != &apos;&apos;&quot;&gt;
+            name = #{name}
+        &lt;/if&gt;
+        &lt;if test=&quot;age != null and age != &apos;&apos;&quot;&gt;
+            , age = #{age}
+        &lt;/if&gt;
+        &lt;if test=&quot;birthday != null and birthday != &apos;&apos;&quot;&gt;
+            , birthday = #{birthday}
+        &lt;/if&gt;
+    &lt;/trim&gt;
+    where id = ${id}
+&lt;/update&gt;
+</code></pre><p>想搞明白这个trim节点的prefixOverrides到底是什么意思(从字面上理解就是前缀覆盖)，而且官方文档上也没这方面知识的说明。我将这段xml改成如下：</p>
+<pre><code>&lt;update id=&quot;update&quot; parameterType=&quot;org.format.dynamicproxy.mybatis.bean.User&quot;&gt;
+    UPDATE users
+    &lt;trim prefix=&quot;SET&quot; prefixOverrides=&quot;,&quot;&gt;
+        &lt;if test=&quot;name != null and name != &apos;&apos;&quot;&gt;
+            , name = #{name}
+        &lt;/if&gt;
+        &lt;if test=&quot;age != null and age != &apos;&apos;&quot;&gt;
+            , age = #{age}
+        &lt;/if&gt;
+        &lt;if test=&quot;birthday != null and birthday != &apos;&apos;&quot;&gt;
+            , birthday = #{birthday}
+        &lt;/if&gt;
+    &lt;/trim&gt;
+    where id = ${id}
+&lt;/update&gt;
+</code></pre><p>(第二段第一个if节点多了个逗号)  结果我发现这2段xml解析的结果是一样的，非常迫切地想知道这到底是为什么，然后这也促使了我去看源码的决心。最终还是看下来了。</p>
+<p>文章有点长，而且讲的也不是非常直观，希望对有些人有帮助。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2014/09/26/mybatis-dynamic-sql /">http://fangjian0423.github.io/2014/09/26/mybatis-dynamic-sql /</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/mybatis/" rel="tag">#mybatis</a>
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/09/21/dom-parse-xml-html/" rel="next" title="简单谈谈dom解析xml和html">
+                <i class="fa fa-chevron-left"></i> 简单谈谈dom解析xml和html
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/10/31/intellij_idea_uml/" rel="prev" title="Intellij Idea中一个非常牛逼的UML图功能">
+                Intellij Idea中一个非常牛逼的UML图功能 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#介绍MyBatis中一些关于动态SQL的接口和类"><span class="nav-number">2.</span> <span class="nav-text">介绍MyBatis中一些关于动态SQL的接口和类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码分析走起"><span class="nav-number">3.</span> <span class="nav-text">源码分析走起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实例分析"><span class="nav-number">4.</span> <span class="nav-text">实例分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2014/09/26/mybatis-dynamic-sql /';
+      var disqus_title = "MyBatis动态SQL底层原理分析";
+      var disqus_url = 'http://fangjian0423.github.io/2014/09/26/mybatis-dynamic-sql /';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

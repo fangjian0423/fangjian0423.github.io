@@ -1,0 +1,1311 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="jvm,scala," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="spray-json是scala的一个轻量的，简洁的，简单的关于JSON实现。同时也是spray项目的json模块，本文分析spray-json的源码 ...">
+<meta name="keywords" content="jvm,scala">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spray-json源码分析">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/12/23/scala-spray-json/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="spray-json是scala的一个轻量的，简洁的，简单的关于JSON实现。同时也是spray项目的json模块，本文分析spray-json的源码 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="spray-json源码分析">
+<meta name="twitter:description" content="spray-json是scala的一个轻量的，简洁的，简单的关于JSON实现。同时也是spray项目的json模块，本文分析spray-json的源码 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> spray-json源码分析 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                spray-json源码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-12-23T01:47:35+08:00" content="2015-12-23">
+              2015-12-23
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/scala/" itemprop="url" rel="index">
+                    <span itemprop="name">scala</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/12/23/scala-spray-json/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/23/scala-spray-json/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/12/23/scala-spray-json/" class="leancloud_visitors" data-flag-title="spray-json源码分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="spray-json介绍以及内部结构"><a href="#spray-json介绍以及内部结构" class="headerlink" title="spray-json介绍以及内部结构"></a>spray-json介绍以及内部结构</h2><p><a href="https://github.com/spray/spray-json" target="_blank" rel="noopener">spray-json</a>是scala的一个轻量的，简洁的，简单的关于JSON实现。</p>
+<p>同时也是<a href="http://spray.io/" target="_blank" rel="noopener">spray</a>项目的json模块。</p>
+<p>本文分析spray-json的源码。</p>
+<p>在分析spray-json的源码之前，我们先介绍一下spray-json的使用方法以及里面的几个概念。</p>
+<p>首先是spray-json的一个使用例子，里面有各种黑魔法：</p>
+<pre><code>val str = &quot;&quot;&quot;{
+    &quot;name&quot;: &quot;Ed&quot;,
+    &quot;age&quot;: 24
+}&quot;&quot;&quot;
+
+// 黑魔法。不是String的parseJson方法，而是使用了隐式转换，隐式转换成PimpedString类。PimpedString里有parseJson方法，转换成JsValue对象
+val jsonVal = str.parseJson // jsonVal是个JsObject对象的实例
+
+// jsonVal是个JsObject对象，也是个JsValue实例。JsValue对象都有compactPrint和prettyPrint方法
+println(jsonVal.compactPrint) // 压缩打印
+println(jsonVal.prettyPrint) // 格式化打印
+
+// 手动构建一个JsObject
+val jsonObj = JsObject(
+    (&quot;name&quot;, JsString(&quot;format&quot;)), (&quot;age&quot;, JsNumber(99))
+)
+
+println(jsonObj.compactPrint)
+println(jsonObj.prettyPrint)
+
+// 黑方法，不是List的toJson方法，而是使用了隐式转换，隐式转换成PimpedAny类，PimpedAny类里有toList方法，转换成对应的类型
+val jsonList = List(1,2,3).toJson
+
+// JsValue的toString方法引用了compactPrint方法
+println(jsonList)
+</code></pre><p>然后是spray-json里的几个概念介绍：</p>
+<p>1.JsValue: 抽象类。对原生json中的各种数据类型的抽象。它的实现类JsArray对应json里的数组；JsBoolean对应json里的布尔值；JsNumber对应json里的数值 …</p>
+<p>2.JsonFormat: 一个trait，是json序列化和反序列话的抽象。继承JsonReader(JsValue转换成对象的抽象)和JsonWriter(对象转换成JsValue的抽象)。BasicFormats和CollectionFormats、AdditionalFormats等这些trait里都有各种JsonFormat的隐式转换。</p>
+<p>3.RootJsonFormat。json文档的抽象，跟JsonFormat一样，只不过RootJsonFormat只支持JsArray和JsObject。因为这是一个json文档对象，只有一个json对象或者一个json数组才能称得上是一个json文档对象。</p>
+<p>4.JsonPrinter: 一个trait。json打印成字符串的抽象。具体的实现特质有CompactPrinter(压缩后的字符串)和PrettyPrinter(格式化后的字符串)</p>
+<p>5.DefaultJsonProtocol: 继承BasicFormats，混入StandardFormats、CollectionFormats、ProductFormats、AdditionalFormats的特质。我们需要转换一些基础类型或者集合类型的时候需要import这个trait。</p>
+<h2 id="json-package对象"><a href="#json-package对象" class="headerlink" title="json package对象"></a>json package对象</h2><p>json package对象里定义了一些隐式转换方法和一些实用方法。</p>
+<pre><code>package object json {
+
+  // JsField。 一个二元元组，代表json中的一个项(key为String，value为任意json类型)
+  type JsField = (String, JsValue)
+
+  // 反序列化异常
+  def deserializationError(msg: String, cause: Throwable = null, fieldNames: List[String] = Nil) = throw new DeserializationException(msg, cause, fieldNames)
+  // 序列化异常
+  def serializationError(msg: String) = throw new SerializationException(msg)
+  // jsonReader方法，是个泛型。使用了隐式参数，返回值是这个隐式参数的引用。也就是说只要调用了jsonReader方法，那么就会自动去找对应泛型类型的实现
+  def jsonReader[T](implicit reader: JsonReader[T]) = reader
+  // 跟jsonReader方法一个道理。只要调用了jsonWriter方法，那么就会自动去找对应泛型类型的实现
+  def jsonWriter[T](implicit writer: JsonWriter[T]) = writer 
+
+  // 隐式转换方法。上面例子的toList使用了这个隐式转换
+  implicit def pimpAny[T](any: T) = new PimpedAny(any)
+  // 隐式方法。上面例子的parseJson使用了这个隐式转换
+  implicit def pimpString(string: String) = new PimpedString(string)
+}
+
+package json {
+
+  // 反序列异常类的定义，上面的deserializationError方法实例化了这个类
+  case class DeserializationException(msg: String, cause: Throwable = null, fieldNames: List[String] = Nil) extends RuntimeException(msg, cause)
+  // 序列异常类的定义，上面的serializationError方法实例化了这个类
+  class SerializationException(msg: String) extends RuntimeException(msg)
+
+  // 上面的隐式方法pimpAny实例化了这个类。黑魔法toJson方法，不是List的toJson方法，而是List隐式转换成PimpedAny，然后调用PimpedAny的toJson方法。toJson方法的参数是个隐式参数，跟上面代码里的jsonWriter方法一样，会找对应泛型类型的JsonWriter实现类，然后调用JsonWriter的write方法
+  private[json] class PimpedAny[T](any: T) {
+    def toJson(implicit writer: JsonWriter[T]): JsValue = writer.write(any)
+  }
+
+  // 上面的隐式方法pimpString实例化了这个类。黑魔法parseJson方法，不是String的parseJson方法，而是String隐式转换成PimpedString，然后调用PimpedString的parseJson方法
+  private[json] class PimpedString(string: String) {
+    @deprecated(&quot;deprecated in favor of parseJson&quot;, &quot;1.2.6&quot;)
+    def asJson: JsValue = parseJson
+    def parseJson: JsValue = JsonParser(string)
+  }
+}
+</code></pre><h2 id="JsValue-原生json中的各种数据类型的抽象"><a href="#JsValue-原生json中的各种数据类型的抽象" class="headerlink" title="JsValue(原生json中的各种数据类型的抽象)"></a>JsValue(原生json中的各种数据类型的抽象)</h2><p>JsValue是原生json中各种数据类型的抽象，是个抽象类，直接看JsValue的定义:</p>
+<pre><code>sealed abstract class JsValue {
+     // 重载的toString方法引用了compactPrint方法，会打印出json的压缩格式
+  override def toString = compactPrint
+  def toString(printer: (JsValue =&gt; String)) = printer(this)
+  // 压缩打印，使用了CompactPrinter。CompactPrinter是一个JsonPrinter的子类
+  def compactPrint = CompactPrinter(this)
+  // 格式化打印，PrettyPrinter。PrettyPrinter也是一个JsonPrinter的子类
+  def prettyPrint = PrettyPrinter(this)
+  // 转换成对应的类。jsonReader方法在json package里定义，已经分析过。会找对应那个的JsonReader实现类。然后调用read方法
+  def convertTo[T :JsonReader]: T = jsonReader[T].read(this)
+
+  // 转换成JsObject对象，除了JsObject对象重写了这个，返回了自身。其他类型的JsValue都会抛出DeserializationException异常
+  def asJsObject(errorMsg: String = &quot;JSON object expected&quot;): JsObject = deserializationError(errorMsg)
+
+  def asJsObject: JsObject = asJsObject()
+
+  @deprecated(&quot;Superceded by &apos;convertTo&apos;&quot;, &quot;1.1.0&quot;)
+  def fromJson[T :JsonReader]: T = convertTo
+}
+</code></pre><p>JsNumber是数值类型的抽象：</p>
+<pre><code>case class JsNumber(value: BigDecimal) extends JsValue
+
+// JsNumber中定义了几个方便的构造方法
+object JsNumber {
+  val zero: JsNumber = apply(0)
+  def apply(n: Int) = new JsNumber(BigDecimal(n))
+  def apply(n: Long) = new JsNumber(BigDecimal(n))
+  def apply(n: Double) = n match {
+    case n if n.isNaN      =&gt; JsNull
+    case n if n.isInfinity =&gt; JsNull
+    case _                 =&gt; new JsNumber(BigDecimal(n))
+  }
+  def apply(n: BigInt) = new JsNumber(BigDecimal(n))
+  def apply(n: String) = new JsNumber(BigDecimal(n))
+  def apply(n: Array[Char]) = new JsNumber(BigDecimal(n))
+}
+</code></pre><p>JsString是字符串类型的抽象：</p>
+<pre><code>case class JsString(value: String) extends JsValue
+
+// JsString中定义了几个方便的方法
+object JsString {
+    val empty = JsString(&quot;&quot;)
+    def apply(value: Symbol) = new JsString(value.name)
+}
+</code></pre><p>JsObject是对象类型的抽象：</p>
+<pre><code>case class JsObject(fields: Map[String, JsValue]) extends JsValue {
+  // 重写了asJsObject方法
+  override def asJsObject(errorMsg: String) = this
+  // 根据字段名获得对应的JsValue
+  def getFields(fieldNames: String*): immutable.Seq[JsValue] = fieldNames.flatMap(fields.get)(collection.breakOut)
+}
+
+object JsObject {
+  val empty = JsObject(Map.empty[String, JsValue])
+  // 使用多个JsField构造JsObject。这里的JsField就是代表一个(String, JsValue)
+  def apply(members: JsField*) = new JsObject(Map(members: _*))
+  @deprecated(&quot;Use JsObject(JsValue*) instead&quot;, &quot;1.3.0&quot;)
+  def apply(members: List[JsField]) = new JsObject(Map(members: _*))
+}
+</code></pre><h2 id="JsonFormat-JsonWriter和JsonReader的子类"><a href="#JsonFormat-JsonWriter和JsonReader的子类" class="headerlink" title="JsonFormat(JsonWriter和JsonReader的子类)"></a>JsonFormat(JsonWriter和JsonReader的子类)</h2><p>一个trait，是json序列化和反序列话的抽象。继承JsonReader(JsValue转换成对象的抽象)和JsonWriter(对象转换成JsValue的抽象)。</p>
+<p>JsonReader的定义，把一个JsValue转换成对应的类型：</p>
+<pre><code>trait JsonReader[T] {
+  def read(json: JsValue): T
+}
+</code></pre><p>JsonWriter的定义，把一个类型转换成JsValue：</p>
+<pre><code>trait JsonWriter[T] {
+  def write(obj: T): JsValue
+}
+</code></pre><p>json package对象里的jsonReader和jsonWriter方法有个隐式参数，我们也分析过：只要调用了jsonReader(JsonWriter)方法，那么就会自动去找对应泛型类型的实现。</p>
+<p>AdditionalFormats、BasicFormats、CollectionFormats、StandardFormats等都定义了各种JsonFormat。</p>
+<p>比如Int类型就找IntJsonFormat，String类型就找StringJsonFormat …  这些基础类型的JsonFormat都定义在BasicFormats这个trait中。</p>
+<p>我们就分析几个BasicFormats中定义的基础类型JsonFormat：</p>
+<p>Int基本类型的JsonFormat：</p>
+<pre><code>implicit object IntJsonFormat extends JsonFormat[Int] {
+    // write方法继承自JsonWriter。 直接实例化一个JsNumber对象
+    def write(x: Int) = JsNumber(x)
+    // read方法继承自JsonReader。读取JsNumber中对应的值
+    def read(value: JsValue) = value match {
+      case JsNumber(x) =&gt; x.intValue
+      case x =&gt; deserializationError(&quot;Expected Int as JsNumber, but got &quot; + x)
+    }
+}
+</code></pre><p>String基本类型的JsonFormat：</p>
+<pre><code>implicit object StringJsonFormat extends JsonFormat[String] {
+    // write方法实例化一个JsString
+    def write(x: String) = {
+      require(x ne null)
+      JsString(x)
+    }
+    // read方法读取JsString中对应的字符串
+    def read(value: JsValue) = value match {
+      case JsString(x) =&gt; x
+      case x =&gt; deserializationError(&quot;Expected String as JsString, but got &quot; + x)
+    }
+}
+</code></pre><p>…..</p>
+<p>CollectionFormats中定义了几个集合类的JsonFormat:</p>
+<p>List类型的JsonFormat：</p>
+<pre><code>implicit def listFormat[T :JsonFormat] = new RootJsonFormat[List[T]] {
+    // 将List转换成JsArray对象。遍历list中的各个元素，对每个元素调用toJson方法。最后JsArray里的每个元素都是JsValue
+    def write(list: List[T]) = JsArray(list.map(_.toJson).toVector)
+    // JsArray转换成List。对JsArray里的各个JsValue调用convertTo转换成对应的类型
+    def read(value: JsValue): List[T] = value match {
+      case JsArray(elements) =&gt; elements.map(_.convertTo[T])(collection.breakOut)
+      case x =&gt; deserializationError(&quot;Expected List as JsArray, but got &quot; + x)
+    }
+}
+</code></pre><p>Map类型的JsonFormat：</p>
+<pre><code>implicit def mapFormat[K :JsonFormat, V :JsonFormat] = new RootJsonFormat[Map[K, V]] {
+    // 遍历Map中的每一个二元元组。如果元组的第一项不是String，直接抛出SerializationException异常。否则构造key为元组第一项字符串，value为元组第二项的JsVaue对象。
+    def write(m: Map[K, V]) = JsObject {
+      m.map { field =&gt;
+        field._1.toJson match {
+          case JsString(x) =&gt; x -&gt; field._2.toJson
+          case x =&gt; throw new SerializationException(&quot;Map key must be formatted as JsString, not &apos;&quot; + x + &quot;&apos;&quot;)
+        }
+      }
+    }
+    def read(value: JsValue) = value match {
+      case x: JsObject =&gt; x.fields.map { field =&gt;
+        (JsString(field._1).convertTo[K], field._2.convertTo[V])
+      } (collection.breakOut)
+      case x =&gt; deserializationError(&quot;Expected Map as JsObject, but got &quot; + x)
+    }
+}
+</code></pre><p>AdditionalFormats中定义了一些helper和额外的JsonFormat：</p>
+<pre><code>// JsValue的JsonFormat，JsValue调用convertTo或者toJson返回的就是自身
+implicit object JsValueFormat extends JsonFormat[JsValue] {
+  def write(value: JsValue) = value
+  def read(value: JsValue) = value
+}
+
+
+implicit object RootJsObjectFormat extends RootJsonFormat[JsObject] {
+  def write(value: JsObject) = value
+  def read(value: JsValue) = value.asJsObject
+}
+</code></pre><p>StandardFormats中定义了Option、Either的JsonFormat，1元-7元元组的JsonFormat。</p>
+<pre><code>implicit def tuple1Format[A :JF] = new JF[Tuple1[A]] {
+  def write(t: Tuple1[A]) = t._1.toJson
+  def read(value: JsValue) = Tuple1(value.convertTo[A])
+}
+
+implicit def tuple2Format[A :JF, B :JF] = new RootJsonFormat[(A, B)] {
+  def write(t: (A, B)) = JsArray(t._1.toJson, t._2.toJson)
+  def read(value: JsValue) = value match {
+    case JsArray(Seq(a, b)) =&gt; (a.convertTo[A], b.convertTo[B])
+    case x =&gt; deserializationError(&quot;Expected Tuple2 as JsArray, but got &quot; + x)
+  }
+}
+</code></pre><h2 id="JsonPrinter-将JsValue打印成原生json字符串"><a href="#JsonPrinter-将JsValue打印成原生json字符串" class="headerlink" title="JsonPrinter(将JsValue打印成原生json字符串)"></a>JsonPrinter(将JsValue打印成原生json字符串)</h2><p>JsonPrinter继承一个函数对象，这个函数的输入是个JsValue，输出是String：</p>
+<pre><code>trait JsonPrinter extends (JsValue =&gt; String)
+</code></pre><p>内部定义了一个抽象方法：</p>
+<pre><code>def print(x: JsValue, sb: JStringBuilder)
+</code></pre><p>CompactPrinter继承JsonPrinter，压缩打印：</p>
+<p>实现的print方法：</p>
+<pre><code>def print(x: JsValue, sb: StringBuilder) {
+    x match {
+      case JsObject(x) =&gt; printObject(x, sb)
+      case JsArray(x)  =&gt; printArray(x, sb)
+      case _ =&gt; printLeaf(x, sb)
+    }
+}
+</code></pre><p>PrettyPrinter也继承JsonPrinter，格式化打印：</p>
+<p>实现的print方法：</p>
+<pre><code>def print(x: JsValue, sb: StringBuilder) {
+  print(x, sb, 0)
+}
+
+  // indent参数是格式化打印的关键
+protected def print(x: JsValue, sb: StringBuilder, indent: Int) {
+  x match {
+    case JsObject(x) =&gt; printObject(x, sb, indent)
+    case JsArray(x)  =&gt; printArray(x, sb, indent)
+    case _ =&gt; printLeaf(x, sb)
+  }
+}
+</code></pre><h2 id="DefaultJsonProtocol-整合了多个JsonFormat"><a href="#DefaultJsonProtocol-整合了多个JsonFormat" class="headerlink" title="DefaultJsonProtocol(整合了多个JsonFormat)"></a>DefaultJsonProtocol(整合了多个JsonFormat)</h2><p>直接看源码：</p>
+<pre><code>trait DefaultJsonProtocol
+    extends BasicFormats
+    with StandardFormats
+    with CollectionFormats
+    with ProductFormats
+    with AdditionalFormats
+
+object DefaultJsonProtocol extends DefaultJsonProtocol
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/12/23/scala-spray-json/">http://fangjian0423.github.io/2015/12/23/scala-spray-json/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/jvm/" rel="tag">#jvm</a>
+          
+            <a href="/tags/scala/" rel="tag">#scala</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/12/20/scala-implicit/" rel="next" title="Scala 隐式转换和隐式参数">
+                <i class="fa fa-chevron-left"></i> Scala 隐式转换和隐式参数
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/01/2015_end/" rel="prev" title="2015总结">
+                2015总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#spray-json介绍以及内部结构"><span class="nav-number">1.</span> <span class="nav-text">spray-json介绍以及内部结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#json-package对象"><span class="nav-number">2.</span> <span class="nav-text">json package对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JsValue-原生json中的各种数据类型的抽象"><span class="nav-number">3.</span> <span class="nav-text">JsValue(原生json中的各种数据类型的抽象)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JsonFormat-JsonWriter和JsonReader的子类"><span class="nav-number">4.</span> <span class="nav-text">JsonFormat(JsonWriter和JsonReader的子类)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JsonPrinter-将JsValue打印成原生json字符串"><span class="nav-number">5.</span> <span class="nav-text">JsonPrinter(将JsValue打印成原生json字符串)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DefaultJsonProtocol-整合了多个JsonFormat"><span class="nav-number">6.</span> <span class="nav-text">DefaultJsonProtocol(整合了多个JsonFormat)</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/12/23/scala-spray-json/';
+      var disqus_title = "spray-json源码分析";
+      var disqus_url = 'http://fangjian0423.github.io/2015/12/23/scala-spray-json/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

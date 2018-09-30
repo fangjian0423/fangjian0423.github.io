@@ -1,0 +1,1221 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,hive," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Hive是基于Hadoop的一个数据仓库工具，使用它可以查询和管理分布式存储系统上的大数据集 ...">
+<meta name="keywords" content="big data,hive">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hive介绍">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/07/31/hive-intro/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Hive是基于Hadoop的一个数据仓库工具，使用它可以查询和管理分布式存储系统上的大数据集 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hive介绍">
+<meta name="twitter:description" content="Hive是基于Hadoop的一个数据仓库工具，使用它可以查询和管理分布式存储系统上的大数据集 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Hive介绍 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hive介绍
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-07-31T13:32:33+08:00" content="2015-07-31">
+              2015-07-31
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/hive/" itemprop="url" rel="index">
+                    <span itemprop="name">hive</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/07/31/hive-intro/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/07/31/hive-intro/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/07/31/hive-intro/" class="leancloud_visitors" data-flag-title="Hive介绍">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Hive是基于Hadoop的一个数据仓库工具，使用它可以查询和管理分布式存储系统上的大数据集。</p>
+<p>Hive提供了一种叫做HiveQL的类似SQL查询语言用来查询数据，HiveQL也允许熟悉MapReduce开发者开发自定义的mapper和reducer来处理内建的mapper和reducer无法完成的复杂的分析工作。</p>
+<p>Hive的工作模式是提交一个任务，等到任务结束时被通知，而不是实时查询。</p>
+<h2 id="Hive安装"><a href="#Hive安装" class="headerlink" title="Hive安装"></a>Hive安装</h2><p>直接去<a href="https://hive.apache.org/" target="_blank" rel="noopener">Hive官网</a>下载最新的文件，解压。</p>
+<p>运行bin目录里的hive文件，运行之前先启动hadoop，运行的时候可能会出现：</p>
+<pre><code>Missing Hive CLI Jar ....
+</code></pre><p>将hive解压出来的lib目录里的jline<em>.jar拷贝到$HADOOP/share/hadoop/yarn/lib里，同时将$HADOOP/share/hadoop/yarn/lib里的jline</em>.jar删除，重启hadoop。</p>
+<p>再次运行，可能还会出现</p>
+<pre><code>The reported blocks 2662 has reached the threshold 0.9990 of total blocks 2662. The number of live datanodes 1 has reached the minimum number 0. In safe mode extension. Safe mode will be turned off automatically in 0 seconds. ...
+</code></pre><p>类似的问题，关闭hdfs的安全模式即可：</p>
+<pre><code>hadoop dfsadmin -safemode leave
+</code></pre><h2 id="基本命令"><a href="#基本命令" class="headerlink" title="基本命令"></a>基本命令</h2><p>HiveQL就是模仿sql而创建的，以SQL的角度来介绍HiveQL。</p>
+<h3 id="DDL操作"><a href="#DDL操作" class="headerlink" title="DDL操作"></a>DDL操作</h3><p>创建表：</p>
+<pre><code>hive&gt; create table users(age INT, name STRING);
+</code></pre><p>查看所有的表：</p>
+<pre><code>hive&gt; show tables;
+</code></pre><p>查看以CLIENT开头的表：</p>
+<pre><code>hive&gt; show tables &apos;CLIENT.*&apos;;
+</code></pre><p>表加列：</p>
+<pre><code>hive&gt; alter table users add columns(gender BOOLEAN);
+</code></pre><p>改表名字：</p>
+<pre><code>hive&gt; alter table users rename to user;
+</code></pre><p>删除表：</p>
+<pre><code>hive&gt; drop table user;
+</code></pre><p>查看表的具体信息：</p>
+<pre><code>hive&gt; descibe user;
+hive&gt; desc user;
+</code></pre><h3 id="DML操作"><a href="#DML操作" class="headerlink" title="DML操作"></a>DML操作</h3><p>hive创建表的时候可以指定分隔符，由于hive操作的是hdfs，数据最终会存储在hdfs上，所以hdfs上的内容肯定是以某种分隔符分开各个列的。 hive默认的列分隔符是 <strong>^A</strong> 。 我们可以自定义自己的分隔符，在创建表的时候指定分隔符即可。</p>
+<p>本地导入数据到hive：</p>
+<pre><code>hive&gt; load data local inpath &apos;localFile&apos; overwrite into table users;
+</code></pre><p>users表的结构只有2列，name和age，而且使用默认的分隔符。</p>
+<p>比如本地文件的内容是这样的：</p>
+<pre><code>format1^A11
+format2^A22
+</code></pre><p>导入之后进行查询：</p>
+<pre><code>hive&gt; select * from users;
+</code></pre><p>显示结果：</p>
+<pre><code>OK
+format1    11
+format2    22
+Time taken: 0.362 seconds, Fetched: 2 row(s)
+</code></pre><p>在创建表的时候可以指定列分隔符和数组分隔符：</p>
+<pre><code>hive&gt; create table users(name string, age int)
+ &gt; ROW FORMAT DELIMITED
+ &gt; FIELDS TERMINATED BY &apos;\t&apos;
+ &gt; COLLECTION ITEMS TERMINATED BY &apos;,&apos;;
+</code></pre><p>导入数据还有几个参数：</p>
+<p>local参数意味着从本地加载文件，如果没有local参数，那表示从hdfs加载文件。</p>
+<p>关键字overwrite意味着当前表中已经存在的数据将会被删除掉，没有overwrite关键字，表示数据是追加，追加到原先数据集里面。</p>
+<p>插入数据，插入数据后会起一个map reduce job去跑插入的数据：</p>
+<pre><code>hive&gt; insert into table users values(&apos;formatgogo&apos;, 222);
+</code></pre><p>带条件的查询数据：</p>
+<pre><code>hive&gt; select * from users where age = 11;
+</code></pre><p>group by查询：</p>
+<pre><code>hive&gt; select age, count(1) from users group by age;
+</code></pre><p>partition的使用，以部门表为例，用type进行partition：</p>
+<pre><code>hive&gt; create table dept(name STRING) partitioned by (type INT);
+</code></pre><p>以2个文件为例，dept1.txt：</p>
+<pre><code>dept1^A1
+dept11^A1
+dept111^A1
+dept1111^A1
+dept11111^A1
+dept111111^A1
+</code></pre><p>dept2.txt</p>
+<pre><code>dept2^A2
+dept22^A2
+dept222^A2
+dept2222^A2
+dept22222^A2
+dept222222^A2
+</code></pre><p>使用partition之后，导入数据的时候需要指定对应的partition：</p>
+<pre><code>hive&gt; load data local inpath &apos;$PATH/dept1.txt&apos; overwrite into table dept partition(type=1);
+hive&gt; load data local inpath &apos;$PATH/dept2.txt&apos; overwrite into table dept partition(type=2);
+
+hive&gt; select * from dept;
+</code></pre><p>结果：</p>
+<pre><code>OK
+dept1    1
+dept11    1
+dept111    1
+dept1111    1
+dept11111    1
+dept111111    1
+dept2    2
+dept22    2
+dept222    2
+dept2222    2
+dept22222    2
+dept222222    2
+Time taken: 0.114 seconds, Fetched: 12 row(s)
+</code></pre><p>insert可以将数据导出到指定目录，将users表导入到本地文件。 去掉local关键字表示导出到hdfs目录：</p>
+<pre><code>hive&gt; insert overwrite local directory &apos;localFileName&apos; select * from users;
+</code></pre><h3 id="hive存储在hdfs的位置"><a href="#hive存储在hdfs的位置" class="headerlink" title="hive存储在hdfs的位置"></a>hive存储在hdfs的位置</h3><p>进入hive控制台之后，可以使用：</p>
+<pre><code>hive&gt; set hive.metastore.warehouse.dir;
+</code></pre><p>查看hive存储在hdfs的位置，默认是存在 /user/hive/warehouse 目录。</p>
+<p>之前的users表，会存储在/user/hive/warehouse/user目录里。</p>
+<p>有partition的表会存在的不同位置，比如之前的dept表的type为1和2的分别存储在 /user/hive/warehouse/dept/type=1 和 /user/hive/warehouse/dept/type=2。</p>
+<h2 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h2><p>hive中的数据类型分2种，简单类型和复杂类型。</p>
+<p>简单类型有以下几种：TINYINT, SMALLINT, INT, BIGINT, BOOLEAN, FLOAT, DOUBLE, STRING。</p>
+<p>复杂类型有以下几种：Structs(结构体，学过C都知道)，MAPS(key-value键值对)，Arrays(数组类型，数组内的元素类型都必须一致)</p>
+<p>简单类型就不分析了，来看一下复杂类型的使用：</p>
+<h3 id="Structs"><a href="#Structs" class="headerlink" title="Structs"></a>Structs</h3><pre><code>hive&gt; create table employee(id INT, info struct&lt;name:STRING, age:INT&gt;)
+      &gt; ROW FORMAT DELIMITED FIELDS TERMINATED BY &apos;,&apos; 
+      &gt; COLLECTION ITEMS TERMINATED BY &apos;:&apos;; 
+</code></pre><p>要导入的数据：</p>
+<pre><code>1,format:11
+2,fj:22
+3,formatfj:33
+</code></pre><p>导入数据：</p>
+<pre><code>hive&gt; load data local inpath &apos;localFile&apos; overwrite into table employee;
+</code></pre><p>查询：</p>
+<pre><code>select * from employee;
+
+OK
+1    {&quot;name&quot;:&quot;format&quot;,&quot;age&quot;:11}
+2    {&quot;name&quot;:&quot;fj&quot;,&quot;age&quot;:22}
+3    {&quot;name&quot;:&quot;formatfj&quot;,&quot;age&quot;:33}
+Time taken: 0.042 seconds, Fetched: 3 row(s)
+
+hive&gt; select info.name from employee;
+
+OK
+format
+fj
+formatfj
+Time taken: 0.061 seconds, Fetched: 3 row(s)
+</code></pre><h3 id="Maps"><a href="#Maps" class="headerlink" title="Maps"></a>Maps</h3><pre><code>hive&gt; create table lessons(id string, score map&lt;string, int&gt;)
+    &gt; ROW FORMAT DELIMITED
+    &gt; FIELDS TERMINATED BY &apos;\t&apos;
+    &gt; COLLECTION ITEMS TERMINATED BY &apos;,&apos;
+    &gt; MAP KEYS TERMINATED BY &apos;:&apos;;
+</code></pre><p>要导入的数据：</p>
+<pre><code>1       chinese:80,english:60,math:70  
+2       computer:60,chemistry:80   
+</code></pre><p>导入数据：</p>
+<pre><code>hive&gt; load data local inpath &apos;localFile&apos; overwrite into table lessons;
+</code></pre><p>查询：</p>
+<pre><code>hive&gt; select score[&apos;chinese&apos;] from lessions;
+
+OK
+80
+NULL
+Time taken: 0.05 seconds, Fetched: 2 row(s)
+
+hive&gt; select * from lessons;
+OK
+1    {&quot;chinese&quot;:80,&quot;english&quot;:60,&quot;math&quot;:70}
+2    {&quot;computer&quot;:60,&quot;chemistry&quot;:80}
+Time taken: 0.032 seconds, Fetched: 2 row(s)
+</code></pre><h3 id="Arrays"><a href="#Arrays" class="headerlink" title="Arrays"></a>Arrays</h3><pre><code>hive&gt; create table student(name string, hobby_list array&lt;STRING&gt;)
+    &gt; ROW FORMAT DELIMITED
+    &gt; FIELDS TERMINATED BY &apos;,&apos;
+    &gt; COLLECTION ITEMS TERMINATED BY &apos;:&apos;;
+</code></pre><p>要导入的数据：</p>
+<pre><code>format,basketball:football:swimming
+fj,coding:running
+</code></pre><p>导入数据：</p>
+<pre><code>hive&gt; load data local inpath &apos;localFile&apos; overwrite into table student;
+</code></pre><p>查询(数组下标没对应的值的话返回NULL)：</p>
+<pre><code>hive&gt; select * from student;
+
+OK
+format    [&quot;basketball&quot;,&quot;football&quot;,&quot;swimming&quot;]
+fj    [&quot;coding&quot;,&quot;running&quot;]
+Time taken: 0.041 seconds, Fetched: 2 row(s)
+
+hive&gt; select hobby_list[2] from student;
+
+OK
+swimming
+NULL
+Time taken: 0.07 seconds, Fetched: 2 row(s)
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/07/31/hive-intro/">http://fangjian0423.github.io/2015/07/31/hive-intro/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/hive/" rel="tag">#hive</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/07/26/google-guava-intro/" rel="next" title="google guava类库介绍">
+                <i class="fa fa-chevron-left"></i> google guava类库介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/08/07/hbase-intro/" rel="prev" title="HBase介绍">
+                HBase介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hive安装"><span class="nav-number">1.</span> <span class="nav-text">Hive安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本命令"><span class="nav-number">2.</span> <span class="nav-text">基本命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DDL操作"><span class="nav-number">2.1.</span> <span class="nav-text">DDL操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DML操作"><span class="nav-number">2.2.</span> <span class="nav-text">DML操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hive存储在hdfs的位置"><span class="nav-number">2.3.</span> <span class="nav-text">hive存储在hdfs的位置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据类型"><span class="nav-number">3.</span> <span class="nav-text">数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Structs"><span class="nav-number">3.1.</span> <span class="nav-text">Structs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Maps"><span class="nav-number">3.2.</span> <span class="nav-text">Maps</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Arrays"><span class="nav-number">3.3.</span> <span class="nav-text">Arrays</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/07/31/hive-intro/';
+      var disqus_title = "Hive介绍";
+      var disqus_url = 'http://fangjian0423.github.io/2015/07/31/hive-intro/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

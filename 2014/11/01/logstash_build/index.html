@@ -1,0 +1,1154 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="elasticsearch,logstash,kibana," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="logstash是一个用来管理事件和日志的工具，它的作用是收集日志，解析日志，存储日志为以后使用 ...">
+<meta name="keywords" content="elasticsearch,logstash,kibana">
+<meta property="og:type" content="article">
+<meta property="og:title" content="logstash搭建日志追踪系统">
+<meta property="og:url" content="http://fangjian0423.github.io/2014/11/01/logstash_build/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="logstash是一个用来管理事件和日志的工具，它的作用是收集日志，解析日志，存储日志为以后使用 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/logstash1.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/logstash2.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/logstash3.png">
+<meta property="og:image" content="http://format-blog-image.qiniudn.com/logstash4.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="logstash搭建日志追踪系统">
+<meta name="twitter:description" content="logstash是一个用来管理事件和日志的工具，它的作用是收集日志，解析日志，存储日志为以后使用 ...">
+<meta name="twitter:image" content="http://format-blog-image.qiniudn.com/logstash1.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> logstash搭建日志追踪系统 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                logstash搭建日志追踪系统
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-01T22:40:05+08:00" content="2014-11-01">
+              2014-11-01
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/elasticsearch/" itemprop="url" rel="index">
+                    <span itemprop="name">elasticsearch</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/01/logstash_build/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/11/01/logstash_build/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2014/11/01/logstash_build/" class="leancloud_visitors" data-flag-title="logstash搭建日志追踪系统">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>开始博客之前，首先看个问题：<br>作为一只程序猿，写的代码的过程需要加入一些日志信息，这些日志信息包括debug调试信息，异常记录日志等。  Java猿一般都是使用log4j，logback等第三方库记录日志。 那么问题来了，挖掘机到底哪家强？……  扯个淡，那么问题来了，如果我们想看日志信息，怎么办， ssh到服务器上，vim然后查询。每次都这样，是不是很蛋疼 = =； 还有另外一个问题，如果我们想分析、追踪日志，或者找关键字(分词后的关键字)，这样简简单单看日志文件是不可能的。 因此，我们就需要开源力量了！</p>
+<h2 id="logstash介绍"><a href="#logstash介绍" class="headerlink" title="logstash介绍"></a>logstash介绍</h2><p>摘自官网上的一句话：<a href="http://logstash.net/" target="_blank" rel="noopener">logstash</a> is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use (like, for searching)。logstash是一个用来管理事件和日志的工具，它的作用是收集日志，解析日志，存储日志为以后使用。</p>
+<p>官网上有<a href="http://logstash.net/docs/1.4.2/tutorials/getting-started-with-logstash" target="_blank" rel="noopener">tutorials</a>。 本文也就是对tutorials做一个总结。</p>
+<h2 id="logstash日志追踪系统搭建过程"><a href="#logstash日志追踪系统搭建过程" class="headerlink" title="logstash日志追踪系统搭建过程"></a>logstash日志追踪系统搭建过程</h2><p>要搭建logstash日志追踪系统需要以下几个环境：</p>
+<ol>
+<li>JDK</li>
+<li>logstash</li>
+<li><a href="http://www.elasticsearch.org" target="_blank" rel="noopener">elasticsearch</a></li>
+</ol>
+<p>没有JDK的小伙伴首先先去<a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html?ssSourceSiteId=ocomen" target="_blank" rel="noopener">下载</a>吧。 logstash和elasticsearch都先下载过来吧~。</p>
+<h3 id="logstash环境搭建"><a href="#logstash环境搭建" class="headerlink" title="logstash环境搭建"></a>logstash环境搭建</h3><p>首先先进入logstash的bin目录建立一个logstash.conf配置文件：</p>
+<pre><code>input { stdin { } }
+output {
+  stdout { codec =&gt; rubydebug }
+}
+</code></pre><p>然后执行：</p>
+<pre><code>./logstash -f logstash.conf     
+</code></pre><p>这时控制台等待输入内容，我们输入hello world，这个时候控制台会打印出：</p>
+<pre><code>{
+   &quot;message&quot; =&gt; &quot;hello world&quot;,
+   &quot;@version&quot; =&gt; &quot;1&quot;,
+   &quot;@timestamp&quot; =&gt; &quot;2014-11-01T12:38:17.217Z&quot;,
+      &quot;host&quot; =&gt; &quot;format-2.local&quot;
+}
+</code></pre><p>这个说明我们的logstash本地配置成功了。</p>
+<p><strong>配置文件有2个内容组成，input和output，其实还有2个配置：filter和codec。</strong><br>这就是logstash内部的一个叫做<strong>事件处理管道(pipeline)</strong>的核心概念的3大组成部分：<br>input：<br>生成事件(logstash中的事件是由队列实现的，这个队列由ruby的SizedQueue实现)的数据来源，常见的有file(文件)、syslog(系统日志)、redis(缓存系统)、<a href="https://github.com/elasticsearch/logstash-forwarder" target="_blank" rel="noopener">lumberjack(lumberjack协议)</a>。</p>
+<p>filter：<br>修改事件内容，常见的filter有grok(常用，解析文本并结构化地存储下来，用来处理没有结构的文本)、mutate、drop、clone、geoip</p>
+<p>output：<br>展现结果，常见的有elasticsearch(搜索引擎)、file、graphite、statsd</p>
+<p>codec：<br>可以作为input或output的一部分，主要用来处理日志过程中产生的消息，常见的codec有json、rubydebug</p>
+<p>现在我们回过头看来我们的logstash.conf配置文件，只配置了input和output，其中input由一个stdin组成，这个stdin没有任何参数，output由stdout组成，这个stdout由codec参数，且使用了rebydebug，因此控制台打印出的信息是reby的对象格式。  我们把codec改成json的话，将会打印出以下内容：</p>
+<pre><code>{&quot;message&quot;:&quot;hello world&quot;,&quot;@version&quot;:&quot;1&quot;,&quot;@timestamp&quot;:&quot;2014-11-01T13:16:38.221Z&quot;,&quot;host&quot;:&quot;format-2.local&quot;}
+</code></pre><h3 id="elasticsearch环境搭建"><a href="#elasticsearch环境搭建" class="headerlink" title="elasticsearch环境搭建"></a>elasticsearch环境搭建</h3><p>elasticsearch的环境搭建比较简单，download elasticsearch之后进入bin目录，执行：</p>
+<pre><code>./elasticsearch
+</code></pre><p>之后打开浏览器进入<a href="http://localhost:9200/，发现有一串json文本就表示elasticsearch服务器已启。" target="_blank" rel="noopener">http://localhost:9200/，发现有一串json文本就表示elasticsearch服务器已启。</a> 但是貌似没有发现什么界面，是不是很不友好= =。</p>
+<p>elasticsearch支持插件功能，我们使用<a href="http://www.elasticsearch.org/overview/kibana/" target="_blank" rel="noopener">kibana插件</a>，下载之后修改config.js文件，把elasticsearch对应的地址改成elasticsearch服务器地址，然后把kibana解压出来的所有文件放到$elasticsearch_home/plugins_/kibana/_site/目录中。<br>之后打开<a href="http://localhost:9200/_plugin/kibana" target="_blank" rel="noopener">http://localhost:9200/_plugin/kibana</a></p>
+<p><img src="http://format-blog-image.qiniudn.com/logstash1.png" alt=""><br><img src="http://format-blog-image.qiniudn.com/logstash2.png" alt=""></p>
+<h3 id="logstash整合elasticsearch"><a href="#logstash整合elasticsearch" class="headerlink" title="logstash整合elasticsearch"></a>logstash整合elasticsearch</h3><p>配置完logstash和elasticsearch之后，整合一下这两个框架。<br>logstash配置文件(input、output可以配置多个)：</p>
+<pre><code>input { stdin { } }
+output {
+  stdout { codec =&gt; json }
+  elasticsearch { host =&gt; localhost }
+}
+</code></pre><p>然后重新启动logstash，控制台输入hello elasticsearch，刷新kibana页面：<br><img src="http://format-blog-image.qiniudn.com/logstash3.png" alt=""></p>
+<p>logstash日志追踪系统搭建完毕。</p>
+<h2 id="logstash的实际应用"><a href="#logstash的实际应用" class="headerlink" title="logstash的实际应用"></a>logstash的实际应用</h2><p>以log4j为例。</p>
+<p>logstash配置：</p>
+<pre><code>input {
+  stdin { }
+  log4j {
+     mode =&gt; &quot;server&quot;
+     host  =&gt; &quot;127.0.0.1&quot;
+     port =&gt; 56789
+     type =&gt; &quot;log4j&quot;
+  }
+}
+output {
+  stdout { codec =&gt; rubydebug }
+  elasticsearch { host =&gt; localhost }
+}
+</code></pre><p>测试类：</p>
+<pre><code>public class LogTest {
+
+    private Logger logger = Logger.getLogger(DebugLogger.class);
+
+    @Before
+    public void setUp() {
+        PropertyConfigurator.configure(LogTest.class.getClassLoader().getResourceAsStream(&quot;log4j.properties&quot;));
+    }
+
+    @Test
+    public void testLog() {
+        logger.debug(&quot;hello logstash, this is a message from log4j&quot;);
+    }
+
+    @Test
+    public void testException() {
+        logger.error(&quot;error&quot;, new TestException(&quot;sorry, error&quot;));
+    }
+</code></pre><p>}</p>
+<p>log4j配置：</p>
+<pre><code>log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d %p %t %c : %m%n
+
+log4j.appender.file=org.apache.log4j.RollingFileAppender
+log4j.appender.file.file=/Users/fangjian/Develop/log_file/test_log.log
+log4j.appender.file.maxFileSize=1024
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d %p %t %c : %m%n
+
+# logstash配置
+log4j.appender.logstash=org.apache.log4j.net.SocketAppender
+log4j.appender.logstash.port=56789
+log4j.appender.logstash.remoteHost=127.0.0.1
+
+log4j.rootLogger=debug,stdout,file,logstash
+</code></pre><p>2个test方法跑完之后，刷新kibana界面：<br><img src="http://format-blog-image.qiniudn.com/logstash4.png" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文仅仅只是对logstash的搭建做一个总结，包括logstash内部的结构，还有一些配置语言的介绍都没有非常详细的解释，如果读者有兴趣，可以自行查阅相关资料。</p>
+<p>参考资料：<br><a href="http://logstash.net/" target="_blank" rel="noopener">http://logstash.net/</a><br><a href="http://blog.yeradis.com/2013/10/logstash-and-apache-log4j-or-how-to.html" target="_blank" rel="noopener">http://blog.yeradis.com/2013/10/logstash-and-apache-log4j-or-how-to.html</a><br><a href="http://www.cnblogs.com/buzzlight/p/logstash_elasticsearch_kibana_log.html" target="_blank" rel="noopener">http://www.cnblogs.com/buzzlight/p/logstash_elasticsearch_kibana_log.html</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2014/11/01/logstash_build/">http://fangjian0423.github.io/2014/11/01/logstash_build/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/elasticsearch/" rel="tag">#elasticsearch</a>
+          
+            <a href="/tags/logstash/" rel="tag">#logstash</a>
+          
+            <a href="/tags/kibana/" rel="tag">#kibana</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/10/31/intellij_idea_uml/" rel="next" title="Intellij Idea中一个非常牛逼的UML图功能">
+                <i class="fa fa-chevron-left"></i> Intellij Idea中一个非常牛逼的UML图功能
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/11/22/java_threadlocal/" rel="prev" title="ThreadLocal原理及其实际应用">
+                ThreadLocal原理及其实际应用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#logstash介绍"><span class="nav-number">2.</span> <span class="nav-text">logstash介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#logstash日志追踪系统搭建过程"><span class="nav-number">3.</span> <span class="nav-text">logstash日志追踪系统搭建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#logstash环境搭建"><span class="nav-number">3.1.</span> <span class="nav-text">logstash环境搭建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#elasticsearch环境搭建"><span class="nav-number">3.2.</span> <span class="nav-text">elasticsearch环境搭建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#logstash整合elasticsearch"><span class="nav-number">3.3.</span> <span class="nav-text">logstash整合elasticsearch</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#logstash的实际应用"><span class="nav-number">4.</span> <span class="nav-text">logstash的实际应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2014/11/01/logstash_build/';
+      var disqus_title = "logstash搭建日志追踪系统";
+      var disqus_url = 'http://fangjian0423.github.io/2014/11/01/logstash_build/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

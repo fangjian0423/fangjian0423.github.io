@@ -1,0 +1,1419 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,spark," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Spark编程指南笔记，参考官方文档的编程指南，翻译再加上一些自己写的代码 ...">
+<meta name="keywords" content="big data,spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark编程指南笔记">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/01/27/spark-programming-guide/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Spark编程指南笔记，参考官方文档的编程指南，翻译再加上一些自己写的代码 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark编程指南笔记">
+<meta name="twitter:description" content="Spark编程指南笔记，参考官方文档的编程指南，翻译再加上一些自己写的代码 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Spark编程指南笔记 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark编程指南笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-01-27T00:22:21+08:00" content="2016-01-27">
+              2016-01-27
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/spark/" itemprop="url" rel="index">
+                    <span itemprop="name">spark</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/01/27/spark-programming-guide/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/01/27/spark-programming-guide/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/01/27/spark-programming-guide/" class="leancloud_visitors" data-flag-title="Spark编程指南笔记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Spark初始化"><a href="#Spark初始化" class="headerlink" title="Spark初始化"></a>Spark初始化</h2><p>使用Spark编程第一件要做的事就是初始化SparkContext对象，SparkContext对象会告诉Spark如何使用Spark集群。</p>
+<p>SparkContext会使用SparkConf中的一些配置信息，所以构造SparkContext对象之前需要构造一个SparkConf对象。</p>
+<p>一个JVM上的SparkContext只有一个是激活的，如果要构造一个新的SparkContext，必须stop一个已经激活的SparkContext。</p>
+<pre><code>val conf = new SparkConf().setMaster(&quot;local&quot;).setAppName(&quot;Test&quot;)
+</code></pre><p>  val sc = new SparkContext(conf)</p>
+<p>appName为Test，这个name会在cluster UI上展示，master是一个Spark，Mesos，YARN cluster URL或者local。 具体的值可以参考 <a href="http://spark.apache.org/docs/latest/submitting-applications.html#master-urls" target="_blank" rel="noopener">master-url解释</a>。</p>
+<h2 id="RDD-Resilient-Distributed-Datasets"><a href="#RDD-Resilient-Distributed-Datasets" class="headerlink" title="RDD(Resilient Distributed Datasets)"></a>RDD(Resilient Distributed Datasets)</h2><p>Spark提出的最主要抽象概念是RDD(弹性分布式数据集)，它是一个有容错机制并且可以被并行操作的元素集合。</p>
+<p>有两种方式可以创建RDD:</p>
+<p>1.使用一个已存在的集合进行并行计算<br>2.使用外部数据集，比如共享的文件系统，HDFS，HBase以及任何支持Hadoop InputFormat的数据源</p>
+<h3 id="并行集合"><a href="#并行集合" class="headerlink" title="并行集合"></a>并行集合</h3><p>使用SparkContext的parallelize方法构造并行集合。</p>
+<pre><code>val dataSet = Array(1,2,3,4,5)
+val rdd = sc.parallelize(dataSet)
+rdd.reduce(_ + _) // 15
+</code></pre><p>parallelize方法有一个参数slices，表示数据集切分的份数。Spark会在集群上为每一个分片起一个任务。如果不设置的话，Spark会根据集群的情况，自动设置slices的数字。</p>
+<h3 id="外部数据集"><a href="#外部数据集" class="headerlink" title="外部数据集"></a>外部数据集</h3><p>文本文件可以使用SparkContext的textFile方法构造RDD。这个方法接收一个URI参数(也可以包括本地的文件)，并且以每行的方式读取文件内容。</p>
+<p>比如data.txt文件里一行一个数字，取所有数字的和：</p>
+<pre><code>val rdd = sc.textFile(this.getClass.getResource(&quot;/data.txt&quot;).toString)
+
+rdd.reduce {
+   (a, b) =&gt; (a.toInt + b.toInt).toString
+}
+
+// 另外一种方式
+rdd.map(s =&gt; s.toInt).reduce(_ + _)
+</code></pre><p>Spark中所有基于文件的输入方法，都支持目录，压缩文件，通配符读取文件。比如</p>
+<pre><code>sc.textFile(&quot;/data/*.txt&quot;)
+sc.textFile(&quot;/data&quot;)
+</code></pre><p>textFile方法也可以传入第二个可选参数来控制文件的分片数量。默认情况下，Spark会为文件的每一个块（在HDFS中块的大小默认是64MB）创建一个分片。但是你也可以通过传入一个更大的值来要求Spark建立更多的分片。注意，分片的数量绝不能小于文件块的数量。</p>
+<p>除了文本文件之外，Spark还支持其他格式的输入：</p>
+<p>1.SparkContext的wholeTextFiles方法会读取一个包含很多小文件的目录，并以filename，content为键值对的方式返回结果。<br>2.对于SequenceFiles，可以使用SparkContext的sequenceFile[K, V]方法创建。像 IntWritable和Text一样，它们必须是 Hadoop 的 Writable 接口的子类。另外，对于几种通用 Writable 类型，Spark 允许你指定原生类型来替代。例如：sequencFile[Int, String] 将会自动读取 IntWritable 和 Texts。<br>3.对于其他类型的 Hadoop 输入格式，你可以使用 SparkContext.hadoopRDD 方法，它可以接收任意类型的 JobConf 和输入格式类，键类型和值类型。按照像 Hadoop 作业一样的方法设置输入源就可以了。<br>4.RDD.saveAsObjectFile 和 SparkContext.objectFile 提供了以 Java 序列化的简单方式来保存 RDD。虽然这种方式没有 Avro 高效，但也是一种简单的方式来保存任意的 RDD。</p>
+<h2 id="RDD操作"><a href="#RDD操作" class="headerlink" title="RDD操作"></a>RDD操作</h2><h3 id="RDD操作基础"><a href="#RDD操作基础" class="headerlink" title="RDD操作基础"></a>RDD操作基础</h3><p>RDD支持两种类型的操作。</p>
+<p>1.transformations。从一个数据集产生一个新的数据集。比如map方法，就可以根据旧的数据集产生新的数据集。<br>2.actions。在一个数据集中进行聚合操作，并且返回一个最终的结果。</p>
+<p>Spark中所有的transformations操作都是lazy的，就是说它们并不会立刻真的计算出结果。相反，它们仅仅是记录下了转换操作的操作对象（比如：一个文件）。只有当一个启动操作被执行，要向驱动程序返回结果时，转化操作才会真的开始计算。这样的设计使得Spark运行更加高效——比如，我们会发觉由map操作产生的数据集将会在reduce操作中用到，之后仅仅是返回了reduce的最终的结果而不是map产生的庞大数据集。</p>
+<p>在默认情况下，每一个由转化操作得到的RDD都会在每次执行启动操作时重新计算生成。但是，你也可以通过调用persist(或cache)方法来将RDD持久化到内存中，这样Spark就可以在下次使用这个数据集时快速获得。Spark同样提供了对将RDD持久化到硬盘上或在多个节点间复制的支持。</p>
+<p>一个计算文件中每行的字符串个数和所有字符串个数的和例子：</p>
+<pre><code>val rdd = sc.textFile(&quot;data.txt&quot;)
+val lineLengths = rdd.map(s =&gt; s.length)
+val totalLength = lineLengths.reduce(_ + _)
+</code></pre><p>lineLengths对象是一个transformations结果，所以它不是马上就开始执行的，当运行lineLengths.reduce的时候lineLengths才会开始去计算。如果之后还会用到这个lineLengths。可以在reduce方法之前加上:</p>
+<pre><code>lineLengths.persist()
+</code></pre><h3 id="使用函数"><a href="#使用函数" class="headerlink" title="使用函数"></a>使用函数</h3><p>Spark很多方法都可以使用函数完成。</p>
+<p>使用对象：</p>
+<pre><code>object SparkFunction {
+  def strLength = (s: String) =&gt; s.length
+}
+
+val lineLengths = rdds.map(SparkFunction.strLength)
+lineLengths.reduce(_ + _)
+</code></pre><p>使用类：</p>
+<pre><code>class SparkCls {
+  def func = (s: String) =&gt; s.length
+  def buildRdd(rdd: RDD[String]) = rdd.map(func)
+}
+new SparkCls().buildRdd(rdds).reduce(_ + _)
+</code></pre><h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><pre><code>var counter = 0
+var rdd = sc.parallelize(data)
+
+// Wrong: Don&apos;t do this!!
+rdd.foreach(x =&gt; counter += x)
+
+println(&quot;Counter value: &quot; + counter)
+</code></pre><p>上述代码如果在local模式并且在一个JVM的情况下使用是可以得到正确的值的。这是因为所有的RDD和变量counter都是同一块内存上。</p>
+<p>然后在集群模式下，上述代码的结果可能就不会是我们想要的正确结果。集群模式下，Spark会在RDD分成多个任务，每个任务都会被对应的executor执行。在executor执行之前，Spark会计算每个闭包。上面这个例子foreach方法和counter就组成了一个闭包。这个闭包会被序列化并且发送给每个executor。在local模式下，因为只有一个executor，所以共享相同的闭包。然后在集群模式下，有多个executor，并且各个executor在不同的节点上都有自己的闭包的拷贝。</p>
+<p>所以counter变量就已经不再是节点上的变量了。虽然counter变量在内存上依然存在，但是它对于executor已经不可见，executor只知道它是序列化后的闭包的一份拷贝。因此如果counter的操作都是在闭包下的话，counter的值还是为0。</p>
+<p>Spark提供了一种Accumulator的概念用来处理集群模式下的变量更新问题。</p>
+<p>另外一个要注意的是不要使用foreach或者map方法打印数据。在一台机器上，这个操作是没有问题的。但是如果在集群上，不一定会打印出全部的数据。可以使用collect方法将RDD放到调用节点上。所以rdd.collect().foreach(println)是可以打印出数据的，但是可能数据量过大，会导致OOM。所以最好的方式还是使用take方法：rdd.take(100).foreach(println)。</p>
+<h3 id="使用键值对"><a href="#使用键值对" class="headerlink" title="使用键值对"></a>使用键值对</h3><p>Spark也支持键值对的操作，这在分组和聚合操作时候用得到。当键值对中的键为自定义对象时，需要自定义该对象的equals()和hashCode()方法。</p>
+<p>一个使用键值对的单词统计例子：</p>
+<pre><code>// 使用map方法将单词文本转换成一个键值对，(word, num)。 num初始值为1
+val pairs = rdd.map(s =&gt; (s, 1))
+val reduceRdd = pairs.reduceByKey(_ + _)
+val result = reduceRdd.sortByKey().collect()
+result.foreach(println)
+</code></pre><h3 id="Spark内置的Transformations"><a href="#Spark内置的Transformations" class="headerlink" title="Spark内置的Transformations"></a>Spark内置的Transformations</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">转换</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">map(func)</td>
+<td style="text-align:center">根据func函数生成一个新的rdd数据集</td>
+</tr>
+<tr>
+<td style="text-align:center">filter(func)</td>
+<td style="text-align:center">根据func函数返回true的数据集</td>
+</tr>
+<tr>
+<td style="text-align:center">flatMap(func)</td>
+<td style="text-align:center">跟map方法类似，但是每一项可以返回多个值。func函数的返回值是一个集合</td>
+</tr>
+<tr>
+<td style="text-align:center">mapPartitions(func)</td>
+<td style="text-align:center">跟map方法类似，但是是在每个partition上运行的。func函数的参数是一个Iteraror，返回值也是一个Iterator。如果map方法需要创建一个额外的对象，使用mapPartitions方法比map方法高效得多</td>
+</tr>
+<tr>
+<td style="text-align:center">mapPartitionsWithIndex(func)</td>
+<td style="text-align:center">作用跟mapPartitions方法一样，只是func方法多了一个index参数。 func方法定义 (Int, Iterator[T]) =&gt; Iterator[U]</td>
+</tr>
+<tr>
+<td style="text-align:center">sample(withReplacement, fraction, seed)</td>
+<td style="text-align:center">根据 fraction 指定的比例，对数据进行采样，可以选择是否用随机数进行替换，seed 用于指定随机数生成器种子</td>
+</tr>
+<tr>
+<td style="text-align:center">union(otherDataset)</td>
+<td style="text-align:center">取2个rdd的并集，得到一个新的rdd</td>
+</tr>
+<tr>
+<td style="text-align:center">intersection(otherDataset)</td>
+<td style="text-align:center">取2个rdd的交集，得到一个新的rdd。这个新的rdd没有重复的数据</td>
+</tr>
+<tr>
+<td style="text-align:center">distinct([numTasks])</td>
+<td style="text-align:center">返回一个新的没有重复数据的数据集</td>
+</tr>
+<tr>
+<td style="text-align:center">groupByKey([numTasks])</td>
+<td style="text-align:center">将一个(K,V)的键值对RDD转换成一个(K, Iterable[V])的新的键值对RDD。注意点：如果group的目的是为了做聚合计算(比如总和或者平均值)，使用reduceByKey或者aggregateByKey性能更好。</td>
+</tr>
+<tr>
+<td style="text-align:center">reduceByKey(func, [numTasks])</td>
+<td style="text-align:center">跟groupByKey方法一样，也是操作(K, V)的键值对RDD。返回值同样是一个(K, V)的键值对RDD，func函数的定义：(V, V) =&gt; V，也就是每两个值的值</td>
+</tr>
+<tr>
+<td style="text-align:center">aggregateByKey(zeroValue)(seqOp, combOp, [numTasks])</td>
+<td style="text-align:center">跟reduceByKey作用类似，zeroValue参数表示初始值，这个初始值的类型可以跟rdd中的键值对的值的类型不同。seqOp参数是个函数，定义为(U, V) =&gt; U，U类型是初始化zeroValue的类型，V类型是一开始rdd的键值对的值的类型。这个函数表示用来与初始值zeroValue进行比较，取一个新的值，需要注意的是这个新的值会作为参数出现在下一次key相等的情况下。 combOp参数也是个函数，定义为(U, U) =&gt; U，U类型也是初始值的类型。这个函数相当于reduce方法中的函数，用来做聚合操作</td>
+</tr>
+<tr>
+<td style="text-align:center">sortByKey([ascending], [numTasks])</td>
+<td style="text-align:center">对一个(K, V)键值对的RDD进行排行，返回一个基于K排序的新的RDD</td>
+</tr>
+<tr>
+<td style="text-align:center">join(otherDataset, [numTasks])</td>
+<td style="text-align:center">基于(K, V)键值对的rdd，如果对(K, W)的键值对rdd使用join操作，可以产生(K, (V, W))键值对的rdd。类似数据库中的join操作，spark还提供leftOuterJoin, rightOuterJoin, fullOuterJoin方法</td>
+</tr>
+<tr>
+<td style="text-align:center">cogroup(otherDataset, [numTasks])</td>
+<td style="text-align:center">跟join方法类似，不过是基于(K, V)的rdd，cogroup基于(K, W)的rdd，产生(K, (Iterable[V], Iterable[W]))的rdd。这个方法也叫做groupWith</td>
+</tr>
+<tr>
+<td style="text-align:center">cartesian(otherDataset)</td>
+<td style="text-align:center">笛卡尔积。 有K的rdd与V的rdd进行笛卡尔积，会生成(K, V)的rdd</td>
+</tr>
+<tr>
+<td style="text-align:center">pipe(command, [envVars])</td>
+<td style="text-align:center">对rdd进行管道操作。 就像shell命令一样</td>
+</tr>
+<tr>
+<td style="text-align:center">coalesce(numPartitions)</td>
+<td style="text-align:center">减少 RDD 的分区数到指定值。在过滤大量数据之后，可以执行此操作</td>
+</tr>
+<tr>
+<td style="text-align:center">repartition(numPartitions)</td>
+<td style="text-align:center">重新给 RDD 分区</td>
+</tr>
+<tr>
+<td style="text-align:center">repartitionAndSortWithinPartitions(partitioner)</td>
+<td style="text-align:center">重新给 RDD 分区，并且每个分区内以记录的 key 排序</td>
+</tr>
+</tbody>
+</table>
+<p>以这个数据为例：</p>
+<pre><code>i
+am
+format
+let
+us
+go
+hoho
+good
+nice
+format
+is
+nice
+haha
+haha
+haha
+scala is cool, nice
+</code></pre><p>一些Transformations操作：</p>
+<pre><code>rdd.map(s =&gt; s.length) // 每一行文本转换成长度
+rdd.filter(s =&gt; s.length == 1) // 取文本长度为1的数据
+rdd.flatMap(s =&gt; s.split(&quot;,&quot;)) // 把有 , 的字符串转换成多行
+rdd.sample(false, 1.0)
+rdd.union(rdd2)
+rdd.intersection(rdd2)
+rdd.distinct(rdd2)
+rdd.map(s =&gt; (s, 1)).groupByKey().foreach {
+  pair =&gt; {
+    print(pair._1) ; print(&quot; ** &quot;)
+    println(pair._2.mkString(&quot;-&quot;))
+  }
+}
+rdd.map(s =&gt; (s, 1)).reduceByKey {
+  (x, y) =&gt; x + y
+}.foreach {
+  (pair) =&gt; println(pair._1 + &quot; &quot; + pair._2)
+}
+
+rdd.map(s =&gt; (s, 1)).aggregateByKey(0)(
+  (a, b) =&gt; {
+    math.max(a, b)
+  }, (a, b) =&gt; {
+    a + b
+  }
+).foreach {
+  pair =&gt; println(pair._1 + &quot; &quot; + pair._2)
+}
+
+rdd.map(s =&gt; (s, 1)).sortByKey(true).foreach {
+  pair =&gt; println(pair._1 + &quot; &quot; + pair._2)
+}
+
+rdd.map(s =&gt; (s, s.length)).join(rdd.map(s =&gt; (s, s.charAt(0).toUpper.toString))).foreach {
+  pair =&gt; println(pair._1 + &quot; &quot; + pair._2._1 + &quot; &quot; + pair._2._2)
+}
+
+rdd.map(s =&gt; (s, s.length)).cogroup(rdd.map(s =&gt; (s, s.charAt(0).toUpper.toString))).foreach {
+  pair =&gt; {
+    println(pair._1 + &quot;======&quot;)
+    println(pair._2._1.toList.mkString(&quot;-&quot;))
+    println(pair._2._2.toList.mkString(&quot;-&quot;))
+    println(&quot;**&quot; * 8)
+  }
+}
+
+rdd.map(s =&gt; s.length).cartesian(rdd).foreach {
+  pair =&gt; {
+    println(pair._1)
+    println(pair._2)
+    println(&quot;**&quot; * 8)
+  }
+}
+</code></pre><h3 id="Spark内置的Actions"><a href="#Spark内置的Actions" class="headerlink" title="Spark内置的Actions"></a>Spark内置的Actions</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">动作</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">reduce(func)</td>
+<td style="text-align:center">聚合操作。之前很多例子都使用了reduce方法。这个功能必须可交换且可关联的，从而可以正确的被并行执行。</td>
+</tr>
+<tr>
+<td style="text-align:center">collect()</td>
+<td style="text-align:center">返回rdd中所有的元素，返回值类型是Array。这个方法经常用来取数据量比较小的集合</td>
+</tr>
+<tr>
+<td style="text-align:center">count()</td>
+<td style="text-align:center">rdd中的元素个数</td>
+</tr>
+<tr>
+<td style="text-align:center">first()</td>
+<td style="text-align:center">返回数据集的第一个元素</td>
+</tr>
+<tr>
+<td style="text-align:center">take(n)</td>
+<td style="text-align:center">返回数据集的前n个元素，返回值是个Array</td>
+</tr>
+<tr>
+<td style="text-align:center">takeSample(withReplacement, num, [seed])</td>
+<td style="text-align:center">返回一个数组，在数据集中随机采样 num 个元素组成，可以选择是否用随机数替换不足的部分，seed 用于指定的随机数生成器种子返回数据集的前n个元素，返回值是个Array</td>
+</tr>
+<tr>
+<td style="text-align:center">takeOrdered(n, [ordering])</td>
+<td style="text-align:center">返回自然顺序或者自定义顺序的前 n 个元素</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsTextFile(path)</td>
+<td style="text-align:center">把数据集中的元素写到文件里，可以写到本地文件系统上，hdfs上或者任意Hadoop支持的文件系统上。Spark会调用元素的toString方法将其转换成文本的一行</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsSequenceFile(path)</td>
+<td style="text-align:center">跟saveAsTextFile方法类似，但是是写成SequenceFile文件格式，也是支持写到本地文件系统上，hdfs上或者任意Hadoop支持的文件系统上。这个方法只能作用于键值对的RDD</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsObjectFile(path)</td>
+<td style="text-align:center">跟saveAsTextFile方法类似，是使用Java的序列化的方式保存文件</td>
+</tr>
+<tr>
+<td style="text-align:center">countByKey()</td>
+<td style="text-align:center">计算键值的数量。对键值对(K, V)的rdd数据集，返回(K, Int)的Map</td>
+</tr>
+<tr>
+<td style="text-align:center">foreach(func)</td>
+<td style="text-align:center">使用func遍历rdd数据集中的各个元素。这通常用于边缘效果，例如更新一个Accumulator，或者和外部存储系统进行交互</td>
+</tr>
+</tbody>
+</table>
+<p>一些Actions操作：</p>
+<pre><code>rdd.saveAsTextFile(&quot;file:///tmp/data01&quot;)
+rdd.map(s =&gt; (s, s.length)).saveAsSequenceFile(&quot;file:///tmp/data02&quot;)
+rdd.map(s =&gt; (s, s.length)).countByKey().foreach {
+  pair =&gt; println(pair._1 + &quot; &quot; + pair._2)
+}
+</code></pre><h2 id="RDD的持久化-Persistence"><a href="#RDD的持久化-Persistence" class="headerlink" title="RDD的持久化(Persistence)"></a>RDD的持久化(Persistence)</h2><p>Spark的一个重要功能就是在将数据集持久化（或缓存）到内存中以便在多个操作中重复使用。当持久化一个RDD的时候，每个存储着这个RDD的分片节点都会计算然后保存到内存中以便下次再次使用。这使得接下来的计算过程速度能够加快（经常能加快超过十倍的速度）。缓存是加快迭代算法和快速交互过程速度的关键工具。</p>
+<p>可以使用persist或者cache方法让rdd持久化。在第一次被计算产生之后，它就会始终停留在节点的内存中。Spark的缓存是具有容错性的——如果RDD的任意一个分片丢失了，Spark就会依照这个RDD产生的转化过程自动重算一遍。</p>
+<p>另外，每个持久化后的RDD可以使用不用级别的存储级别。比如可以存在硬盘中，可以存在内存中，还可以将这个数据集在节点之间复制，或者使用 Tachyon 将它储存到堆外。这些存储级别都是通过向 persist() 传递一个 StorageLevel 对象（Scala, Java, Python）来设置的。</p>
+<p>Spark的一些存储级别如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">存储级别</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">MEMORY_ONLY</td>
+<td style="text-align:center">默认级别。将RDD作为反序列化的的对象存储在JVM中。如果不能被内存装下，一些分区将不会被缓存，并且在需要的时候被重新计算</td>
+</tr>
+<tr>
+<td style="text-align:center">MEMORY_AND_DISK</td>
+<td style="text-align:center">默认级别。将RDD作为反序列化的的对象存储在JVM中。如果不能被内存装下，会存在硬盘上，并且在需要的时候被重新计算</td>
+</tr>
+<tr>
+<td style="text-align:center">MEMORY_ONLY_SER</td>
+<td style="text-align:center">将RDD作为序列化的的对象进行存储（每一分区占用一个字节数组）。通常来说，这比将对象反序列化的空间利用率更高，尤其当使用fast serializer,但在读取时会比较占用CPU</td>
+</tr>
+<tr>
+<td style="text-align:center">MEMORY_AND_DISK_SER</td>
+<td style="text-align:center">与MEMORY_ONLY_SER相似，但是把超出内存的分区将存储在硬盘上而不是在每次需要的时候重新计算</td>
+</tr>
+<tr>
+<td style="text-align:center">DISK_ONLY</td>
+<td style="text-align:center">只存储RDD分区到硬盘上</td>
+</tr>
+<tr>
+<td style="text-align:center">MEMORY_ONLY_2, MEMORY_AND_DISK_2 等</td>
+<td style="text-align:center">与上述的存储级别一样，但是将每一个分区都复制到两个集群结点上</td>
+</tr>
+</tbody>
+</table>
+<p>存储级别的选择：</p>
+<p>如果你的 RDD 可以很好的与默认的存储级别契合，就不需要做任何修改了。这已经是 CPU 使用效率最高的选项，它使得 RDD的操作尽可能的快。</p>
+<p>如果不行，试着使用 MEMORY_ONLY_SER 并且选择一个快速序列化的库使得对象在有比较高的空间使用率的情况下，依然可以较快被访问。</p>
+<p>尽可能不要存储到硬盘上，除非计算数据集的函数，计算量特别大，或者它们过滤了大量的数据。否则，重新计算一个分区的速度，和与从硬盘中读取基本差不多快。</p>
+<p>如果你想有快速故障恢复能力，使用复制存储级别。例如：用 Spark 来响应web应用的请求。所有的存储级别都有通过重新计算丢失数据恢复错误的容错机制，但是复制存储级别可以让你在 RDD 上持续的运行任务，而不需要等待丢失的分区被重新计算。</p>
+<p>如果你想要定义你自己的存储级别，比如复制因子为3而不是2，可以使用 StorageLevel 单例对象的 apply()方法。</p>
+<h2 id="共享变量"><a href="#共享变量" class="headerlink" title="共享变量"></a>共享变量</h2><p>通常情况下，当一个函数在远程集群节点上通过Spark操作(比如map或者reduce)，Spark会对涉及到的变量的所有副本执行这个函数。这些变量都会被拷贝到每台机器上，而且这个过程不会被反馈到驱动程序。通常情况下，在任务之间读写共享变量是很低效的。但是Spark仍然提供了有限的两种共享变量类型用于常见的使用场景：broadcast variables 和 accumulators。</p>
+<h3 id="broadcast-variables-广播变量"><a href="#broadcast-variables-广播变量" class="headerlink" title="broadcast variables(广播变量)"></a>broadcast variables(广播变量)</h3><p>广播变量允许程序员在每台机器上保持一个只读变量的缓存而不是将一个变量的拷贝传递给各个任务。这些变量是可以被使用的，比如，给每个节点传递一份大输入数据集的拷贝是很耗时的。Spark试图使用高效的广播算法来分布广播变量，以此来降低通信花销。可以通过SparkContext.broadcast(v)来从变量v创建一个广播变量。这个广播变量是v的一个包装，同时它的值可以调用value方法获得：</p>
+<pre><code>val broadcastVar = sc.broadcast(Array(1, 2, 3))
+
+broadcastVar.value // Array(1, 2, 3)
+</code></pre><p>一个广播变量被创建之后，在所有函数中都应当使用它来代替原来的变量v，这样就可以包装v在节点之间只被传递一次。另外，v变量在被广播之后不应该再被修改，这样可以确保每一个节点上储存的广播变量的一致性。</p>
+<h3 id="accumulators-累加器"><a href="#accumulators-累加器" class="headerlink" title="accumulators(累加器)"></a>accumulators(累加器)</h3><p>累加器是在一个相关过程中只能被”累加”的变量，对这个变量的操作可以有效地被并行化。它们可以被用于实现计数器（就像在MapReduce过程中）或求和运算。Spark原生支持对数字类型的累加器，程序员也可以为其他新的类型添加支持。累加器被以一个名字创建之后，会在Spark的UI中显示出来。这有助于了解计算的累进过程（注意：目前Python中不支持这个特性）。</p>
+<p>可以通过SparkContext.accumulator(v)来从变量v创建一个累加器。在集群中运行的任务随后可以使用add方法或+=操作符（在Scala和Python中）来向这个累加器中累加值。但是，他们不能读取累加器中的值。只有驱动程序可以读取累加器中的值，通过累加器的value方法。</p>
+<p>以下的代码展示了向一个累加器中累加数组元素的过程：</p>
+<pre><code>val accum = sc.accumulator(0, &quot;My Accumulator&quot;)
+sc.parallelize(Array(1, 2, 3, 4)).foreach(x =&gt; accum += x)
+accum.value // 10
+</code></pre><p>这段代码利用了累加器对Int类型的内建支持，程序员可以通过继承 AccumulatorParam 类来创建自己想要的类型支持。AccumulatorParam 的接口提供了两个方法：zero 用于为你的数据类型提供零值；addInPlace 用于计算两个值得和。比如，假设我们有一个 Vector类表示数学中的向量，我们可以这样写：</p>
+<pre><code>object VectorAccumulatorParam extends AccumulatorParam[Vector] {
+  def zero(initialValue: Vector): Vector = {
+    Vector.zeros(initialValue.size)
+  }
+  def addInPlace(v1: Vector, v2: Vector): Vector = {
+    v1 += v2
+  }
+}
+
+// Then, create an Accumulator of this type:
+val vecAccum = sc.accumulator(new Vector(...))(VectorAccumulatorParam)
+</code></pre><p>累加器的更新操作只会被运行一次，Spark 提供了保证，每个任务中对累加器的更新操作都只会被运行一次。比如，重启一个任务不会再次更新累加器。在转化过程中，用户应该留意每个任务的更新操作在任务或作业重新运算时是否被执行了超过一次。</p>
+<p>累加器不会改变Spark的惰性求值模型。如果累加器在对RDD的操作中被更新了，它们的值只会在启动操作中作为 RDD 计算过程中的一部分被更新。所以，在一个懒惰的转化操作中调用累加器的更新，并没法保证会被及时运行。下面的代码段展示了这一点：</p>
+<pre><code>accum = sc.accumulator(0)
+data.map(lambda x =&gt; acc.add(x); f(x))
+</code></pre><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="http://spark.apache.org/docs/latest/programming-guide.html/" target="_blank" rel="noopener">http://spark.apache.org/docs/latest/programming-guide.html</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/01/27/spark-programming-guide/">http://fangjian0423.github.io/2016/01/27/spark-programming-guide/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/spark/" rel="tag">#spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/19/flume-channel-full-exception/" rel="next" title="记录Flume使用KafkaSource的时候Channel队列满了之后发生的怪异问题">
+                <i class="fa fa-chevron-left"></i> 记录Flume使用KafkaSource的时候Channel队列满了之后发生的怪异问题
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/02/10/sparkstreaming-programming-guide/" rel="prev" title="Spark Streaming编程指南笔记">
+                Spark Streaming编程指南笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Spark初始化"><span class="nav-number">1.</span> <span class="nav-text">Spark初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDD-Resilient-Distributed-Datasets"><span class="nav-number">2.</span> <span class="nav-text">RDD(Resilient Distributed Datasets)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#并行集合"><span class="nav-number">2.1.</span> <span class="nav-text">并行集合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#外部数据集"><span class="nav-number">2.2.</span> <span class="nav-text">外部数据集</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDD操作"><span class="nav-number">3.</span> <span class="nav-text">RDD操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RDD操作基础"><span class="nav-number">3.1.</span> <span class="nav-text">RDD操作基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用函数"><span class="nav-number">3.2.</span> <span class="nav-text">使用函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#闭包"><span class="nav-number">3.3.</span> <span class="nav-text">闭包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用键值对"><span class="nav-number">3.4.</span> <span class="nav-text">使用键值对</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spark内置的Transformations"><span class="nav-number">3.5.</span> <span class="nav-text">Spark内置的Transformations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spark内置的Actions"><span class="nav-number">3.6.</span> <span class="nav-text">Spark内置的Actions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDD的持久化-Persistence"><span class="nav-number">4.</span> <span class="nav-text">RDD的持久化(Persistence)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享变量"><span class="nav-number">5.</span> <span class="nav-text">共享变量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#broadcast-variables-广播变量"><span class="nav-number">5.1.</span> <span class="nav-text">broadcast variables(广播变量)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#accumulators-累加器"><span class="nav-number">5.2.</span> <span class="nav-text">accumulators(累加器)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/01/27/spark-programming-guide/';
+      var disqus_title = "Spark编程指南笔记";
+      var disqus_url = 'http://fangjian0423.github.io/2016/01/27/spark-programming-guide/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

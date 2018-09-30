@@ -1,0 +1,1372 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,thread," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写这篇博客的时候又刚好想起了当时自己实习的时候遇到的一个问题。1000个爬虫任务使用了多线程的处理方式，比如开5个线程处理这1000个任务 ...">
+<meta name="keywords" content="java,thread">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java内置的线程池笔记">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/07/24/java-poolthread/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="写这篇博客的时候又刚好想起了当时自己实习的时候遇到的一个问题。1000个爬虫任务使用了多线程的处理方式，比如开5个线程处理这1000个任务 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java内置的线程池笔记">
+<meta name="twitter:description" content="写这篇博客的时候又刚好想起了当时自己实习的时候遇到的一个问题。1000个爬虫任务使用了多线程的处理方式，比如开5个线程处理这1000个任务 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> java内置的线程池笔记 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                java内置的线程池笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-07-24T20:32:33+08:00" content="2015-07-24">
+              2015-07-24
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/07/24/java-poolthread/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/07/24/java-poolthread/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/07/24/java-poolthread/" class="leancloud_visitors" data-flag-title="java内置的线程池笔记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>目前的工作是接触大数据相关的内容，自己也缺少高并发的知识，刚好前几天看了flume的源码，里面也用到了各种线程池内容，刚好学习一下，做个笔记。</p>
+<p>写这篇博客的时候又刚好想起了当时自己实习的时候遇到的一个问题。1000个爬虫任务使用了多线程的处理方式，比如开5个线程处理这1000个任务，每个线程分200个任务，然后各个线程处理那200个爬虫任务→_→，太笨了。其实更合理的方法是使用阻塞队列+线程池的方法。</p>
+<h2 id="线程池的使用"><a href="#线程池的使用" class="headerlink" title="线程池的使用"></a>线程池的使用</h2><p>Java把线程的调用封装成了一个Executor接口，Executor接口中定义了一个execute方法，用来提交线程的执行。</p>
+<p>而ExecutorService接口是Executor接口的子接口，用来管理线程的执行。</p>
+<p>ExecutorService的初始化可以使用Executors类的静态方法。</p>
+<p>Executors类是Java提供的一个专门用于创建线程池的类。</p>
+<p>Executors提供了很多方法用来初始化ExecutorService，可以初始化指定数目个线程的线城市或者单个线程的线程池。</p>
+<p>比如构造一个10个线程的线程池，使用了guava的ThreadFactoryBuilder，guava的ThreadFactoryBuilder可以传入一个namFormat参数用户来表示线程的name，它内部会使用数字增量表示%d，比如一下的nameFormat，10个线程，名字分别是thread-call-runner-1，thread-call-runner-2 … thread-call-runner-10:</p>
+<pre><code>Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat(&quot;thread-call-runner-%d&quot;).build());
+</code></pre><p>ExecutorService线程池使用线程执行任务例子：</p>
+<p>1.阻塞队列里有10个元素，初始化带有2个线程的线程池，跑2个线程分别去阻塞队列里取数据执行。</p>
+<pre><code>@Test
+public void test01() throws Exception {
+    ExecutorService es = Executors.newFixedThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-call-runner-%d&quot;).build());
+    final LinkedBlockingDeque&lt;String&gt; deque = new LinkedBlockingDeque&lt;String&gt;();
+    for(int i = 1; i &lt;= 10; i ++) {
+        deque.add(i + &quot;&quot;);
+    }
+    es.submit(new Runnable() {
+        @Override
+        public void run() {
+            while(!deque.isEmpty()) {
+                System.out.println(deque.poll() + &quot;-&quot; + Thread.currentThread().getName());
+            }
+        }
+    });
+    es.submit(new Runnable() {
+        @Override
+        public void run() {
+            while(!deque.isEmpty()) {
+                System.out.println(deque.poll() + &quot;-&quot; + Thread.currentThread().getName());
+            }
+        }
+    });
+    Thread.sleep(10000l);
+}
+</code></pre><p>打印，2个线程都会执行：</p>
+<pre><code>1-thread-call-runner-0
+2-thread-call-runner-0
+3-thread-call-runner-1
+4-thread-call-runner-0
+5-thread-call-runner-0
+6-thread-call-runner-1
+7-thread-call-runner-0
+8-thread-call-runner-1
+9-thread-call-runner-0
+10-thread-call-runner-0
+</code></pre><p>2.执行Callable线程，Callable线程和Runnable线程的区别就是Callable的线程会有返回值，这个返回值是Future，未来的意思，而且这Future是个接口，提供了几个实用的方法，比如cancel, idDone, isCancelled, get等方法。</p>
+<pre><code>@Test
+public void test02() throws Exception {
+    ExecutorService es = Executors.newFixedThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-call-runner-%d&quot;).build());
+    final LinkedBlockingDeque&lt;String&gt; deque = new LinkedBlockingDeque&lt;String&gt;();
+    for(int i = 1; i &lt;= 500; i ++) {
+        deque.add(i + &quot;&quot;);
+    }
+    Future&lt;String&gt; result = es.submit(new Callable&lt;String&gt;() {
+        @Override
+        public String call() throws Exception {
+            while (!deque.isEmpty()) {
+                System.out.println(deque.poll() + &quot;-&quot; + Thread.currentThread().getName());
+            }
+            return &quot;done&quot;;
+        }
+    });
+    System.out.println(result.isDone());
+    // get方法会阻塞
+    System.out.println(result.get());
+    System.out.println(&quot;exec next&quot;);
+}
+</code></pre><p>打印：</p>
+<pre><code>先打印出几百个 数字-thread-call-runner-0
+然后打印出 isDone的结果， 是false
+Future的get是得到Callable线程执行完毕后的结果，该方法会阻塞，直到该Future对应的线程全部执行完才会继续执行下去。这个例子Callable线程执行完返回done，所以get方法也是返回done
+
+get方法还有个重载的方法，带有2个参数，第一个参数是一个long类型的数字，第二个参数是时间单位。result.get(1, TimeUnit.MILLISECONDS) 就表示1毫秒，等待这个Future的时间为1毫秒，如果时间1毫秒，那么这个get方法的调用会抛出java.util.concurrent.TimeoutException异常，并且线程内部的执行也会停止。注意，但是如果我们catch这个TimeoutException的话，那么线程里的代码还是会被执行完毕。
+
+try {
+    // catch TimeoutException的话线程里的代码还是会执行下去
+    System.out.println(result.get(10, TimeUnit.MILLISECONDS));
+} catch (TimeoutException e) {
+    e.printStackTrace();
+}
+</code></pre><p>3.Future的cancel方法的使用</p>
+<pre><code>@Test
+public void test03() throws Exception {
+    ExecutorService es = Executors.newFixedThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-call-runner-%d&quot;).build());
+    final LinkedBlockingDeque&lt;String&gt; deque = new LinkedBlockingDeque&lt;String&gt;();
+    for(int i = 1; i &lt;= 5000; i ++) {
+        deque.add(i + &quot;&quot;);
+    }
+    Future&lt;String&gt; result = es.submit(new Callable&lt;String&gt;() {
+        @Override
+        public String call() throws Exception {
+            while (!deque.isEmpty() &amp;&amp; !Thread.currentThread().isInterrupted()) {
+                System.out.println(deque.poll() + &quot;-&quot; + Thread.currentThread().getName());
+            }
+            return &quot;done&quot;;
+        }
+    });
+
+    try {
+        System.out.println(result.get(10, TimeUnit.MILLISECONDS));
+    } catch (TimeoutException e) {
+        System.out.println(&quot;cancel result: &quot; + result.cancel(true));
+        System.out.println(&quot;is cancelled: &quot; + result.isCancelled());
+    }
+    Thread.sleep(2000l);
+}
+</code></pre><p>打印：</p>
+<pre><code>先打印出几百个 数字-thread-call-runner-0
+然后打印出
+cancel result: true
+is cancelled: true
+
+cancel方法用来取消线程的继续执行，它有个boolean类型的返回值，表示是否cancel成功。这里我们使用了get方法，10毫秒处理5000条数据，报了TimeoutException异常，catch之后对Future进行了cancel调用。注意，我们在Callable里执行的代码里加上了
+
+!Thread.currentThread().isInterrupted()
+
+如果去掉了这个条件，那么还是会打印出5000条处理数据。cancel方法底层会去interrupted对应的线程，所以才需要加上这个条件的判断。
+</code></pre><h2 id="调度线程池的使用"><a href="#调度线程池的使用" class="headerlink" title="调度线程池的使用"></a>调度线程池的使用</h2><p>ScheduledExecutorService接口是ExecutorService接口的子类。</p>
+<p>看名字也知道，ScheduledExecutorService是基于调度的线程池。</p>
+<p>1.ScheduledExecutorService的schedule方法例子：</p>
+<pre><code>@Test
+public void test04() throws Exception {
+    ScheduledExecutorService ses = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-schedule-runner-%d&quot;).build());
+    Future&lt;String&gt; result = ses.schedule(new Callable&lt;String&gt;() {
+        @Override
+        public String call() throws Exception {
+            System.out.println(&quot;exec task&quot;);
+            return &quot;ok&quot;;
+        }
+    }, 10, TimeUnit.SECONDS);
+    Thread.sleep(15000);
+}
+</code></pre><p>打印：</p>
+<pre><code>执行10秒后打印出  exec task
+</code></pre><p>2.cancel在schedule中的使用：</p>
+<pre><code>@Test
+public void test05() throws Exception {
+    ScheduledExecutorService ses = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-schedule-runner-%d&quot;).build());
+    Future&lt;String&gt; result = ses.schedule(new Callable&lt;String&gt;() {
+        @Override
+        public String call() throws Exception {
+            System.out.println(&quot;exec task&quot;);
+            try {
+                Thread.sleep(5000l);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(&quot;exec done, take 5 seconds&quot;);
+            return &quot;ok&quot;;
+        }
+    }, 10, TimeUnit.SECONDS);
+    Thread.sleep(11000);
+    result.cancel(true);
+    Thread.sleep(10000);
+}
+</code></pre><p>打印：</p>
+<pre><code>先打印出exec task，然后抛出InterruptedException异常，异常被catch。接着打印出exec done, take 5 seconds
+因为Callable线程是10秒后执行的，线程会执行5秒，在11秒的时候会调用Future的cancel方法，会取消线程的时候，由于我们catch了异常，所以线程会执行完毕。
+
+注意一下，cancel方法有个boolean类型的参数mayInterruptIfRunning。上个例子中我们传入了true，所以会打断正在执行的线程，因此抛出了异常。如果我们传入false，线程正在执行，所以不会去打断它，因此会打印出exec task，然后再打印出exec done, take 5 seconds，并且没有异常抛出。
+</code></pre><p>3.scheduleWithFixedDelay方法，定时器，每隔多少时间执行</p>
+<pre><code>@Test
+public void test06() throws Exception {
+    ScheduledExecutorService sec = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-schedule-runner-%d&quot;).build());
+    sec.scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+            System.out.println(&quot;exec&quot;);
+        }
+    }, 0, 5, TimeUnit.SECONDS);
+    Thread.sleep(16000l);
+}
+</code></pre><p>打印：</p>
+<pre><code>打印出4次exec。
+scheduleWithFixedDelay有4个参数，第一个参数是个Runnable接口的实现类，第二个参数是首次执行线程的延迟时间，第三个参数是每隔多少时间再次执行线程时间，第四个参数是时间的单位。
+如果Runnable中执行的代码发生了异常并且没有被catch的话，那么发生异常之后，Runnable里的代码就不会再次执行。
+</code></pre><p>4.scheduleAtFixedRate方法，scheduleAtFixedRate方法跟scheduleWithFixedDelay类似。唯一的区别是scheduleWithFixedDelay是在线程全部执行完毕之后开始计算时间的，而scheduleAtFixedRate是在线程开始执行的时候计算时间的，所以scheduleAtFixedRate有时会产生不是定时执行的感觉。</p>
+<p>先看scheduleWithFixedDelay：</p>
+<pre><code>@Test
+public void test07() throws Exception {
+    ScheduledExecutorService sec = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-schedule-runner-%d&quot;).build());
+    sec.scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+            System.out.println(&quot;exec&quot;);
+            try {
+                Thread.sleep(3000l);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }, 0, 5, TimeUnit.SECONDS);
+    Thread.sleep(17000l);
+}
+</code></pre><p>打印：</p>
+<pre><code>执行3次exec。Runnable每次执行3秒。第一次是在0秒执行，执行了3秒，第二次是在8秒，执行了3秒。第三次是在16秒执行
+</code></pre><p>然后再看scheduleAtFixedRate：</p>
+<pre><code>@Test
+public void test09() throws Exception {
+    ScheduledExecutorService sec = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder().setNameFormat(&quot;thread-schedule-runner-%d&quot;).build());
+    sec.scheduleAtFixedRate(new Runnable() {
+        @Override
+        public void run() {
+            System.out.println(&quot;exec&quot;);
+            try {
+                Thread.sleep(3000l);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }, 0, 5, TimeUnit.SECONDS);
+    Thread.sleep(16000l);
+}
+</code></pre><p>打印：</p>
+<pre><code>执行了4次exec，第一次在0秒执行，第二次在5秒，第三次是10秒，第四次在15秒执行
+</code></pre><h2 id="线程池的参数解释"><a href="#线程池的参数解释" class="headerlink" title="线程池的参数解释"></a>线程池的参数解释</h2><p>Executors类的静态方法中大致有这么几种创建不同类型的线程池：</p>
+<ol>
+<li>newFixedThreadPool</li>
+<li>newSingleThreadExecutor</li>
+<li>newCachedThreadPool</li>
+<li>newScheduledThreadPool</li>
+<li>newSingleThreadScheduledExecutor</li>
+</ol>
+<p>在分析这些方法之前，先解释一下线程池中所使用的一些配置参数。</p>
+<p>比如实例化一个单线程的线程池。源码如下：</p>
+<pre><code>public static ExecutorService newSingleThreadExecutor() {
+    return new FinalizableDelegatedExecutorService
+        (new ThreadPoolExecutor(1, 1,
+                                0L, TimeUnit.MILLISECONDS,
+                                new LinkedBlockingQueue&lt;Runnable&gt;()));
+}
+</code></pre><p>ThreadPoolExecutor是线程池的具体实现类。它的构造函数接受以下这几个重要的参数：</p>
+<ol>
+<li>corePoolSize：线程池基本数量</li>
+<li>workQueue：用于保存等待执行的任务的阻塞队列。阻塞队列的类型可自己选择，阻塞有这几种类型，ArrayBlockingQueue(基于数组的有界阻塞队列，按FIFO进出任务)，LinkedBlockingQueue(基于链表的阻塞队列，FIFO方式)，SynchronousQueue(不存储元素的阻塞队列。每个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态，吞吐量要高于LinkedBlockingQueue，是一个无限阻塞队列)，PriorityBlockingQueue(具有优先级的无限阻塞队列)</li>
+<li>maximunPoolSize：线程池最大数量，也就是线程池允许创建的最大线程数。这个参数跟阻塞队列的关系是这样的：如果阻塞队列满了，这个时候又来了一个任务，那么这个时候如果当前线程数小于最大数量，那么就会直接创建新的线程执行任务。当然，如果工作队列是无界的，那么这个参数就没有意义了，因为队列无界，任务都会在队列中存储着</li>
+<li>ThreadFactory：创建线程的工厂</li>
+<li>RejectedExecutionHandler：饱和策略，也就是当队列和线程数目都满了以后，采取的策略。有AbortPolicy(直接抛出异常)，CallerRunsPolicy(只用调用者所在线程来运行任务)，DiscardOldestPolicy(丢弃队列里最近的一个任务，并执行当前任务)，DiscardPolicy(不处理，直接丢弃)。当然，还可以自定义策略</li>
+<li>keeyAliveTime：存活时间。如果当前线程池中的线程数量比基本数量要多，并且是闲置状态的话，这些闲置的线程能存活的最大时间</li>
+<li>TimeUnit，跟第6个参数一起使用，表示存活时间的时间单位</li>
+</ol>
+<p>这些参数中，有3个参数跟线程池大小有关，分别是基本数量，最大数量和阻塞队列。</p>
+<p>线程池的处理流程是这样的：</p>
+<ol>
+<li>首先判断线程池的基本大小，如果基本大小还没满，那么直接创建新的线程执行任务，否则进行下一步</li>
+<li>判断线程池中的阻塞队列是是否已满，没满的话存到阻塞队列里等待执行，否则执行下一步(所以如果是个无界的阻塞队列，那么这一步永远都成立)</li>
+<li>判断线程池最大大小是否已满，没满的话直接创建线程执行任务，否则交给饱和策略处理</li>
+</ol>
+<p>以1个例子来说明：</p>
+<pre><code>ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 20, 10, TimeUnit.SECONDS,new LinkedBlockingQueue(10));
+
+for(int i = 0; i &lt; 15; i ++) {
+    threadPoolExecutor.submit(new MyThread(i + 1));
+}
+
+static class MyThread implements Runnable {
+    private int index;
+    public MyThread(int index) {
+        this.index = index;
+    }
+    @Override
+    public void run() {
+        System.out.println(this.index);
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+</code></pre><p>输出：</p>
+<pre><code>1
+12
+13
+14
+15
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</code></pre><p>很明显地看到，线程池基本大小只有1个，所以先输出10，接下来阻塞队列有最多有10个线程等待需要执行，但是多出了12，13，14，15这4个线程，由于最大线程数是20个，所以这4个线程就直接被创建开始执行了。</p>
+<p>下面就分析Executors的静态方法：</p>
+<p>newFixedThreadPool方法:</p>
+<pre><code>public static ExecutorService newFixedThreadPool(int nThreads) {
+    return new ThreadPoolExecutor(nThreads, nThreads,
+                                  0L, TimeUnit.MILLISECONDS,
+                                  new LinkedBlockingQueue&lt;Runnable&gt;());
+}
+</code></pre><p>创建一个基本大小和最大大小都为nThreads，阻塞队列长度为Integer.MAX_VALUE的线程池。</p>
+<p>newSingleThreadExecutor方法：</p>
+<pre><code>public static ExecutorService newSingleThreadExecutor() {
+    return new FinalizableDelegatedExecutorService
+        (new ThreadPoolExecutor(1, 1,
+                                0L, TimeUnit.MILLISECONDS,
+                                new LinkedBlockingQueue&lt;Runnable&gt;()));
+}
+</code></pre><p>创建一个基本大小和最大大小都为1，阻塞队列长度为Integer.MAX_VALUE的线程池。</p>
+<p>newCachedThreadPool方法：</p>
+<pre><code>public static ExecutorService newCachedThreadPool() {
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                  60L, TimeUnit.SECONDS,
+                                  new SynchronousQueue&lt;Runnable&gt;());
+}
+</code></pre><p>创建一个基本大小为0，最大大小都为Integer.MAX_VALUE，阻塞队列为无界队列的线程池。</p>
+<p>newScheduledThreadPool方法：</p>
+<pre><code>public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {
+    return new ScheduledThreadPoolExecutor(corePoolSize);
+}
+</code></pre><p>创建一个基本大小为corePoolSize，最大大小都为Integer.MAX_VALUE，阻塞队列为DelayedWorkQueue的线程池。</p>
+<p>newSingleThreadScheduledExecutor方法：</p>
+<p>创建一个基本大小为corePoolSize，最大大小都为Integer.MAX_VALUE，阻塞队列为DelayedWorkQueue的线程池。</p>
+<pre><code>public static ScheduledExecutorService newSingleThreadScheduledExecutor() {
+    return new DelegatedScheduledExecutorService
+        (new ScheduledThreadPoolExecutor(1));    
+}
+</code></pre><p>创建一个基本大小为1，最大大小都为Integer.MAX_VALUE，阻塞队列为DelayedWorkQueue的线程池。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/07/24/java-poolthread/">http://fangjian0423.github.io/2015/07/24/java-poolthread/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/thread/" rel="tag">#thread</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/07/20/flume-hdfs-sink/" rel="next" title="通过源码分析Flume HDFSSink 写hdfs文件的过程">
+                <i class="fa fa-chevron-left"></i> 通过源码分析Flume HDFSSink 写hdfs文件的过程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/26/google-guava-intro/" rel="prev" title="google guava类库介绍">
+                google guava类库介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#线程池的使用"><span class="nav-number">1.</span> <span class="nav-text">线程池的使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调度线程池的使用"><span class="nav-number">2.</span> <span class="nav-text">调度线程池的使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程池的参数解释"><span class="nav-number">3.</span> <span class="nav-text">线程池的参数解释</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/07/24/java-poolthread/';
+      var disqus_title = "java内置的线程池笔记";
+      var disqus_url = 'http://fangjian0423.github.io/2015/07/24/java-poolthread/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

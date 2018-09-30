@@ -1,0 +1,1307 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="jdk,map," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Map是一个映射键和值的对象。类似于Python中的字典。 HashMap为什么会出现呢? 因为数组这种数据结构，虽然遍历简单，但是插入和删除操作复杂，需要移动数组内部的元素；链表这种数据结构，插入和删除操作简单，但是查找复杂，只能一个一个地遍历。 有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没链表快，查询没数组快。 wik">
+<meta name="keywords" content="jdk,map">
+<meta property="og:type" content="article">
+<meta property="og:title" content="jdk HashMap工作原理分析">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/03/29/jdk_hashmap/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Map是一个映射键和值的对象。类似于Python中的字典。 HashMap为什么会出现呢? 因为数组这种数据结构，虽然遍历简单，但是插入和删除操作复杂，需要移动数组内部的元素；链表这种数据结构，插入和删除操作简单，但是查找复杂，只能一个一个地遍历。 有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没链表快，查询没数组快。 wik">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap01.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap05.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap06.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap07.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap08.jpg">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="jdk HashMap工作原理分析">
+<meta name="twitter:description" content="Map是一个映射键和值的对象。类似于Python中的字典。 HashMap为什么会出现呢? 因为数组这种数据结构，虽然遍历简单，但是插入和删除操作复杂，需要移动数组内部的元素；链表这种数据结构，插入和删除操作简单，但是查找复杂，只能一个一个地遍历。 有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没链表快，查询没数组快。 wik">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap01.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> jdk HashMap工作原理分析 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                jdk HashMap工作原理分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-29T01:49:58+08:00" content="2016-03-29">
+              2016-03-29
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/jdk/" itemprop="url" rel="index">
+                    <span itemprop="name">jdk</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/29/jdk_hashmap/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/03/29/jdk_hashmap/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/29/jdk_hashmap/" class="leancloud_visitors" data-flag-title="jdk HashMap工作原理分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Map是一个映射键和值的对象。类似于Python中的字典。</p>
+<p>HashMap为什么会出现呢?</p>
+<p>因为数组这种数据结构，虽然遍历简单，但是插入和删除操作复杂，需要移动数组内部的元素；链表这种数据结构，插入和删除操作简单，但是查找复杂，只能一个一个地遍历。</p>
+<p>有没有一种新的数据结构，插入数据简单，同时查找也简单？ 这个时候就出现了哈希表这种数据结构。 这是一种折中的方式，插入没链表快，查询没数组快。</p>
+<p>wiki上就是这么定义哈希表的：</p>
+<p>散列表（Hash table，也叫哈希表），是根据关键字（Key value）而直接访问在内存存储位置的数据结构。也就是说，它通过计算一个关于键值的函数，将所需查询的数据映射到表中一个位置来访问记录，这加快了查找速度。这个映射函数称做散列函数，存放记录的数组称做散列表。</p>
+<a id="more"></a>
+<p>有几个概念要解释一下：</p>
+<ol>
+<li>如果有1个关键字为k，它是通过一种函数f(k)得到散列表的地址，然后把值放到这个地址上。这个函数f就称为散列函数，也叫哈希函数。</li>
+<li>对于不同的关键字，得到了同一地址，即k1 != k2，但是f(k1) = f(k2)。这种现象称为冲突，</li>
+<li>若对于关键字集合中的任一个关键字，经散列函数映象到地址集合中任何一个地址的概率是相等的，则称此类散列函数为均匀散列函数</li>
+</ol>
+<p>散列函数有好几种实现，分别有直接定址法、随机数法、除留余数法等，在<a href="https://zh.wikipedia.org/wiki/%E5%93%88%E5%B8%8C%E8%A1%A8" target="_blank" rel="noopener">wiki散列表</a>上都有介绍。</p>
+<p>散列表的冲突解决方法，也有好几种，有开放定址法、单独链表法、再散列等。</p>
+<p>Java中的HashMap采用的冲突解决方法是使用单独链表法，如下图所示：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap01.png" alt=""></p>
+<h2 id="HashMap原理分析"><a href="#HashMap原理分析" class="headerlink" title="HashMap原理分析"></a>HashMap原理分析</h2><p>HashMap是jdk中Map接口的实现类之一，是一个散列表的实现。</p>
+<p>HashMap中的key和value都可以为null，且它的方法都没有synchronized。 其他方法的实现大部分跟HashTable一致。HashTable的相关源码不在这里介绍，基本上跟HashTable一致。</p>
+<p>HashMap有个内部静态类Node，这个Node就是为了解决冲突而设计的链表中的节点的概念。它有4个属性，hash表示哈希地址，key表示关键字，value表示值, next表示这个节点的下一个节点，是一个单项链表：</p>
+<pre><code>static class Node&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {
+    final int hash;
+    final K key;
+    V value;
+    Node&lt;K,V&gt; next;
+
+    Node(int hash, K key, V value, Node&lt;K,V&gt; next) {
+        this.hash = hash;
+        this.key = key;
+        this.value = value;
+        this.next = next;
+    }
+
+    ...
+}
+</code></pre><h3 id="在分析HashMap源码之前，先看一个HashMap使用例子"><a href="#在分析HashMap源码之前，先看一个HashMap使用例子" class="headerlink" title="在分析HashMap源码之前，先看一个HashMap使用例子"></a>在分析HashMap源码之前，先看一个HashMap使用例子</h3><pre><code>Map&lt;String, Integer&gt; map = new HashMap&lt;String, Integer&gt;(5);
+map.put(&quot;java&quot;, 1);
+map.put(&quot;golang&quot;, 2);
+map.put(&quot;python&quot;, 3);
+map.put(&quot;ruby&quot;, 4);
+map.put(&quot;scala&quot;, 5);
+</code></pre><p>上面这段代码执行之后会生成下面这张哈希表。</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap05.jpg" alt=""></p>
+<p>至于为什么会生成这样的哈希表，会在后面分析源码中讲解。</p>
+<h3 id="HashMap的属性"><a href="#HashMap的属性" class="headerlink" title="HashMap的属性"></a>HashMap的属性</h3><p>HashMap的几个重要的属性:</p>
+<pre><code>transient Node&lt;K,V&gt;[] table; // 哈希表数组
+
+transient int size; // 键值对个数
+
+int threshold; // 阀值。 值 = 容量 * 加载因子。默认值为12(16(默认容量) * 0.75(默认加载因子))。当哈希表中的键值对个数超过该值时，会进行扩容
+
+final float loadFactor; // 加载因子，默认是0.75
+</code></pre><p>有2个重要的特性影响着HashMap的性能，分别是capacity(容量)和load factor(加载因子)。</p>
+<p>其中capacity表示哈希表bucket的数量，HashMap的默认值是16。load factor加载因子表示当一个map填满了达到这个比例之后的bucket时候，和ArrayList一样，将会创建原来HashMap大小的两倍的bucket数组，来重新调整map的大小，并将原来的对象放入新的bucket数组中。这个过程也叫做重哈希。默认的load factor为0.75 。</p>
+<h3 id="HashMap的操作"><a href="#HashMap的操作" class="headerlink" title="HashMap的操作"></a>HashMap的操作</h3><p>分析一下HashMapput键值对的过程，是如何找到bucket的，遇到哈希冲突的时候是如何使用链表法的。</p>
+<h4 id="put操作"><a href="#put操作" class="headerlink" title="put操作"></a>put操作</h4><pre><code>public V put(K key, V value) {
+    // 第一个参数就是关键字key的哈希值
+    return putVal(hash(key), key, value, false, true);
+}
+
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+               boolean evict) {
+    Node&lt;K,V&gt;[] tab; Node&lt;K,V&gt; p; int n, i;
+    if ((tab = table) == null || (n = tab.length) == 0)
+        n = (tab = resize()).length; // 哈希表是空的话，重新构建，进行扩容
+    if ((p = tab[i = (n - 1) &amp; hash]) == null)
+        tab[i] = newNode(hash, key, value, null); // 没有hash冲突的话，直接在对应位置上构造一个新的节点即可
+    else { // 如果哈希表当前位置上已经有节点的话，说明有hash冲突
+        Node&lt;K,V&gt; e; K k;
+        // 关键字跟哈希表上的首个节点济宁比较
+        if (p.hash == hash &amp;&amp;
+            ((k = p.key) == key || (key != null &amp;&amp; key.equals(k))))
+            e = p;
+        // 如果使用的是红黑树，用红黑树的方式进行处理
+        else if (p instanceof TreeNode)
+            e = ((TreeNode&lt;K,V&gt;)p).putTreeVal(this, tab, hash, key, value);
+        else { // 跟链表进行比较
+            for (int binCount = 0; ; ++binCount) {
+                if ((e = p.next) == null) { // 一直遍历链表，直到找到最后一个
+                    p.next = newNode(hash, key, value, null); // 构造链表上的新节点
+                    if (binCount &gt;= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                        treeifyBin(tab, hash);
+                    break;
+                }
+                if (e.hash == hash &amp;&amp;
+                    ((k = e.key) == key || (key != null &amp;&amp; key.equals(k))))
+                    break;
+                p = e;
+            }
+        }
+        if (e != null) { // 如果找到了节点，说明关键字相同，进行覆盖操作，直接返回旧的关键字的值
+            V oldValue = e.value;
+            if (!onlyIfAbsent || oldValue == null)
+                e.value = value;
+            afterNodeAccess(e);
+            return oldValue;
+        }
+    }
+    ++modCount;
+    if (++size &gt; threshold) // 如果目前键值对个数已经超过阀值，重新构建
+        resize();
+    afterNodeInsertion(evict); // 节点插入以后的钩子方法
+    return null;
+}
+</code></pre><h4 id="get操作"><a href="#get操作" class="headerlink" title="get操作"></a>get操作</h4><p>get操作关键点就是怎么在哈希表上取数据，理解了put操作之后，get方法很容易理解了：</p>
+<pre><code>public V get(Object key) {
+    Node&lt;K,V&gt; e;
+    return (e = getNode(hash(key), key)) == null ? null : e.value;
+}
+</code></pre><p>getNode方法就说明了如何取数据：</p>
+<pre><code>final Node&lt;K,V&gt; getNode(int hash, Object key) {
+    Node&lt;K,V&gt;[] tab; Node&lt;K,V&gt; first, e; int n; K k;
+    if ((tab = table) != null &amp;&amp; (n = tab.length) &gt; 0 &amp;&amp;
+        (first = tab[(n - 1) &amp; hash]) != null) { // 如果哈希表容量为0或者关键字没有命中，直接返回null
+        if (first.hash == hash &amp;&amp;  // 关键字命中的话比较第一个节点
+            ((k = first.key) == key || (key != null &amp;&amp; key.equals(k)))) 
+            return first;
+        if ((e = first.next) != null) {
+            if (first instanceof TreeNode) // 以红黑树的方式查找
+                return ((TreeNode&lt;K,V&gt;)first).getTreeNode(hash, key);
+            do { // 遍历链表查找
+                if (e.hash == hash &amp;&amp;
+                    ((k = e.key) == key || (key != null &amp;&amp; key.equals(k))))
+                    return e;
+            } while ((e = e.next) != null);
+        }
+    }
+    return null;
+}
+</code></pre><h4 id="hash过程和resize过程分析"><a href="#hash过程和resize过程分析" class="headerlink" title="hash过程和resize过程分析"></a>hash过程和resize过程分析</h4><p>hash过程在HashMap里就是一个hash方法：</p>
+<pre><code>static final int hash(Object key) {
+    int h;
+    // 使用hashCode的值和hashCode的值无符号右移16位做异或操作
+    return (key == null) ? 0 : (h = key.hashCode()) ^ (h &gt;&gt;&gt; 16);
+}
+</code></pre><p>这段代码是什么意思呢？ 我们以文中的那个demo为例，说明”java”这个关键字是如何找到对应bucket的过程。</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap06.jpg" alt=""></p>
+<p>从上图可以看到，hash方法得到的hash值是根据关键字的hashCode的高16位和低16位进行异或操作得到的一个值。</p>
+<p>这个值再与哈希表容量-1值进行与操作得到最终的bucket索引值。</p>
+<pre><code>(n - 1) &amp; hash
+</code></pre><p>hashCode的高16位与低16位进行异或操作主要是设计者想了一个顾全大局的方法(综合考虑了速度、作用、质量)来做的。</p>
+<p>如果链表的数量大了，HashMap会把哈希表转换成红黑树来进行处理，本文不讨论这部分内容。</p>
+<p>现在回过头来看例子，为什么初始化了一个容量为5的HashMap，但是哈希表的容量为8，而且阀值为6？</p>
+<p>因为HashMap的构造函数初始化threshold的时候调用了tableSizeFor方法，这个方法会把容量改成2的幂的整数，主要是为了哈希表散列更均匀。</p>
+<pre><code>// 定位bucket索引的最后操作。如果n为奇数，n-1就是偶数，偶数的话转成二进制最后一位是0，相反如果是奇数，最后一位是1，这样产生的索引值将更均匀
+(n - 1) &amp; hash
+</code></pre><p>tableSizeFor方法如下：</p>
+<pre><code>this.threshold = tableSizeFor(initialCapacity);
+
+// 保证thresold为2的幂
+static final int tableSizeFor(int cap) {
+    int n = cap - 1;
+    n |= n &gt;&gt;&gt; 1;
+    n |= n &gt;&gt;&gt; 2;
+    n |= n &gt;&gt;&gt; 4;
+    n |= n &gt;&gt;&gt; 8;
+    n |= n &gt;&gt;&gt; 16;
+    return (n &lt; 0) ? 1 : (n &gt;= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+}
+</code></pre><p>阀值为6是因为之后进行resize操作的时候更新了阀值</p>
+<pre><code>阀值 = 容量 * 加载因子 = 8 * 0.75 = 6
+</code></pre><p>HashMap的扩容会把原先哈希表的容量扩大两倍。扩大之后，会对节点重新进行处理。</p>
+<p>哈希表上的节点的状态有3种，分别是单节点，无节点，链表，扩容对于这3种状态的处理方式如下：</p>
+<p>以8节点为原先容量，扩容为16容量讲解。</p>
+<ol>
+<li>单节点：由于容量扩大两倍，相当于左移1位。扩容前与00000111[7，n - 1 = 8 - 1]进行与操作。扩容后与00001111[15, n - 1 = 16 - 1]进行与操作。所以最终的结果要是还是在原位置，要么在原位置 +8(+old capacity) 位置</li>
+<li>无节点：不处理</li>
+<li>链表：遍历各个节点，每个节点的处理方式跟单节点一样，结果分成2种，还在原位置和原位置 +8 位置</li>
+</ol>
+<p>单节点处理示意图如下，这么设计的原因就是不需要再次计算hash值，只需要移动位置(+old capacity)即可：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap07.jpg" alt="">   </p>
+<p>下图是一个HashMap扩容之后的效果图（省去了索引为7橙色链表的虚线，太多线条了）：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/hashmap08.jpg" alt="">   </p>
+<p>哈希表扩容是使用resize方法完成：</p>
+<pre><code>final Node&lt;K,V&gt;[] resize() {
+    Node&lt;K,V&gt;[] oldTab = table;
+    int oldCap = (oldTab == null) ? 0 : oldTab.length;
+    int oldThr = threshold;
+    int newCap, newThr = 0;
+    if (oldCap &gt; 0) { // 如果老容量大于0，说明哈希表中已经有数据了，然后进行扩容
+        if (oldCap &gt;= MAXIMUM_CAPACITY) { // 超过最大容量的话，不扩容
+            threshold = Integer.MAX_VALUE;
+            return oldTab;
+        }
+        else if ((newCap = oldCap &lt;&lt; 1) &lt; MAXIMUM_CAPACITY &amp;&amp; // 容量加倍
+                 oldCap &gt;= DEFAULT_INITIAL_CAPACITY) // 如果老的容量超过默认容量的话
+            newThr = oldThr &lt;&lt; 1; // 阀值加倍
+    }
+    else if (oldThr &gt; 0) // 根据thresold初始化数组
+        newCap = oldThr;
+    else {               // 使用默认配置
+        newCap = DEFAULT_INITIAL_CAPACITY;
+        newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+    }
+    if (newThr == 0) {
+        float ft = (float)newCap * loadFactor;
+        newThr = (newCap &lt; MAXIMUM_CAPACITY &amp;&amp; ft &lt; (float)MAXIMUM_CAPACITY ?
+                  (int)ft : Integer.MAX_VALUE);
+    }
+    threshold = newThr;
+    @SuppressWarnings({&quot;rawtypes&quot;,&quot;unchecked&quot;})
+        Node&lt;K,V&gt;[] newTab = (Node&lt;K,V&gt;[])new Node[newCap];
+    table = newTab;
+    if (oldTab != null) {
+        for (int j = 0; j &lt; oldCap; ++j) { // 扩容之后进行rehash操作
+            Node&lt;K,V&gt; e;
+            if ((e = oldTab[j]) != null) {
+                oldTab[j] = null;
+                if (e.next == null)
+                    newTab[e.hash &amp; (newCap - 1)] = e; // 单节点扩容
+                else if (e instanceof TreeNode)
+                    ((TreeNode&lt;K,V&gt;)e).split(this, newTab, j, oldCap); // 红黑树方式处理
+                else { // 链表扩容
+                    Node&lt;K,V&gt; loHead = null, loTail = null;
+                    Node&lt;K,V&gt; hiHead = null, hiTail = null;
+                    Node&lt;K,V&gt; next;
+                    do {
+                        next = e.next;
+                        if ((e.hash &amp; oldCap) == 0) {
+                            if (loTail == null)
+                                loHead = e;
+                            else
+                                loTail.next = e;
+                            loTail = e;
+                        } 
+                        else {
+                            if (hiTail == null)
+                                hiHead = e;
+                            else
+                                hiTail.next = e;
+                            hiTail = e;
+                        }
+                    } while ((e = next) != null);
+                    if (loTail != null) {
+                        loTail.next = null;
+                        newTab[j] = loHead;
+                    }
+                    if (hiTail != null) {
+                        hiTail.next = null;
+                        newTab[j + oldCap] = hiHead;
+                    }
+                }
+            }
+        }
+    }
+    return newTab;
+}
+</code></pre><h2 id="HashMap注意的地方"><a href="#HashMap注意的地方" class="headerlink" title="HashMap注意的地方"></a>HashMap注意的地方</h2><ol>
+<li>HashMap底层是个哈希表，使用拉链法解决冲突</li>
+<li>HashMap内部存储的数据是无序的，这是因为HashMap内部的数组的下表是根据hash值算出来的</li>
+<li>HashMap允许key为null</li>
+<li>HashMap不是一个线程安全的类</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/03/29/jdk_hashmap/">http://fangjian0423.github.io/2016/03/29/jdk_hashmap/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/jdk/" rel="tag">#jdk</a>
+          
+            <a href="/tags/map/" rel="tag">#map</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/27/jdk_linkedlist/" rel="next" title="jdk LinkedList工作原理分析">
+                <i class="fa fa-chevron-left"></i> jdk LinkedList工作原理分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/29/jdk_linkedhashmap/" rel="prev" title="jdk LinkedHashMap工作原理分析">
+                jdk LinkedHashMap工作原理分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap原理分析"><span class="nav-number">1.</span> <span class="nav-text">HashMap原理分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#在分析HashMap源码之前，先看一个HashMap使用例子"><span class="nav-number">1.1.</span> <span class="nav-text">在分析HashMap源码之前，先看一个HashMap使用例子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap的属性"><span class="nav-number">1.2.</span> <span class="nav-text">HashMap的属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap的操作"><span class="nav-number">1.3.</span> <span class="nav-text">HashMap的操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#put操作"><span class="nav-number">1.3.1.</span> <span class="nav-text">put操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#get操作"><span class="nav-number">1.3.2.</span> <span class="nav-text">get操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#hash过程和resize过程分析"><span class="nav-number">1.3.3.</span> <span class="nav-text">hash过程和resize过程分析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap注意的地方"><span class="nav-number">2.</span> <span class="nav-text">HashMap注意的地方</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/03/29/jdk_hashmap/';
+      var disqus_title = "jdk HashMap工作原理分析";
+      var disqus_url = 'http://fangjian0423.github.io/2016/03/29/jdk_hashmap/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

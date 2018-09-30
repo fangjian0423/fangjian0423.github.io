@@ -1,0 +1,1616 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,flume," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="分析Flume HDFSSink写hdfs文件过程">
+<meta name="keywords" content="big data,flume">
+<meta property="og:type" content="article">
+<meta property="og:title" content="通过源码分析Flume HDFSSink 写hdfs文件的过程">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/07/20/flume-hdfs-sink/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="分析Flume HDFSSink写hdfs文件过程">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="通过源码分析Flume HDFSSink 写hdfs文件的过程">
+<meta name="twitter:description" content="分析Flume HDFSSink写hdfs文件过程">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> 通过源码分析Flume HDFSSink 写hdfs文件的过程 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                通过源码分析Flume HDFSSink 写hdfs文件的过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-07-20T23:32:33+08:00" content="2015-07-20">
+              2015-07-20
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/flume/" itemprop="url" rel="index">
+                    <span itemprop="name">flume</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/07/20/flume-hdfs-sink/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/07/20/flume-hdfs-sink/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/07/20/flume-hdfs-sink/" class="leancloud_visitors" data-flag-title="通过源码分析Flume HDFSSink 写hdfs文件的过程">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Flume有HDFS Sink，可以将Source进来的数据写入到hdfs中。</p>
+<p>HDFS Sink具体的逻辑代码是在HDFSEventSink这个类中。</p>
+<p>HDFS Sink跟写文件相关的配置如下：</p>
+<p>hdfs.path -&gt; hdfs目录路径<br>hdfs.filePrefix -&gt; 文件前缀。默认值FlumeData<br>hdfs.fileSuffix -&gt; 文件后缀<br>hdfs.rollInterval -&gt; 多久时间后close hdfs文件。单位是秒，默认30秒。设置为0的话表示不根据时间close hdfs文件<br>hdfs.rollSize -&gt; 文件大小超过一定值后，close文件。默认值1024，单位是字节。设置为0的话表示不基于文件大小<br>hdfs.rollCount -&gt; 写入了多少个事件后close文件。默认值是10个。设置为0的话表示不基于事件个数<br>hdfs.fileType -&gt; 文件格式， 有3种格式可选择：SequenceFile, DataStream or CompressedStream<br>hdfs.batchSize -&gt; 批次数，HDFS Sink每次从Channel中拿的事件个数。默认值100<br>hdfs.minBlockReplicas -&gt; HDFS每个块最小的replicas数字，不设置的话会取hadoop中的配置<br>hdfs.maxOpenFiles -&gt; 允许最多打开的文件数，默认是5000。如果超过了这个值，越早的文件会被关闭<br>serializer -&gt; HDFS Sink写文件的时候会进行序列化操作。会调用对应的Serializer借口，可以自定义符合需求的Serializer<br>hdfs.retryInterval -&gt; 关闭HDFS文件失败后重新尝试关闭的延迟数，单位是秒<br>hdfs.callTimeout -&gt; HDFS操作允许的时间，比如hdfs文件的open，write，flush，close操作。单位是毫秒，默认值是10000</p>
+<h2 id="HDFSEventSink分析"><a href="#HDFSEventSink分析" class="headerlink" title="HDFSEventSink分析"></a>HDFSEventSink分析</h2><p>以一个hdfs.path，hdfs.filePrefix和hdfs.fileSuffix分别为/data/%Y/%m/%d/%H，flume, .txt 为例子，分析源码：</p>
+<p>直接看HDFSEventSink的process方法：</p>
+<pre><code>public Status process() throws EventDeliveryException {
+    // 得到Channel
+    Channel channel = getChannel();
+    Transaction transaction = channel.getTransaction();
+    // 构造一个BucketWriter集合，BucketWriter就是处理hdfs文件的具体逻辑实现类
+    List&lt;BucketWriter&gt; writers = Lists.newArrayList();
+    // Channel的事务启动
+    transaction.begin();
+    try {
+      int txnEventCount = 0;
+      // 每次处理batchSize个事件。这里的batchSize就是之前配置的hdfs.batchSize
+      for (txnEventCount = 0; txnEventCount &lt; batchSize; txnEventCount++) {
+        Event event = channel.take();
+        if (event == null) {
+          break;
+        }
+
+        // 构造hdfs文件所在的路径
+        String realPath = BucketPath.escapeString(filePath, event.getHeaders(),
+            timeZone, needRounding, roundUnit, roundValue, useLocalTime);
+        // 构造hdfs文件名, fileName就是之前配置的hdfs.filePrefix，即flume
+        String realName = BucketPath.escapeString(fileName, event.getHeaders(),
+          timeZone, needRounding, roundUnit, roundValue, useLocalTime);
+
+        // 构造hdfs文件路径，根据之前的path，filePrefix，fileSuffix
+        // 得到这里的lookupPath为 /data/2015/07/20/15/flume
+        String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
+        BucketWriter bucketWriter;
+        HDFSWriter hdfsWriter = null;
+        // 构造一个回调函数
+        WriterCallback closeCallback = new WriterCallback() {
+          @Override
+          public void run(String bucketPath) {
+            LOG.info(&quot;Writer callback called.&quot;);
+            synchronized (sfWritersLock) {
+              // sfWriters是一个HashMap，最多支持maxOpenFiles个键值对。超过maxOpenFiles的话会关闭越早进来的文件
+              // 回调函数的作用就是hdfs文件close的时候移除sfWriters中对应的那个文件。防止打开的文件数超过maxOpenFiles
+              // sfWriters这个Map中的key是要写的hdfs路径，value是BucketWriter
+              sfWriters.remove(bucketPath);
+            }
+          }
+        };
+        synchronized (sfWritersLock) {
+          // 先查看sfWriters是否已经存在key为/data/2015/07/20/15/flume的BucketWriter
+          bucketWriter = sfWriters.get(lookupPath);
+          if (bucketWriter == null) {
+              // 没有的话构造一个BucketWriter
+            // 先根据fileType得到对应的HDFSWriter，fileType默认有3种类型，分别是SequenceFile, DataStream or CompressedStream
+            hdfsWriter = writerFactory.getWriter(fileType);
+            // 构造一个BucketWriter，会将刚刚构造的hdfsWriter当做参数传入，BucketWriter写hdfs文件的时候会使用HDFSWriter
+            bucketWriter = initializeBucketWriter(realPath, realName,
+              lookupPath, hdfsWriter, closeCallback);
+            // 新构造的BucketWriter放入到sfWriters中
+            sfWriters.put(lookupPath, bucketWriter);
+          }
+        }
+
+        // 将BucketWriter放入到writers集合中
+        if (!writers.contains(bucketWriter)) {
+          writers.add(bucketWriter);
+        }
+
+        // 写hdfs数据
+        try {
+          bucketWriter.append(event);
+        } catch (BucketClosedException ex) {
+          LOG.info(&quot;Bucket was closed while trying to append, &quot; +
+            &quot;reinitializing bucket and writing event.&quot;);
+          hdfsWriter = writerFactory.getWriter(fileType);
+          bucketWriter = initializeBucketWriter(realPath, realName,
+            lookupPath, hdfsWriter, closeCallback);
+          synchronized (sfWritersLock) {
+            sfWriters.put(lookupPath, bucketWriter);
+          }
+          bucketWriter.append(event);
+        }
+      }
+
+      if (txnEventCount == 0) {
+        sinkCounter.incrementBatchEmptyCount();
+      } else if (txnEventCount == batchSize) {
+        sinkCounter.incrementBatchCompleteCount();
+      } else {
+        sinkCounter.incrementBatchUnderflowCount();
+      }
+
+      // 每个批次全部完成后flush所有的hdfs文件
+      for (BucketWriter bucketWriter : writers) {
+        bucketWriter.flush();
+      }
+
+      // 事务提交
+      transaction.commit();
+
+      if (txnEventCount &lt; 1) {
+        return Status.BACKOFF;
+      } else {
+        sinkCounter.addToEventDrainSuccessCount(txnEventCount);
+        return Status.READY;
+      }
+    } catch (IOException eIO) {
+      // 发生异常事务回滚
+      transaction.rollback();
+      LOG.warn(&quot;HDFS IO error&quot;, eIO);
+      return Status.BACKOFF;
+    } catch (Throwable th) {
+      // 发生异常事务回滚
+      transaction.rollback();
+      LOG.error(&quot;process failed&quot;, th);
+      if (th instanceof Error) {
+        throw (Error) th;
+      } else {
+        throw new EventDeliveryException(th);
+      }
+    } finally {
+      // 关闭事务
+      transaction.close();
+    }
+}
+</code></pre><h2 id="BucketWriter分析"><a href="#BucketWriter分析" class="headerlink" title="BucketWriter分析"></a>BucketWriter分析</h2><p>接下来我们看下BucketWriter的append和flush方法。</p>
+<p>append方法：</p>
+<pre><code>  public synchronized void append(final Event event)
+      throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
+    // If idleFuture is not null, cancel it before we move forward to avoid a
+    // close call in the middle of the append.
+    if(idleFuture != null) {
+      idleFuture.cancel(false);
+      // There is still a small race condition - if the idleFuture is already
+      // running, interrupting it can cause HDFS close operation to throw -
+      // so we cannot interrupt it while running. If the future could not be
+      // cancelled, it is already running - wait for it to finish before
+      // attempting to write.
+      if(!idleFuture.isDone()) {
+        try {
+          idleFuture.get(callTimeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+          LOG.warn(&quot;Timeout while trying to cancel closing of idle file. Idle&quot; +
+            &quot; file close may have failed&quot;, ex);
+        } catch (Exception ex) {
+          LOG.warn(&quot;Error while trying to cancel closing of idle file. &quot;, ex);
+        }
+      }
+      idleFuture = null;
+    }
+
+    // 如果hdfs文件没有被打开
+    if (!isOpen) {
+      // hdfs已关闭的话抛出异常
+      if (closed) {
+        throw new BucketClosedException(&quot;This bucket writer was closed and &quot; +
+          &quot;this handle is thus no longer valid&quot;);
+      }
+      // 打开hdfs文件
+      open();
+    }
+
+    // 查看是否需要创建新文件
+    if (shouldRotate()) {
+      boolean doRotate = true;
+
+      if (isUnderReplicated) {
+        if (maxConsecUnderReplRotations &gt; 0 &amp;&amp;
+            consecutiveUnderReplRotateCount &gt;= maxConsecUnderReplRotations) {
+          doRotate = false;
+          if (consecutiveUnderReplRotateCount == maxConsecUnderReplRotations) {
+            LOG.error(&quot;Hit max consecutive under-replication rotations ({}); &quot; +
+                &quot;will not continue rolling files under this path due to &quot; +
+                &quot;under-replication&quot;, maxConsecUnderReplRotations);
+          }
+        } else {
+          LOG.warn(&quot;Block Under-replication detected. Rotating file.&quot;);
+        }
+        consecutiveUnderReplRotateCount++;
+      } else {
+        consecutiveUnderReplRotateCount = 0;
+      }
+
+      if (doRotate) {
+          // 如果需要创建新文件的时候会关闭文件，然后再打开新的文件。这里的close方法没有参数，表示可以再次打开新的文件
+        close();
+        open();
+      }
+    }
+
+    // 写event数据
+    try {
+      sinkCounter.incrementEventDrainAttemptCount();
+      callWithTimeout(new CallRunner&lt;Void&gt;() {
+        @Override
+        public Void call() throws Exception {
+          // 真正的写数据使用HDFSWriter的append方法
+          writer.append(event); // could block
+          return null;
+        }
+      });
+    } catch (IOException e) {
+      LOG.warn(&quot;Caught IOException writing to HDFSWriter ({}). Closing file (&quot; +
+          bucketPath + &quot;) and rethrowing exception.&quot;,
+          e.getMessage());
+      try {
+        close(true);
+      } catch (IOException e2) {
+        LOG.warn(&quot;Caught IOException while closing file (&quot; +
+             bucketPath + &quot;). Exception follows.&quot;, e2);
+      }
+      throw e;
+    }
+
+    // 文件大小+起来
+    processSize += event.getBody().length;
+    // 事件个数+1
+    eventCounter++;
+    // 批次数+1
+    batchCounter++;
+
+    // 批次数达到配置的hdfs.batchSize的话调用flush方法
+    if (batchCounter == batchSize) {
+      flush();
+    }
+}
+</code></pre><p>先看下open方法，打开hdfs文件的方法：</p>
+<pre><code>private void open() throws IOException, InterruptedException {
+    // hdfs文件路径或HDFSWriter没构造的话抛出异常
+    if ((filePath == null) || (writer == null)) {
+      throw new IOException(&quot;Invalid file settings&quot;);
+    }
+
+    final Configuration config = new Configuration();
+    // disable FileSystem JVM shutdown hook
+    config.setBoolean(&quot;fs.automatic.close&quot;, false);
+
+    // Hadoop is not thread safe when doing certain RPC operations,
+    // including getFileSystem(), when running under Kerberos.
+    // open() must be called by one thread at a time in the JVM.
+    // NOTE: tried synchronizing on the underlying Kerberos principal previously
+    // which caused deadlocks. See FLUME-1231.
+    synchronized (staticLock) {
+      checkAndThrowInterruptedException();
+
+      try {
+          // fileExtensionCounter是一个AtomicLong类型的实例，初始化为当前时间戳的数值
+        // 由于之前分析的，可能存在先关闭文件，然后再次open新文件的情况。所以在同一个BucketWriter类中open方法得到的文件名时间戳仅仅相差1
+        // 得到时间戳counter
+        long counter = fileExtensionCounter.incrementAndGet();
+
+        // 最终的文件名加上时间戳，这就是为什么flume生成的文件名会带有时间戳的原因
+        // 这里的fullFileName就是 flume.1437375933234
+        String fullFileName = fileName + &quot;.&quot; + counter;
+
+        // 加上后缀名， fullFileName就成了flume.1437375933234.txt
+        if (fileSuffix != null &amp;&amp; fileSuffix.length() &gt; 0) {
+          fullFileName += fileSuffix;
+        } else if (codeC != null) {
+          fullFileName += codeC.getDefaultExtension();
+        }
+
+        // 由于没配置inUsePrefix和inUseSuffix。 故这两个属性的值分别为&quot;&quot;和&quot;.tmp&quot;
+        // buckerPath为 /data/2015/07/20/15/flume.1437375933234.txt.tmp
+        bucketPath = filePath + &quot;/&quot; + inUsePrefix
+          + fullFileName + inUseSuffix;
+        // targetPath为 /data/2015/07/20/15/flume.1437375933234.txt
+        targetPath = filePath + &quot;/&quot; + fullFileName;
+
+        LOG.info(&quot;Creating &quot; + bucketPath);
+        callWithTimeout(new CallRunner&lt;Void&gt;() {
+          @Override
+          public Void call() throws Exception {
+            if (codeC == null) {
+              // Need to get reference to FS using above config before underlying
+              // writer does in order to avoid shutdown hook &amp;
+              // IllegalStateExceptions
+              if(!mockFsInjected) {
+                fileSystem = new Path(bucketPath).getFileSystem(
+                  config);
+              }
+              // 使用HDFSWriter打开文件
+              writer.open(bucketPath);
+            } else {
+              // need to get reference to FS before writer does to
+              // avoid shutdown hook
+              if(!mockFsInjected) {
+                fileSystem = new Path(bucketPath).getFileSystem(
+                  config);
+              }
+              // 使用HDFSWriter打开文件
+              writer.open(bucketPath, codeC, compType);
+            }
+            return null;
+          }
+        });
+      } catch (Exception ex) {
+        sinkCounter.incrementConnectionFailedCount();
+        if (ex instanceof IOException) {
+          throw (IOException) ex;
+        } else {
+          throw Throwables.propagate(ex);
+        }
+      }
+    }
+    isClosedMethod = getRefIsClosed();
+    sinkCounter.incrementConnectionCreatedCount();
+    // 重置各个计数器
+    resetCounters();
+
+    // 开线程处理hdfs.rollInterval配置的参数，多长时间后调用close方法
+    if (rollInterval &gt; 0) {
+      Callable&lt;Void&gt; action = new Callable&lt;Void&gt;() {
+        public Void call() throws Exception {
+          LOG.debug(&quot;Rolling file ({}): Roll scheduled after {} sec elapsed.&quot;,
+              bucketPath, rollInterval);
+          try {
+            // Roll the file and remove reference from sfWriters map.
+            close(true);
+          } catch(Throwable t) {
+            LOG.error(&quot;Unexpected error&quot;, t);
+          }
+          return null;
+        }
+      };
+      // 以秒为单位在这里指定。将这个线程执行的结果赋值给timedRollFuture这个属性
+      timedRollFuture = timedRollerPool.schedule(action, rollInterval,
+          TimeUnit.SECONDS);
+    }
+
+    isOpen = true;
+}
+</code></pre><p>flush方法，只会在close和append方法(处理的事件数等于批次数)中被调用：</p>
+<pre><code>public synchronized void flush() throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
+    if (!isBatchComplete()) { //isBatchComplete判断batchCount是否等于0。 所以这里只要batchCount不为0，那么执行下去
+      doFlush(); // doFlush方法会调用HDFSWriter的sync方法，并且将batchCount设置为0
+
+      // idleTimeout没有配置，以下代码不会执行
+      if(idleTimeout &gt; 0) {
+        // if the future exists and couldn&apos;t be cancelled, that would mean it has already run
+        // or been cancelled
+        if(idleFuture == null || idleFuture.cancel(false)) {
+          Callable&lt;Void&gt; idleAction = new Callable&lt;Void&gt;() {
+            public Void call() throws Exception {
+              LOG.info(&quot;Closing idle bucketWriter {} at {}&quot;, bucketPath,
+                System.currentTimeMillis());
+              if (isOpen) {
+                close(true);
+              }
+              return null;
+            }
+          };
+          idleFuture = timedRollerPool.schedule(idleAction, idleTimeout,
+              TimeUnit.SECONDS);
+        }
+      }
+    }
+}
+</code></pre><p>close方法：</p>
+<pre><code>  public synchronized void close(boolean callCloseCallback)
+        throws IOException, InterruptedException {
+    checkAndThrowInterruptedException();
+    try {
+      // close的时候先执行flush方法，清空batchCount，并调用HDFSWriter的sync方法
+      flush();
+    } catch (IOException e) {
+      LOG.warn(&quot;pre-close flush failed&quot;, e);
+    }
+    boolean failedToClose = false;
+    LOG.info(&quot;Closing {}&quot;, bucketPath);
+    // 创建一个关闭线程，这个线程会调用HDFSWriter的close方法
+    CallRunner&lt;Void&gt; closeCallRunner = createCloseCallRunner();
+    if (isOpen) { // 如果文件还开着
+      try {
+          // 执行HDFSWriter的close方法
+        callWithTimeout(closeCallRunner);
+        sinkCounter.incrementConnectionClosedCount();
+      } catch (IOException e) {
+        LOG.warn(
+          &quot;failed to close() HDFSWriter for file (&quot; + bucketPath +
+            &quot;). Exception follows.&quot;, e);
+        sinkCounter.incrementConnectionFailedCount();
+        failedToClose = true;
+        // 关闭文件失败的话起个线程，retryInterval秒后继续执行
+        final Callable&lt;Void&gt; scheduledClose =
+          createScheduledCloseCallable(closeCallRunner);
+        timedRollerPool.schedule(scheduledClose, retryInterval,
+          TimeUnit.SECONDS);
+      }
+      isOpen = false;
+    } else {
+      LOG.info(&quot;HDFSWriter is already closed: {}&quot;, bucketPath);
+    }
+
+    // timedRollFuture就是根据hdfs.rollInterval配置生成的一个属性。如果hdfs.rollInterval配置为0，那么不会执行以下代码
+    // 因为要close文件，所以如果开启了hdfs.rollInterval等待时间到了flush文件，由于文件已经关闭，再次关闭会有问题
+    // 所以这里取消timedRollFuture线程的执行
+    if (timedRollFuture != null &amp;&amp; !timedRollFuture.isDone()) {
+      timedRollFuture.cancel(false); // do not cancel myself if running!
+      timedRollFuture = null;
+    }
+
+    // 没有配置hdfs.idleTimeout， 不会执行
+    if (idleFuture != null &amp;&amp; !idleFuture.isDone()) {
+      idleFuture.cancel(false); // do not cancel myself if running!
+      idleFuture = null;
+    }
+
+    // 重命名文件，如果报错了，不会重命名文件
+    if (bucketPath != null &amp;&amp; fileSystem != null &amp;&amp; !failedToClose) {
+      // 将 /data/2015/07/20/15/flume.1437375933234.txt.tmp 重命名为 /data/2015/07/20/15/flume.1437375933234.txt
+      renameBucket(bucketPath, targetPath, fileSystem);
+    }
+    if (callCloseCallback) { // callCloseCallback是close方法的参数
+
+      // 调用关闭文件的回调函数，也就是BucketWriter的onCloseCallback属性
+      // 这个onCloseCallback属性就是在HDFSEventSink里的回调函数closeCallback。 用来处理sfWriters.remove(bucketPath);
+      // 如果onCloseCallback属性为true，那么说明这个BucketWriter已经不会再次open新的文件了。生命周期已经到了。
+      // onCloseCallback只有在append方法中调用shouldRotate方法的时候需要close文件的时候才会传入false，其他情况都是true
+      runCloseAction(); 
+
+      closed = true;
+    }
+}
+</code></pre><p>再回过头来看下append方法里的shouldRotate方法，shouldRotate方法执行下去的话会关闭文件然后再次打开新的文件：</p>
+<pre><code>private boolean shouldRotate() {
+    boolean doRotate = false;
+
+    // 调用HDFSWriter的isUnderReplicated方法，用来判断当前hdfs文件是否正在复制。
+    if (writer.isUnderReplicated()) {
+      this.isUnderReplicated = true;
+      doRotate = true;
+    } else {
+      this.isUnderReplicated = false;
+    }
+
+    // rollCount就是配置的hdfs.rollCount。 eventCounter事件数达到rollCount之后，会close文件，然后创建新的文件
+    if ((rollCount &gt; 0) &amp;&amp; (rollCount &lt;= eventCounter)) {
+      LOG.debug(&quot;rolling: rollCount: {}, events: {}&quot;, rollCount, eventCounter);
+      doRotate = true;
+    }
+
+    // rollSize就是配置的hdfs.rollSize。processSize是每个事件加起来的文件大小。当processSize超过rollSize的时候，会close文件，然后创建新的文件
+    if ((rollSize &gt; 0) &amp;&amp; (rollSize &lt;= processSize)) {
+      LOG.debug(&quot;rolling: rollSize: {}, bytes: {}&quot;, rollSize, processSize);
+      doRotate = true;
+    }
+
+    return doRotate;
+}
+</code></pre><h2 id="HDFSWriter分析"><a href="#HDFSWriter分析" class="headerlink" title="HDFSWriter分析"></a>HDFSWriter分析</h2><p>每个BucketWriter中对应只有一个HDFSWriter。</p>
+<p>HDFSWriter是一个接口，有3个具体的实现类，分别是：HDFSDataStream，HDFSSequenceFile和HDFSCompressedDataStream。分别对应fileType为DataStream，SequenceFile和CompressedStream。</p>
+<p>我们以HDFSDataStream为例，分析一下在BucketWriter中用到的HDFSWriter的一些方法：</p>
+<p>append方法，写hdfs文件：</p>
+<pre><code>@Override
+public void append(Event e) throws IOException {
+    // 非常简单，直接使用serializer的write方法
+    // serializer是org.apache.flume.serialization.EventSerializer接口的实现类
+    // 默认的Serializer是BodyTextEventSerializer
+    serializer.write(e);
+}
+</code></pre><p>open方法：</p>
+<pre><code>@Override
+public void open(String filePath) throws IOException {
+    Configuration conf = new Configuration();
+    // 构造hdfs路径
+    Path dstPath = new Path(filePath);
+    FileSystem hdfs = getDfs(conf, dstPath);
+    // 调用doOpen方法
+    doOpen(conf, dstPath, hdfs);
+}
+
+protected void doOpen(Configuration conf,
+    Path dstPath, FileSystem hdfs) throws
+        IOException {
+    if(useRawLocalFileSystem) {
+      if(hdfs instanceof LocalFileSystem) {
+        hdfs = ((LocalFileSystem)hdfs).getRaw();
+      } else {
+        logger.warn(&quot;useRawLocalFileSystem is set to true but file system &quot; +
+            &quot;is not of type LocalFileSystem: &quot; + hdfs.getClass().getName());
+      }
+    }
+
+    boolean appending = false;
+    // 构造FSDataOutputStream，作为属性outStream
+    if (conf.getBoolean(&quot;hdfs.append.support&quot;, false) == true &amp;&amp; hdfs.isFile
+            (dstPath)) {
+      outStream = hdfs.append(dstPath);
+      appending = true;
+    } else {
+      outStream = hdfs.create(dstPath);
+    }
+
+    // 初始化Serializer
+    serializer = EventSerializerFactory.getInstance(
+        serializerType, serializerContext, outStream);
+    if (appending &amp;&amp; !serializer.supportsReopen()) {
+      outStream.close();
+      serializer = null;
+      throw new IOException(&quot;serializer (&quot; + serializerType +
+          &quot;) does not support append&quot;);
+    }
+
+    // must call superclass to check for replication issues
+    registerCurrentStream(outStream, hdfs, dstPath);
+
+    if (appending) {
+      serializer.afterReopen();
+    } else {
+      serializer.afterCreate();
+    }
+}
+</code></pre><p>close方法：</p>
+<pre><code>@Override
+public void close() throws IOException {
+    serializer.flush();
+    serializer.beforeClose();
+    outStream.flush();
+    outStream.sync();
+    outStream.close();
+
+    unregisterCurrentStream();
+}
+</code></pre><p>sync方法：</p>
+<pre><code>@Override
+public void sync() throws IOException {
+    serializer.flush();
+    outStream.flush();
+    outStream.sync();
+}
+</code></pre><p>isUnderReplicated方法，在AbstractHDFSWriter中定义：</p>
+<pre><code>@Override
+public boolean isUnderReplicated() {
+    try {
+      // 得到目前文件replication后的块数
+      int numBlocks = getNumCurrentReplicas();
+      if (numBlocks == -1) {
+        return false;
+      }
+      int desiredBlocks;
+      if (configuredMinReplicas != null) {
+        // 如果配置了hdfs.minBlockReplicas
+        desiredBlocks = configuredMinReplicas;
+      } else {
+        // 没配置hdfs.minBlockReplicas的话直接从hdfs配置中拿
+        desiredBlocks = getFsDesiredReplication();
+      }
+      // 如果当前复制的块比期望要复制的块数字要小的话，返回true
+      return numBlocks &lt; desiredBlocks;
+    } catch (IllegalAccessException e) {
+      logger.error(&quot;Unexpected error while checking replication factor&quot;, e);
+    } catch (InvocationTargetException e) {
+      logger.error(&quot;Unexpected error while checking replication factor&quot;, e);
+    } catch (IllegalArgumentException e) {
+      logger.error(&quot;Unexpected error while checking replication factor&quot;, e);
+    }
+    return false;
+}
+</code></pre><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>hdfs.rollInterval，hdfs.rollSize，hdfs.rollCount，hdfs.minBlockReplicas，hdfs.batchSize这5个配置影响着hdfs文件的关闭。</p>
+<p><strong>注意，这5个配置影响的是一个hdfs文件，是一个hdfs文件。当hdfs文件关闭的时候，这些配置指标会重新开始计算。因为BucketWriter中的open方法里会调用resetCounters方法，这个方法会重置计数器。而基于hdfs.rollInterval的timedRollFuture线程返回值是在close方法中被销毁的。因此，只要close文件，并且open新文件的时候，这5个属性都会重新开始计算。</strong></p>
+<p>hdfs.rollInterval与时间有关，当时间达到hdfs.rollInterval配置的秒数，那么会close文件。</p>
+<p>hdfs.rollSize与每个event的字节大小有关，当一个一个event的字节相加起来大于等于hdfs.rollSize的时候，那么会close文件。</p>
+<p>hdfs.rollCount与事件的个数有关，当事件个数大于等于hdfs.rollCount的时候，那么会close文件。</p>
+<p>hdfs.batchSize表示当事件添加到hdfs.batchSize个的时候，也就是说HDFS Sink每次会拿hdfs.batchSize个事件，而且这些所有的事件都写进了同一个hdfs文件，这才会触发本次条件，并且其他4个配置都未达成条件。然后会close文件。</p>
+<p>hdfs.minBlockReplicas表示期望hdfs对文件最小的复制块数。所以有时候我们配置了hdfs.rollInterval，hdfs.rollSize，hdfs.rollCount这3个参数，并且这3个参数都没有符合条件，但是还是生成了多个文件，这就是因为这个参数导致的，而且这个参数的优先级比hdfs.rollSize，hdfs.rollCount要高。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/07/20/flume-hdfs-sink/">http://fangjian0423.github.io/2015/07/20/flume-hdfs-sink/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/flume/" rel="tag">#flume</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/07/14/flume-notes/" rel="next" title="Flume几个比较有用的功能和一些坑(用到新功能后会更新文章)">
+                <i class="fa fa-chevron-left"></i> Flume几个比较有用的功能和一些坑(用到新功能后会更新文章)
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/24/java-poolthread/" rel="prev" title="java内置的线程池笔记">
+                java内置的线程池笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFSEventSink分析"><span class="nav-number">1.</span> <span class="nav-text">HDFSEventSink分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BucketWriter分析"><span class="nav-number">2.</span> <span class="nav-text">BucketWriter分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFSWriter分析"><span class="nav-number">3.</span> <span class="nav-text">HDFSWriter分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/07/20/flume-hdfs-sink/';
+      var disqus_title = "通过源码分析Flume HDFSSink 写hdfs文件的过程";
+      var disqus_url = 'http://fangjian0423.github.io/2015/07/20/flume-hdfs-sink/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

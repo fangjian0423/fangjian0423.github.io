@@ -1,0 +1,1256 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="algorithm,springcloud," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Load Balance负载均衡是用于解决一台机器(一个进程)无法解决所有请求而产生的一种算法。 像nginx可以使用负载均衡分配流量，ribbon为客户端提供负载均衡，dubbo服务调用里的负载均衡等等，很多地方都使用到了负载均衡。 使用负载均衡带来的好处很明显：  当集群里的1台或者多台服务器down的时候，剩余的没有down的服务器可以保证服务的继续使用 使用了更多的机器保证了机器的良性使用">
+<meta name="keywords" content="algorithm,springcloud">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Loadbalance的几种算法以及在ribbon中的使用">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/01/29/loadbalance/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Load Balance负载均衡是用于解决一台机器(一个进程)无法解决所有请求而产生的一种算法。 像nginx可以使用负载均衡分配流量，ribbon为客户端提供负载均衡，dubbo服务调用里的负载均衡等等，很多地方都使用到了负载均衡。 使用负载均衡带来的好处很明显：  当集群里的1台或者多台服务器down的时候，剩余的没有down的服务器可以保证服务的继续使用 使用了更多的机器保证了机器的良性使用">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/loadbalance01.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Loadbalance的几种算法以及在ribbon中的使用">
+<meta name="twitter:description" content="Load Balance负载均衡是用于解决一台机器(一个进程)无法解决所有请求而产生的一种算法。 像nginx可以使用负载均衡分配流量，ribbon为客户端提供负载均衡，dubbo服务调用里的负载均衡等等，很多地方都使用到了负载均衡。 使用负载均衡带来的好处很明显：  当集群里的1台或者多台服务器down的时候，剩余的没有down的服务器可以保证服务的继续使用 使用了更多的机器保证了机器的良性使用">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/loadbalance01.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Loadbalance的几种算法以及在ribbon中的使用 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Loadbalance的几种算法以及在ribbon中的使用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-01-29T19:32:16+08:00" content="2017-01-29">
+              2017-01-29
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springcloud/" itemprop="url" rel="index">
+                    <span itemprop="name">springcloud</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/01/29/loadbalance/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/01/29/loadbalance/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/01/29/loadbalance/" class="leancloud_visitors" data-flag-title="Loadbalance的几种算法以及在ribbon中的使用">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Load Balance负载均衡是用于解决一台机器(一个进程)无法解决所有请求而产生的一种算法。</p>
+<p>像nginx可以使用负载均衡分配流量，ribbon为客户端提供负载均衡，dubbo服务调用里的负载均衡等等，很多地方都使用到了负载均衡。</p>
+<p>使用负载均衡带来的好处很明显：</p>
+<ol>
+<li>当集群里的1台或者多台服务器down的时候，剩余的没有down的服务器可以保证服务的继续使用</li>
+<li>使用了更多的机器保证了机器的良性使用，不会由于某一高峰时刻导致系统cpu急剧上升</li>
+</ol>
+<p>负载均衡有好几种实现策略，常见的有：</p>
+<ol>
+<li>随机 (Random)</li>
+<li>轮询 (RoundRobin)</li>
+<li>一致性哈希 (ConsistentHash)</li>
+<li>哈希 (Hash)</li>
+<li>加权（Weighted）</li>
+</ol>
+<a id="more"></a>
+<p>我们以<a href="https://github.com/Netflix/ribbon" target="_blank" rel="noopener">ribbon</a>的实现为基础，看看其中的一些算法是如何实现的。</p>
+<p>ribbon是一个为客户端提供负载均衡功能的服务，它内部提供了一个叫做ILoadBalance的接口代表负载均衡器的操作，比如有添加服务器操作、选择服务器操作、获取所有的服务器列表、获取可用的服务器列表等等。</p>
+<p>还提供了一个叫做IRule的接口代表负载均衡策略：</p>
+<pre><code>public interface IRule{
+    public Server choose(Object key);
+    public void setLoadBalancer(ILoadBalancer lb);
+    public ILoadBalancer getLoadBalancer();    
+}
+</code></pre><p>IRule接口的实现类有以下几种：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/loadbalance01.png" alt="image"></p>
+<p>其中RandomRule表示随机策略、RoundRobin表示轮询策略、WeightedResponseTimeRule表示加权策略、BestAvailableRule表示请求数最少策略等等。</p>
+<p>随机策略很简单，就是从服务器中随机选择一个服务器，RandomRule的实现代码如下：</p>
+<pre><code>public Server choose(ILoadBalancer lb, Object key) {
+    if (lb == null) {
+        return null;
+    }
+    Server server = null;
+
+    while (server == null) {
+        if (Thread.interrupted()) {
+            return null;
+        }
+        List&lt;Server&gt; upList = lb.getReachableServers();
+        List&lt;Server&gt; allList = lb.getAllServers();
+        int serverCount = allList.size();
+        if (serverCount == 0) {
+            return null;
+        }
+        int index = rand.nextInt(serverCount); // 使用jdk内部的Random类随机获取索引值index
+        server = upList.get(index); // 得到服务器实例
+
+        if (server == null) {
+            Thread.yield();
+            continue;
+        }
+
+        if (server.isAlive()) {
+            return (server);
+        }
+
+        server = null;
+        Thread.yield();
+    }
+    return server;
+}
+</code></pre><p>RoundRobin轮询策略表示每次都取下一个服务器，比如一共有5台服务器，第1次取第1台，第2次取第2台，第3次取第3台，以此类推：</p>
+<pre><code>public Server choose(ILoadBalancer lb, Object key) {
+    if (lb == null) {
+        log.warn(&quot;no load balancer&quot;);
+        return null;
+    }
+
+    Server server = null;
+    int count = 0;
+    while (server == null &amp;&amp; count++ &lt; 10) { // retry 10 次
+        List&lt;Server&gt; reachableServers = lb.getReachableServers();
+        List&lt;Server&gt; allServers = lb.getAllServers();
+        int upCount = reachableServers.size();
+        int serverCount = allServers.size();
+
+        if ((upCount == 0) || (serverCount == 0)) {
+            log.warn(&quot;No up servers available from load balancer: &quot; + lb);
+            return null;
+        }
+
+        int nextServerIndex = incrementAndGetModulo(serverCount); // incrementAndGetModulo方法内部使用nextServerCyclicCounter这个AtomicInteger属性原子递增对serverCount取模得到索引值
+        server = allServers.get(nextServerIndex); // 得到服务器实例
+
+        if (server == null) {
+            Thread.yield();
+            continue;
+        }
+
+        if (server.isAlive() &amp;&amp; (server.isReadyToServe())) {
+            return (server);
+        }
+
+        server = null;
+    }
+
+    if (count &gt;= 10) {
+        log.warn(&quot;No available alive servers after 10 tries from load balancer: &quot;
+                + lb);
+    }
+    return server;
+}
+</code></pre><p>BestAvailableRule策略用来选取最少并发量请求的服务器：</p>
+<pre><code>public Server choose(Object key) {
+    if (loadBalancerStats == null) {
+        return super.choose(key);
+    }
+    List&lt;Server&gt; serverList = getLoadBalancer().getAllServers(); // 获取所有的服务器列表
+    int minimalConcurrentConnections = Integer.MAX_VALUE;
+    long currentTime = System.currentTimeMillis();
+    Server chosen = null;
+    for (Server server: serverList) { // 遍历每个服务器
+        ServerStats serverStats = loadBalancerStats.getSingleServerStat(server); // 获取各个服务器的状态
+        if (!serverStats.isCircuitBreakerTripped(currentTime)) { // 没有触发断路器的话继续执行
+            int concurrentConnections = serverStats.getActiveRequestsCount(currentTime); // 获取当前服务器的请求个数
+            if (concurrentConnections &lt; minimalConcurrentConnections) { // 比较各个服务器之间的请求数，然后选取请求数最少的服务器并放到chosen变量中
+                minimalConcurrentConnections = concurrentConnections;
+                chosen = server;
+            }
+        }
+    }
+    if (chosen == null) { // 如果没有选上，调用父类ClientConfigEnabledRoundRobinRule的choose方法，也就是使用RoundRobinRule轮询的方式进行负载均衡        
+        return super.choose(key);
+    } else {
+        return chosen;
+    }
+}
+</code></pre><h2 id="实例验证Ribbon中的LoadBalance功能"><a href="#实例验证Ribbon中的LoadBalance功能" class="headerlink" title="实例验证Ribbon中的LoadBalance功能"></a>实例验证Ribbon中的LoadBalance功能</h2><p>ServerList中提供了3个instance，分别是：</p>
+<pre><code>compute-service:2222
+compute-service:2223
+compute-service:2224
+</code></pre><p>然后使用不同的IRule策略查看负载均衡的实现。</p>
+<p>首先先使用ribbon提供的LoadBalanced注解加在RestTemplate上面，这个注解会自动构造LoadBalancerClient接口的实现类并注册到Spring容器中。</p>
+<pre><code>@Bean
+@LoadBalanced
+RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+</code></pre><p>接下来使用RestTemplate进行rest操作的时候，会自动使用负载均衡策略，它内部会在RestTemplate中加入LoadBalancerInterceptor这个拦截器，这个拦截器的作用就是使用负载均衡。</p>
+<p>例子中，我们的实例的name叫做compute-service，里面提供了一个方法add用于相加2个Integer类型的数值。</p>
+<p>loadbalance的具体操作：</p>
+<pre><code>public String loadbalance() {
+    ServiceInstance serviceInstance = loadBalancerClient.choose(&quot;compute-service&quot;);
+    StringBuilder sb = new StringBuilder();
+    sb.append(&quot;host: &quot;).append(serviceInstance.getHost()).append(&quot;, &quot;);
+    sb.append(&quot;port: &quot;).append(serviceInstance.getPort()).append(&quot;, &quot;);
+    sb.append(&quot;uri: &quot;).append(serviceInstance.getUri());
+    return sb.toString();
+}
+</code></pre><h3 id="RandomRule随机策略"><a href="#RandomRule随机策略" class="headerlink" title="RandomRule随机策略"></a>RandomRule随机策略</h3><p>RandomRule：</p>
+<pre><code>@Configuration
+public class RibbonConfiguration {
+
+    @Autowired
+    private SpringClientFactory springClientFactory;
+
+    @Bean
+    public IRule ribbonRule() {
+        return new RandomRule();
+    }
+
+}
+</code></pre><p>测试结果如下，确实是随机获取的：</p>
+<pre><code>host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223    
+</code></pre><h3 id="RoundRobinRule轮询策略"><a href="#RoundRobinRule轮询策略" class="headerlink" title="RoundRobinRule轮询策略"></a>RoundRobinRule轮询策略</h3><p>RoundRobinRule：</p>
+<pre><code>@Bean
+public IRule ribbonRule() {
+    return new RandomRule();
+}
+</code></pre><p>测试结果如下，确实是轮询每个服务器的：</p>
+<pre><code>host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2222, uri: http://192.168.31.113:2222
+host: 192.168.31.113, port: 2224, uri: http://192.168.31.113:2224
+</code></pre><h3 id="BestAvailableRule最少并发数策略"><a href="#BestAvailableRule最少并发数策略" class="headerlink" title="BestAvailableRule最少并发数策略"></a>BestAvailableRule最少并发数策略</h3><p>BestAvailableRule：</p>
+<pre><code>@Bean
+public IRule ribbonRule() {
+    return new BestAvailableRule();
+}
+</code></pre><p>如果直接访问浏览器的话，测试结果如下(因为每次访问完请求数都变成0，下次遍历永远都是2223这个端口的实例)：</p>
+<pre><code>host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+host: 192.168.31.113, port: 2223, uri: http://192.168.31.113:2223
+..
+</code></pre><p>使用wrk模拟并发请求，结果会出现多个实例：</p>
+<pre><code>wrk -c 1000 -t 10 -d 10s http://localhost:3333/test
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/01/29/loadbalance/">http://fangjian0423.github.io/2017/01/29/loadbalance/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/algorithm/" rel="tag">#algorithm</a>
+          
+            <a href="/tags/springcloud/" rel="tag">#springcloud</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/01/2016_end/" rel="next" title="2016总结">
+                <i class="fa fa-chevron-left"></i> 2016总结
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/19/springcloud-hystrix/" rel="prev" title="SpringCloud使用Hystrix实现断路器">
+                SpringCloud使用Hystrix实现断路器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实例验证Ribbon中的LoadBalance功能"><span class="nav-number">1.</span> <span class="nav-text">实例验证Ribbon中的LoadBalance功能</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RandomRule随机策略"><span class="nav-number">1.1.</span> <span class="nav-text">RandomRule随机策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RoundRobinRule轮询策略"><span class="nav-number">1.2.</span> <span class="nav-text">RoundRobinRule轮询策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BestAvailableRule最少并发数策略"><span class="nav-number">1.3.</span> <span class="nav-text">BestAvailableRule最少并发数策略</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/01/29/loadbalance/';
+      var disqus_title = "Loadbalance的几种算法以及在ribbon中的使用";
+      var disqus_url = 'http://fangjian0423.github.io/2017/01/29/loadbalance/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

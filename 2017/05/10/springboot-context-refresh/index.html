@@ -1,0 +1,1158 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,springboot,springboot源码分析," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="上一篇文章中，我们分析了SpringBoot的启动过程：构造SpringApplication并调用它的run方法。其中构造SpringApplication的时候会初始化一些监听器和初始化器；run方法调用的过程中会有对应的监听器监听，并且会创建Spring容器。 Spring容器创建之后，会调用它的refresh方法，refresh的时候会做很多事情：比如完成配置类的解析、各种BeanFact">
+<meta name="keywords" content="java,springboot,springboot源码分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot源码分析之Spring容器的refresh过程">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/05/10/springboot-context-refresh/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="上一篇文章中，我们分析了SpringBoot的启动过程：构造SpringApplication并调用它的run方法。其中构造SpringApplication的时候会初始化一些监听器和初始化器；run方法调用的过程中会有对应的监听器监听，并且会创建Spring容器。 Spring容器创建之后，会调用它的refresh方法，refresh的时候会做很多事情：比如完成配置类的解析、各种BeanFact">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/configuration-annotation-process.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpringBoot源码分析之Spring容器的refresh过程">
+<meta name="twitter:description" content="上一篇文章中，我们分析了SpringBoot的启动过程：构造SpringApplication并调用它的run方法。其中构造SpringApplication的时候会初始化一些监听器和初始化器；run方法调用的过程中会有对应的监听器监听，并且会创建Spring容器。 Spring容器创建之后，会调用它的refresh方法，refresh的时候会做很多事情：比如完成配置类的解析、各种BeanFact">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/configuration-annotation-process.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> SpringBoot源码分析之Spring容器的refresh过程 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                SpringBoot源码分析之Spring容器的refresh过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-10T19:55:21+08:00" content="2017-05-10">
+              2017-05-10
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/10/springboot-context-refresh/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/05/10/springboot-context-refresh/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/05/10/springboot-context-refresh/" class="leancloud_visitors" data-flag-title="SpringBoot源码分析之Spring容器的refresh过程">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上一篇文章中，我们分析了SpringBoot的启动过程：构造SpringApplication并调用它的run方法。其中构造SpringApplication的时候会初始化一些监听器和初始化器；run方法调用的过程中会有对应的监听器监听，并且会创建Spring容器。</p>
+<p>Spring容器创建之后，会调用它的refresh方法，refresh的时候会做很多事情：比如完成配置类的解析、各种BeanFactoryPostProcessor和BeanPostProcessor的注册、国际化配置的初始化、web内置容器的构造等等。</p>
+<p>我们来分析一下这个refresh过程。</p>
+<a id="more"></a>
+<p>还是以web程序为例，那么对应的Spring容器为AnnotationConfigEmbeddedWebApplicationContext。它的refresh方法调用了父类AbstractApplicationContext的refresh方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">refresh</span><span class="params">()</span> <span class="keyword">throws</span> BeansException, IllegalStateException </span>&#123;</span><br><span class="line">  <span class="comment">// refresh过程只能一个线程处理，不允许并发执行</span></span><br><span class="line">  <span class="keyword">synchronized</span> (<span class="keyword">this</span>.startupShutdownMonitor) &#123;</span><br><span class="line">    prepareRefresh();</span><br><span class="line">    ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</span><br><span class="line">    prepareBeanFactory(beanFactory);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      postProcessBeanFactory(beanFactory);</span><br><span class="line">      invokeBeanFactoryPostProcessors(beanFactory);</span><br><span class="line">      registerBeanPostProcessors(beanFactory);</span><br><span class="line">      initMessageSource();</span><br><span class="line">      initApplicationEventMulticaster();</span><br><span class="line">      onRefresh();</span><br><span class="line">      registerListeners();</span><br><span class="line">      finishBeanFactoryInitialization(beanFactory);</span><br><span class="line">      finishRefresh();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">      <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">        logger.warn(<span class="string">"Exception encountered during context initialization - "</span> +</span><br><span class="line">            <span class="string">"cancelling refresh attempt: "</span> + ex);</span><br><span class="line">      &#125;</span><br><span class="line">      destroyBeans();</span><br><span class="line">      cancelRefresh(ex);</span><br><span class="line">      <span class="keyword">throw</span> ex;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">finally</span> &#123;</span><br><span class="line">      resetCommonCaches();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="prepareRefresh方法"><a href="#prepareRefresh方法" class="headerlink" title="prepareRefresh方法"></a>prepareRefresh方法</h2><p>表示在真正做refresh操作之前需要准备做的事情：</p>
+<ol>
+<li>设置Spring容器的启动时间，撤销关闭状态，开启活跃状态。</li>
+<li>初始化属性源信息(Property)</li>
+<li>验证环境信息里一些必须存在的属性</li>
+</ol>
+<h2 id="prepareBeanFactory方法"><a href="#prepareBeanFactory方法" class="headerlink" title="prepareBeanFactory方法"></a>prepareBeanFactory方法</h2><p>从Spring容器获取BeanFactory(Spring Bean容器)并进行相关的设置为后续的使用做准备：</p>
+<ol>
+<li>设置classloader(用于加载bean)，设置表达式解析器(解析bean定义中的一些表达式)，添加属性编辑注册器(注册属性编辑器)</li>
+<li>添加ApplicationContextAwareProcessor这个BeanPostProcessor。取消ResourceLoaderAware、ApplicationEventPublisherAware、MessageSourceAware、ApplicationContextAware、EnvironmentAware这5个接口的自动注入。因为ApplicationContextAwareProcessor把这5个接口的实现工作做了</li>
+<li>设置特殊的类型对应的bean。BeanFactory对应刚刚获取的BeanFactory；ResourceLoader、ApplicationEventPublisher、ApplicationContext这3个接口对应的bean都设置为当前的Spring容器</li>
+<li>注入一些其它信息的bean，比如environment、systemProperties等</li>
+</ol>
+<h2 id="postProcessBeanFactory方法"><a href="#postProcessBeanFactory方法" class="headerlink" title="postProcessBeanFactory方法"></a>postProcessBeanFactory方法</h2><p>BeanFactory设置之后再进行后续的一些BeanFactory操作。</p>
+<p>不同的Spring容器做不同的操作。比如GenericWebApplicationContext容器会在BeanFactory中添加ServletContextAwareProcessor用于处理ServletContextAware类型的bean初始化的时候调用setServletContext或者setServletConfig方法(跟ApplicationContextAwareProcessor原理一样)。</p>
+<p>AnnotationConfigEmbeddedWebApplicationContext对应的postProcessBeanFactory方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 调用父类EmbeddedWebApplicationContext的实现</span></span><br><span class="line">  <span class="keyword">super</span>.postProcessBeanFactory(beanFactory);</span><br><span class="line">  <span class="comment">// 查看basePackages属性，如果设置了会使用ClassPathBeanDefinitionScanner去扫描basePackages包下的bean并注册</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.basePackages != <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.basePackages.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.scanner.scan(<span class="keyword">this</span>.basePackages);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 查看annotatedClasses属性，如果设置了会使用AnnotatedBeanDefinitionReader去注册这些bean</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.annotatedClasses != <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.annotatedClasses.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.reader.register(<span class="keyword">this</span>.annotatedClasses);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>父类EmbeddedWebApplicationContext的实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> </span>&#123;</span><br><span class="line">  beanFactory.addBeanPostProcessor(</span><br><span class="line">      <span class="keyword">new</span> WebApplicationContextServletContextAwareProcessor(<span class="keyword">this</span>));</span><br><span class="line">  beanFactory.ignoreDependencyInterface(ServletContextAware.class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="invokeBeanFactoryPostProcessors方法"><a href="#invokeBeanFactoryPostProcessors方法" class="headerlink" title="invokeBeanFactoryPostProcessors方法"></a>invokeBeanFactoryPostProcessors方法</h2><p>在Spring容器中找出实现了BeanFactoryPostProcessor接口的processor并执行。Spring容器会委托给PostProcessorRegistrationDelegate的invokeBeanFactoryPostProcessors方法执行。</p>
+<p>介绍两个接口：</p>
+<ol>
+<li>BeanFactoryPostProcessor：用来修改Spring容器中已经存在的bean的定义，使用ConfigurableListableBeanFactory对bean进行处理</li>
+<li>BeanDefinitionRegistryPostProcessor：继承BeanFactoryPostProcessor，作用跟BeanFactoryPostProcessor一样，只不过是使用BeanDefinitionRegistry对bean进行处理</li>
+</ol>
+<p>基于web程序的Spring容器AnnotationConfigEmbeddedWebApplicationContext构造的时候，会初始化内部属性AnnotatedBeanDefinitionReader reader，这个reader构造的时候会在BeanFactory中注册一些post processor，包括BeanPostProcessor和BeanFactoryPostProcessor(比如ConfigurationClassPostProcessor、AutowiredAnnotationBeanPostProcessor)：</p>
+<pre><code>AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
+</code></pre><p>invokeBeanFactoryPostProcessors方法处理BeanFactoryPostProcessor的逻辑如下：</p>
+<p>从Spring容器中找出BeanDefinitionRegistryPostProcessor类型的bean(这些processor是在容器刚创建的时候通过构造AnnotatedBeanDefinitionReader的时候注册到容器中的)，然后按照优先级分别执行，优先级的逻辑如下：</p>
+<ol>
+<li>实现PriorityOrdered接口的BeanDefinitionRegistryPostProcessor先全部找出来，然后排序后依次执行</li>
+<li>实现Ordered接口的BeanDefinitionRegistryPostProcessor找出来，然后排序后依次执行</li>
+<li>没有实现PriorityOrdered和Ordered接口的BeanDefinitionRegistryPostProcessor找出来执行并依次执行</li>
+</ol>
+<p>接下来从Spring容器内查找BeanFactoryPostProcessor接口的实现类，然后执行(如果processor已经执行过，则忽略)，这里的查找规则跟上面查找BeanDefinitionRegistryPostProcessor一样，先找PriorityOrdered，然后是Ordered，最后是两者都没。</p>
+<p>这里需要说明的是ConfigurationClassPostProcessor这个processor是优先级最高的被执行的processor(实现了PriorityOrdered接口)。这个ConfigurationClassPostProcessor会去BeanFactory中找出所有有@Configuration注解的bean，然后使用ConfigurationClassParser去解析这个类。ConfigurationClassParser内部有个Map&lt;ConfigurationClass, ConfigurationClass&gt;类型的configurationClasses属性用于保存解析的类，ConfigurationClass是一个对要解析的配置类的封装，内部存储了配置类的注解信息、被@Bean注解修饰的方法、@ImportResource注解修饰的信息、ImportBeanDefinitionRegistrar等都存储在这个封装类中。</p>
+<p>这里ConfigurationClassPostProcessor最先被处理还有另外一个原因是如果程序中有自定义的BeanFactoryPostProcessor，那么这个PostProcessor首先得通过ConfigurationClassPostProcessor被解析出来，然后才能被Spring容器找到并执行。(ConfigurationClassPostProcessor不先执行的话，这个Processor是不会被解析的，不会被解析的话也就不会执行了)。</p>
+<p>在我们的程序中，只有主类RefreshContextApplication有@Configuration注解(@SpringBootApplication注解带有@Configuration注解)，所以这个配置类会被ConfigurationClassParser解析。解析过程如下：</p>
+<ol>
+<li>处理@PropertySources注解：进行一些配置信息的解析</li>
+<li>处理@ComponentScan注解：使用ComponentScanAnnotationParser扫描basePackage下的需要解析的类(@SpringBootApplication注解也包括了@ComponentScan注解，只不过basePackages是空的，空的话会去获取当前@Configuration修饰的类所在的包)，并注册到BeanFactory中(这个时候bean并没有进行实例化，而是进行了注册。具体的实例化在finishBeanFactoryInitialization方法中执行)。对于扫描出来的类，递归解析</li>
+<li>处理@Import注解：先递归找出所有的注解，然后再过滤出只有@Import注解的类，得到@Import注解的值。比如查找@SpringBootApplication注解的@Import注解数据的话，首先发现@SpringBootApplication不是一个@Import注解，然后递归调用修饰了@SpringBootApplication的注解，发现有个@EnableAutoConfiguration注解，再次递归发现被@Import(EnableAutoConfigurationImportSelector.class)修饰，还有@AutoConfigurationPackage注解修饰，再次递归@AutoConfigurationPackage注解，发现被@Import(AutoConfigurationPackages.Registrar.class)注解修饰，所以@SpringBootApplication注解对应的@Import注解有2个，分别是@Import(AutoConfigurationPackages.Registrar.class)和@Import(EnableAutoConfigurationImportSelector.class)。找出所有的@Import注解之后，开始处理逻辑：<ol>
+<li>遍历这些@Import注解内部的属性类集合</li>
+<li>如果这个类是个ImportSelector接口的实现类，实例化这个ImportSelector，如果这个类也是DeferredImportSelector接口的实现类，那么加入ConfigurationClassParser的deferredImportSelectors属性中让第6步处理。否则调用ImportSelector的selectImports方法得到需要Import的类，然后对这些类递归做@Import注解的处理</li>
+<li>如果这个类是ImportBeanDefinitionRegistrar接口的实现类，设置到配置类的importBeanDefinitionRegistrars属性中</li>
+<li>其它情况下把这个类入队到ConfigurationClassParser的importStack(队列)属性中，然后把这个类当成是@Configuration注解修饰的类递归重头开始解析这个类</li>
+</ol>
+</li>
+<li>处理@ImportResource注解：获取@ImportResource注解的locations属性，得到资源文件的地址信息。然后遍历这些资源文件并把它们添加到配置类的importedResources属性中</li>
+<li>处理@Bean注解：获取被@Bean注解修饰的方法，然后添加到配置类的beanMethods属性中</li>
+<li>处理DeferredImportSelector：处理第3步@Import注解产生的DeferredImportSelector，进行selectImports方法的调用找出需要import的类，然后再调用第3步相同的处理逻辑处理</li>
+</ol>
+<p>这里@SpringBootApplication注解被@EnableAutoConfiguration修饰，@EnableAutoConfiguration注解被@Import(EnableAutoConfigurationImportSelector.class)修饰，所以在第3步会找出这个@Import修饰的类EnableAutoConfigurationImportSelector，这个类刚好实现了DeferredImportSelector接口，接着就会在第6步被执行。第6步selectImport得到的类就是自动化配置类。</p>
+<p>EnableAutoConfigurationImportSelector的selectImport方法会在spring.factories文件中找出key为EnableAutoConfiguration对应的值，有81个，这81个就是所谓的自动化配置类(XXXAutoConfiguration)。</p>
+<p>ConfigurationClassParser解析完成之后，被解析出来的类会放到configurationClasses属性中。然后使用ConfigurationClassBeanDefinitionReader去解析这些类。</p>
+<p>这个时候这些bean只是被加载到了Spring容器中。下面这段代码是ConfigurationClassBeanDefinitionReader的解析bean过程：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitions</span><span class="params">(Set&lt;ConfigurationClass&gt; configurationModel)</span> </span>&#123;</span><br><span class="line">  TrackedConditionEvaluator trackedConditionEvaluator = <span class="keyword">new</span> TrackedConditionEvaluator();</span><br><span class="line">  <span class="keyword">for</span> (ConfigurationClass configClass : configurationModel) &#123;</span><br><span class="line">    <span class="comment">// 对每一个配置类，调用loadBeanDefinitionsForConfigurationClass方法</span></span><br><span class="line">    loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsForConfigurationClass</span><span class="params">(ConfigurationClass configClass,</span></span></span><br><span class="line"><span class="function"><span class="params">    TrackedConditionEvaluator trackedConditionEvaluator)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 使用条件注解判断是否需要跳过这个配置类</span></span><br><span class="line">  <span class="keyword">if</span> (trackedConditionEvaluator.shouldSkip(configClass)) &#123;</span><br><span class="line">    <span class="comment">// 跳过配置类的话在Spring容器中移除bean的注册</span></span><br><span class="line">    String beanName = configClass.getBeanName();</span><br><span class="line">    <span class="keyword">if</span> (StringUtils.hasLength(beanName) &amp;&amp; <span class="keyword">this</span>.registry.containsBeanDefinition(beanName)) &#123;</span><br><span class="line">      <span class="keyword">this</span>.registry.removeBeanDefinition(beanName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.importRegistry.removeImportingClassFor(configClass.getMetadata().getClassName());</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (configClass.isImported()) &#123;</span><br><span class="line">    <span class="comment">// 如果自身是被@Import注释所import的，注册自己</span></span><br><span class="line">    registerBeanDefinitionForImportedConfigurationClass(configClass);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 注册方法中被@Bean注解修饰的bean</span></span><br><span class="line">  <span class="keyword">for</span> (BeanMethod beanMethod : configClass.getBeanMethods()) &#123;</span><br><span class="line">    loadBeanDefinitionsForBeanMethod(beanMethod);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 注册@ImportResource注解注释的资源文件中的bean</span></span><br><span class="line">  loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());</span><br><span class="line">  <span class="comment">// 注册@Import注解中的ImportBeanDefinitionRegistrar接口的registerBeanDefinitions</span></span><br><span class="line">  loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>invokeBeanFactoryPostProcessors方法总结来说就是从Spring容器中找出BeanDefinitionRegistryPostProcessor和BeanFactoryPostProcessor接口的实现类并按照一定的规则顺序进行执行。 其中ConfigurationClassPostProcessor这个BeanDefinitionRegistryPostProcessor优先级最高，它会对项目中的@Configuration注解修饰的类(@Component、@ComponentScan、@Import、@ImportResource修饰的类也会被处理)进行解析，解析完成之后把这些bean注册到BeanFactory中。需要注意的是这个时候注册进来的bean还没有实例化。</p>
+<p>下面这图就是对ConfigurationClassPostProcessor后置器的总结：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/configuration-annotation-process.png" alt=""></p>
+<h2 id="registerBeanPostProcessors方法"><a href="#registerBeanPostProcessors方法" class="headerlink" title="registerBeanPostProcessors方法"></a>registerBeanPostProcessors方法</h2><p>从Spring容器中找出的BeanPostProcessor接口的bean，并设置到BeanFactory的属性中。之后bean被实例化的时候会调用这个BeanPostProcessor。</p>
+<p>该方法委托给了PostProcessorRegistrationDelegate类的registerBeanPostProcessors方法执行。这里的过程跟invokeBeanFactoryPostProcessors类似：</p>
+<ol>
+<li>先找出实现了PriorityOrdered接口的BeanPostProcessor并排序后加到BeanFactory的BeanPostProcessor集合中</li>
+<li>找出实现了Ordered接口的BeanPostProcessor并排序后加到BeanFactory的BeanPostProcessor集合中</li>
+<li>没有实现PriorityOrdered和Ordered接口的BeanPostProcessor加到BeanFactory的BeanPostProcessor集合中</li>
+</ol>
+<p>这些已经存在的BeanPostProcessor在postProcessBeanFactory方法中已经说明，都是由AnnotationConfigUtils的registerAnnotationConfigProcessors方法注册的。这些BeanPostProcessor包括有AutowiredAnnotationBeanPostProcessor(处理被@Autowired注解修饰的bean并注入)、RequiredAnnotationBeanPostProcessor(处理被@Required注解修饰的方法)、CommonAnnotationBeanPostProcessor(处理@PreDestroy、@PostConstruct、@Resource等多个注解的作用)等。</p>
+<p>如果是自定义的BeanPostProcessor，已经被ConfigurationClassPostProcessor注册到容器内。</p>
+<p>这些BeanPostProcessor会在这个方法内被实例化(通过调用BeanFactory的getBean方法，如果没有找到实例化的类，就会去实例化)。</p>
+<h2 id="initMessageSource方法"><a href="#initMessageSource方法" class="headerlink" title="initMessageSource方法"></a>initMessageSource方法</h2><p>在Spring容器中初始化一些国际化相关的属性。</p>
+<h2 id="initApplicationEventMulticaster方法"><a href="#initApplicationEventMulticaster方法" class="headerlink" title="initApplicationEventMulticaster方法"></a>initApplicationEventMulticaster方法</h2><p>在Spring容器中初始化事件广播器，事件广播器用于事件的发布。</p>
+<p>在<a href="http://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a>中分析过，EventPublishingRunListener这个SpringApplicationRunListener会监听事件，其中发生contextPrepared事件的时候EventPublishingRunListener会把事件广播器注入到BeanFactory中。</p>
+<p>所以initApplicationEventMulticaster不再需要再次注册，只需要拿出BeanFactory中的事件广播器然后设置到Spring容器的属性中即可。如果没有使用SpringBoot的话，Spring容器得需要自己初始化事件广播器。</p>
+<h2 id="onRefresh方法"><a href="#onRefresh方法" class="headerlink" title="onRefresh方法"></a>onRefresh方法</h2><p>一个模板方法，不同的Spring容器做不同的事情。</p>
+<p>比如web程序的容器AnnotationConfigEmbeddedWebApplicationContext中会调用createEmbeddedServletContainer方法去创建内置的Servlet容器。</p>
+<p>目前SpringBoot只支持3种内置的Servlet容器：</p>
+<ol>
+<li>Tomcat</li>
+<li>Jetty</li>
+<li>Undertow</li>
+</ol>
+<h2 id="registerListeners方法"><a href="#registerListeners方法" class="headerlink" title="registerListeners方法"></a>registerListeners方法</h2><p>把Spring容器内的时间监听器和BeanFactory中的时间监听器都添加的事件广播器中。</p>
+<p>然后如果存在early event的话，广播出去。</p>
+<h2 id="finishBeanFactoryInitialization方法"><a href="#finishBeanFactoryInitialization方法" class="headerlink" title="finishBeanFactoryInitialization方法"></a>finishBeanFactoryInitialization方法</h2><p>实例化BeanFactory中已经被注册但是未实例化的所有实例(懒加载的不需要实例化)。</p>
+<p>比如invokeBeanFactoryPostProcessors方法中根据各种注解解析出来的类，在这个时候都会被初始化。</p>
+<p>实例化的过程各种BeanPostProcessor开始起作用。</p>
+<h2 id="finishRefresh方法"><a href="#finishRefresh方法" class="headerlink" title="finishRefresh方法"></a>finishRefresh方法</h2><p>refresh做完之后需要做的其他事情。</p>
+<ol>
+<li>初始化生命周期处理器，并设置到Spring容器中(LifecycleProcessor)</li>
+<li>调用生命周期处理器的onRefresh方法，这个方法会找出Spring容器中实现了SmartLifecycle接口的类并进行start方法的调用</li>
+<li>发布ContextRefreshedEvent事件告知对应的ApplicationListener进行响应的操作</li>
+<li>调用LiveBeansView的registerApplicationContext方法：如果设置了JMX相关的属性，则就调用该方法</li>
+<li>发布EmbeddedServletContainerInitializedEvent事件告知对应的ApplicationListener进行响应的操作</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Spring容器的refresh过程就是上述11个方法的介绍。内容还是非常多的，本文也只是说了个大概，像bean的实例化过程没有具体去分析，这方面的内容以后会看情况去做分析。</p>
+<p>这篇文章也是为之后的文章比如内置Servlet容器的创建启动、条件注解的使用等打下基础。</p>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p>写了一个例子用来验证容器的refresh过程，包括bean解析，processor的使用、Lifecycle的使用等。</p>
+<p>可以启动项目debug去看看对应的过程，这样对Spring容器会有一个更好的理解。</p>
+<p>地址在：<a href="https://github.com/fangjian0423/springboot-analysis/tree/master/springboot-refresh-context" target="_blank" rel="noopener">https://github.com/fangjian0423/springboot-analysis/tree/master/springboot-refresh-context</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/05/10/springboot-context-refresh/">http://fangjian0423.github.io/2017/05/10/springboot-context-refresh/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/springboot/" rel="tag">#springboot</a>
+          
+            <a href="/tags/springboot源码分析/" rel="tag">#springboot源码分析</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/04/30/springboot-startup-analysis/" rel="next" title="SpringBoot源码分析之SpringBoot的启动过程">
+                <i class="fa fa-chevron-left"></i> SpringBoot源码分析之SpringBoot的启动过程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/16/springboot-condition-annotation/" rel="prev" title="SpringBoot源码分析之条件注解的底层实现">
+                SpringBoot源码分析之条件注解的底层实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#prepareRefresh方法"><span class="nav-number">1.</span> <span class="nav-text">prepareRefresh方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#prepareBeanFactory方法"><span class="nav-number">2.</span> <span class="nav-text">prepareBeanFactory方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#postProcessBeanFactory方法"><span class="nav-number">3.</span> <span class="nav-text">postProcessBeanFactory方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#invokeBeanFactoryPostProcessors方法"><span class="nav-number">4.</span> <span class="nav-text">invokeBeanFactoryPostProcessors方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#registerBeanPostProcessors方法"><span class="nav-number">5.</span> <span class="nav-text">registerBeanPostProcessors方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#initMessageSource方法"><span class="nav-number">6.</span> <span class="nav-text">initMessageSource方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#initApplicationEventMulticaster方法"><span class="nav-number">7.</span> <span class="nav-text">initApplicationEventMulticaster方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#onRefresh方法"><span class="nav-number">8.</span> <span class="nav-text">onRefresh方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#registerListeners方法"><span class="nav-number">9.</span> <span class="nav-text">registerListeners方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#finishBeanFactoryInitialization方法"><span class="nav-number">10.</span> <span class="nav-text">finishBeanFactoryInitialization方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#finishRefresh方法"><span class="nav-number">11.</span> <span class="nav-text">finishRefresh方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">12.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#例子"><span class="nav-number">13.</span> <span class="nav-text">例子</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/05/10/springboot-context-refresh/';
+      var disqus_title = "SpringBoot源码分析之Spring容器的refresh过程";
+      var disqus_url = 'http://fangjian0423.github.io/2017/05/10/springboot-context-refresh/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

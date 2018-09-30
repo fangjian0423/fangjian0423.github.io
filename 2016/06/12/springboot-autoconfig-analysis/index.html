@@ -1,0 +1,1268 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="springboot," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="springboot用来简化Spring框架带来的大量XML配置以及复杂的依赖管理，让开发人员可以更加关注业务逻辑的开发。 比如不使用springboot而使用SpringMVC作为web框架进行开发的时候，需要配置相关的SpringMVC配置以及对应的依赖，比较繁琐；而使用springboot的话只需要以下短短的几行代码就可以使用SpringMVC，可谓相当地方便： @RestControlle">
+<meta name="keywords" content="springboot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot内部的一些自动化配置原理">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/06/12/springboot-autoconfig-analysis/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="springboot用来简化Spring框架带来的大量XML配置以及复杂的依赖管理，让开发人员可以更加关注业务逻辑的开发。 比如不使用springboot而使用SpringMVC作为web框架进行开发的时候，需要配置相关的SpringMVC配置以及对应的依赖，比较繁琐；而使用springboot的话只需要以下短短的几行代码就可以使用SpringMVC，可谓相当地方便： @RestControlle">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/springboot01.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpringBoot内部的一些自动化配置原理">
+<meta name="twitter:description" content="springboot用来简化Spring框架带来的大量XML配置以及复杂的依赖管理，让开发人员可以更加关注业务逻辑的开发。 比如不使用springboot而使用SpringMVC作为web框架进行开发的时候，需要配置相关的SpringMVC配置以及对应的依赖，比较繁琐；而使用springboot的话只需要以下短短的几行代码就可以使用SpringMVC，可谓相当地方便： @RestControlle">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/springboot01.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> SpringBoot内部的一些自动化配置原理 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                SpringBoot内部的一些自动化配置原理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-06-12T19:30:57+08:00" content="2016-06-12">
+              2016-06-12
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/06/12/springboot-autoconfig-analysis/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/12/springboot-autoconfig-analysis/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/06/12/springboot-autoconfig-analysis/" class="leancloud_visitors" data-flag-title="SpringBoot内部的一些自动化配置原理">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>springboot用来简化Spring框架带来的大量XML配置以及复杂的依赖管理，让开发人员可以更加关注业务逻辑的开发。</p>
+<p>比如不使用springboot而使用SpringMVC作为web框架进行开发的时候，需要配置相关的SpringMVC配置以及对应的依赖，比较繁琐；而使用springboot的话只需要以下短短的几行代码就可以使用SpringMVC，可谓相当地方便：</p>
+<pre><code>@RestController
+class App {
+  @RequestMapping(&quot;/&quot;)
+  String home() {
+    &quot;hello&quot;
+  }
+}
+</code></pre><p>其中maven配置如下：</p>
+<pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;1.3.5.RELEASE&lt;/version&gt;
+&lt;/parent&gt;
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+</code></pre><a id="more"></a>
+<p>我们以使用SpringMVC并且视图使用freemarker为例，分析springboot内部是如何解析freemarker视图的。</p>
+<p>如果要在springboot中使用freemarker视图框架，并且使用maven构建项目的时候，还需要加入以下依赖：</p>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-freemarker&lt;/artifactId&gt;
+    &lt;version&gt;1.3.5.RELEASE&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre><p>这个spring-boot-starter-freemarker依赖对应的jar包里的文件如下：</p>
+<pre><code>META-INF
+├── MANIFEST.MF
+├── maven
+│   └── org.springframework.boot
+│       └── spring-boot-starter-freemarker
+│           ├── pom.properties
+│           └── pom.xml
+└── spring.provides
+</code></pre><p>内部的pom.xml里需要的依赖如下：</p>
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-boot-starter&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;org.freemarker&lt;/groupId&gt;
+  &lt;artifactId&gt;freemarker&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-context-support&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre><p>我们可以看到这个spring-boot-starter-freemarker依赖内部并没有freemarker的ViewResolver，而是仅仅加入了freemarker的依赖，还有3个依赖，分别是spring-boot-starter、spring-boot-starter-web和spring-context-support。</p>
+<p>接下来我们来分析一下为什么在springboot中加入了freemarker的依赖spring-boot-starter-freemarker后，SpringMVC自动地构造了一个freemarker的ViewResolver？</p>
+<p>在分析之前，首先我们先看下maven配置，看到了一个parent配置：</p>
+<pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;1.3.5.RELEASE&lt;/version&gt;
+&lt;/parent&gt;
+</code></pre><p>这个spring-boot-starter-parent的pom文件在 <a href="http://central.maven.org/maven2/org/springframework/boot/spring-boot-starter-parent/1.3.5.RELEASE/spring-boot-starter-parent-1.3.5.RELEASE.pom" target="_blank" rel="noopener">http://central.maven.org/maven2/org/springframework/boot/spring-boot-starter-parent/1.3.5.RELEASE/spring-boot-starter-parent-1.3.5.RELEASE.pom</a> 里。</p>
+<p>它内部也有一个parent：</p>
+<pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;
+    &lt;version&gt;1.3.5.RELEASE&lt;/version&gt;
+    &lt;relativePath&gt;../../spring-boot-dependencies&lt;/relativePath&gt;
+&lt;/parent&gt;
+</code></pre><p>这个spring-boot-dependencies的pom文件在<a href="http://central.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/1.3.5.RELEASE/spring-boot-dependencies-1.3.5.RELEASE.pom，内部有很多依赖。" target="_blank" rel="noopener">http://central.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/1.3.5.RELEASE/spring-boot-dependencies-1.3.5.RELEASE.pom，内部有很多依赖。</a></p>
+<p>比如spring-boot-starter-web、spring-boot-starter-websocket、spring-boot-starter-data-solrspring-boot-starter-freemarker等等，基本上所有的依赖都在这个parent里。</p>
+<p>我们的例子中使用了parent依赖里的两个依赖，分别是spring-boot-starter-web和spring-boot-starter-freemarker。</p>
+<p>其中spring-boot-starter-web内部依赖了spring的两个spring web依赖：spring-web和spring-webmvc。</p>
+<p>spring-boot-starter-web内部还依赖spring-boot-starter，这个spring-boot-starter依赖了spring核心依赖spring-core；还依赖了<strong>spring-boot</strong>和<strong>spring-boot-autoconfigure</strong>这两个。</p>
+<p><strong>spring-boot</strong>定义了很多基础功能类，像运行程序的SpringApplication，Logging系统，一些tomcat或者jetty这些EmbeddedServlet容器，配置属性loader等等。</p>
+<p>包括了这些包：</p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/springboot01.png" alt="image"></p>
+<p><strong>spring-boot-autoconfigure</strong>定义了很多自动配置的类，比如jpa，solr，redis，elasticsearch、mongo、freemarker、velocity，thymeleaf等等自动配置的类。</p>
+<p>以freemarker为例，看一下它的自动化配置类：</p>
+<pre><code>@Configuration // 使用Configuration注解，自动构造一些内部定义的bean
+@ConditionalOnClass({ freemarker.template.Configuration.class,
+        FreeMarkerConfigurationFactory.class }) // 需要freemarker.template.Configuration和FreeMarkerConfigurationFactory这两个类存在在classpath中才会进行自动配置
+@AutoConfigureAfter(WebMvcAutoConfiguration.class) // 本次自动配置需要依赖WebMvcAutoConfiguration这个配置类配置之后触发。这个WebMvcAutoConfiguration内部会配置很多Wen基础性的东西，比如RequestMappingHandlerMapping、RequestMappingHandlerAdapter等
+@EnableConfigurationProperties(FreeMarkerProperties.class) // 使用FreeMarkerProperties类中的配置
+public class FreeMarkerAutoConfiguration {
+
+    private static final Log logger = LogFactory
+            .getLog(FreeMarkerAutoConfiguration.class);
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private FreeMarkerProperties properties;
+
+    @PostConstruct // 构造之后调用的方法，组要检查模板位置是否存在
+    public void checkTemplateLocationExists() {
+        if (this.properties.isCheckTemplateLocation()) {
+            TemplateLocation templatePathLocation = null;
+            List&lt;TemplateLocation&gt; locations = new ArrayList&lt;TemplateLocation&gt;();
+            for (String templateLoaderPath : this.properties.getTemplateLoaderPath()) {
+                TemplateLocation location = new TemplateLocation(templateLoaderPath);
+                locations.add(location);
+                if (location.exists(this.applicationContext)) {
+                    templatePathLocation = location;
+                    break;
+                }
+            }
+            if (templatePathLocation == null) {
+                logger.warn(&quot;Cannot find template location(s): &quot; + locations
+                        + &quot; (please add some templates, &quot;
+                        + &quot;check your FreeMarker configuration, or set &quot;
+                        + &quot;spring.freemarker.checkTemplateLocation=false)&quot;);
+            }
+        }
+    }
+
+    protected static class FreeMarkerConfiguration {
+
+        @Autowired
+        protected FreeMarkerProperties properties;
+
+        protected void applyProperties(FreeMarkerConfigurationFactory factory) {
+            factory.setTemplateLoaderPaths(this.properties.getTemplateLoaderPath());
+            factory.setPreferFileSystemAccess(this.properties.isPreferFileSystemAccess());
+            factory.setDefaultEncoding(this.properties.getCharsetName());
+            Properties settings = new Properties();
+            settings.putAll(this.properties.getSettings());
+            factory.setFreemarkerSettings(settings);
+        }
+
+    }
+
+    @Configuration
+    @ConditionalOnNotWebApplication // 非Web项目的自动配置
+    public static class FreeMarkerNonWebConfiguration extends FreeMarkerConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public FreeMarkerConfigurationFactoryBean freeMarkerConfiguration() {
+            FreeMarkerConfigurationFactoryBean freeMarkerFactoryBean = new FreeMarkerConfigurationFactoryBean();
+            applyProperties(freeMarkerFactoryBean);
+            return freeMarkerFactoryBean;
+        }
+
+    }
+
+    @Configuration // 自动配置的类
+    @ConditionalOnClass(Servlet.class) // 需要运行在Servlet容器下
+    @ConditionalOnWebApplication // 需要在Web项目下
+    public static class FreeMarkerWebConfiguration extends FreeMarkerConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(FreeMarkerConfig.class)
+        public FreeMarkerConfigurer freeMarkerConfigurer() {
+            FreeMarkerConfigurer configurer = new FreeMarkerConfigurer();
+            applyProperties(configurer);
+            return configurer;
+        }
+
+        @Bean
+        public freemarker.template.Configuration freeMarkerConfiguration(
+                FreeMarkerConfig configurer) {
+            return configurer.getConfiguration();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(name = &quot;freeMarkerViewResolver&quot;) // 没有配置freeMarkerViewResolver这个bean的话，会自动构造一个freeMarkerViewResolver
+        @ConditionalOnProperty(name = &quot;spring.freemarker.enabled&quot;, matchIfMissing = true) // 配置文件中开关开启的话，才会构造
+        public FreeMarkerViewResolver freeMarkerViewResolver() {
+            // 构造了freemarker的ViewSolver，这就是一开始我们分析的为什么没有设置ViewResolver，但是最后却还是存在的原因
+            FreeMarkerViewResolver resolver = new FreeMarkerViewResolver();
+            this.properties.applyToViewResolver(resolver);
+            return resolver;
+        }
+
+    }
+}
+</code></pre><p>freemarker对应的配置类：</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;spring.freemarker&quot;) // 使用配置文件中以spring.freemarker开头的配置
+public class FreeMarkerProperties extends AbstractTemplateViewResolverProperties {
+    public static final String DEFAULT_TEMPLATE_LOADER_PATH = &quot;classpath:/templates/&quot;; // 默认路径
+
+    public static final String DEFAULT_PREFIX = &quot;&quot;; // 默认前缀
+
+    public static final String DEFAULT_SUFFIX = &quot;.ftl&quot;; // 默认后缀
+
+    ...
+
+}
+</code></pre><p>下面是官网上的freemarker配置：</p>
+<pre><code># FREEMARKER (FreeMarkerAutoConfiguration)
+spring.freemarker.allow-request-override=false # Set whether HttpServletRequest attributes are allowed to override (hide) controller generated model attributes of the same name.
+spring.freemarker.allow-session-override=false # Set whether HttpSession attributes are allowed to override (hide) controller generated model attributes of the same name.
+spring.freemarker.cache=false # Enable template caching.
+spring.freemarker.charset=UTF-8 # Template encoding.
+spring.freemarker.check-template-location=true # Check that the templates location exists.
+spring.freemarker.content-type=text/html # Content-Type value.
+spring.freemarker.enabled=true # Enable MVC view resolution for this technology.
+spring.freemarker.expose-request-attributes=false # Set whether all request attributes should be added to the model prior to merging with the template.
+spring.freemarker.expose-session-attributes=false # Set whether all HttpSession attributes should be added to the model prior to merging with the template.
+spring.freemarker.expose-spring-macro-helpers=true # Set whether to expose a RequestContext for use by Spring&apos;s macro library, under the name &quot;springMacroRequestContext&quot;.
+spring.freemarker.prefer-file-system-access=true # Prefer file system access for template loading. File system access enables hot detection of template changes.
+spring.freemarker.prefix= # Prefix that gets prepended to view names when building a URL.
+spring.freemarker.request-context-attribute= # Name of the RequestContext attribute for all views.
+spring.freemarker.settings.*= # Well-known FreeMarker keys which will be passed to FreeMarker&apos;s Configuration.
+spring.freemarker.suffix= # Suffix that gets appended to view names when building a URL.
+spring.freemarker.template-loader-path=classpath:/templates/ # Comma-separated list of template paths.
+spring.freemarker.view-names= # White list of view names that can be resolved.
+</code></pre><p>所以说一开始我们加入了一个spring-boot-starter-freemarker依赖，这个依赖中存在freemarker的lib，满足了FreeMarkerAutoConfiguration中的ConditionalOnClass里写的freemarker.template.Configuration.class这个类存在于classpath中。</p>
+<p>所以就构造了FreeMarkerAutoConfiguration里的ViewResolver，这个ViewResolver被自动加入到SpringMVC中。</p>
+<p>同样地，如果我们要使用velocity模板，springboot内部也有velocity的自动配置类VelocityAutoConfiguration，原理是跟freemarker一样的。</p>
+<p>其他：</p>
+<p><a href="https://github.com/mybatis/spring-boot-starter" target="_blank" rel="noopener">Mybatis的autoconfigure</a>是Mybatis提供的springboot的自动配置模块，由于springboot官方没有提供mybatis的自动化配置模块，所以mybatis自己写了这么一个模块，观察它的源码，发现基本上跟freemarker的autoconfigure模块一样，只需要构造对应的实例即可。</p>
+<p>总结：</p>
+<p>springboot内部提供了很多自动化配置的类，这些类会判断classpath中是否存在自己需要的那个类，如果存在则会自动配置相关的配置，否则就不会自动配置。</p>
+<p>如果我们需要使用一些框架，只需要加入依赖即可，这些依赖内部是没有代码的，只是一些对应框架需要的lib，有了这些lib就会触发自动化配置，于是就能使用框架了。</p>
+<p>这一点跟当时看springmvc的时候对response进行json或xml渲染的原理相同。springmvc中的requestmapping注解加上responsebody注解后会返回xml或者json，如果依赖中加入jackson依赖就会转换成json，如果依赖中加入xstream依赖就会转换成xml。当然，前提是springmvc中有了这两种依赖的HttpMessageConverter代码，这个HttpMessageConverter代码就相当于springboot中的各种AutoConfiguration。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/06/12/springboot-autoconfig-analysis/">http://fangjian0423.github.io/2016/06/12/springboot-autoconfig-analysis/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/springboot/" rel="tag">#springboot</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/06/04/java-thread-state/" rel="next" title="Java线程状态分析">
+                <i class="fa fa-chevron-left"></i> Java线程状态分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/06/22/springboot-with-scala/" rel="prev" title="SpringBoot with Scala">
+                SpringBoot with Scala <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/06/12/springboot-autoconfig-analysis/';
+      var disqus_title = "SpringBoot内部的一些自动化配置原理";
+      var disqus_url = 'http://fangjian0423.github.io/2016/06/12/springboot-autoconfig-analysis/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

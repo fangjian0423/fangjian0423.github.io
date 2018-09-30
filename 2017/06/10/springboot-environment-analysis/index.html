@@ -1,0 +1,1122 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,springboot,springboot源码分析," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="SpringBoot把配置文件的加载封装成了PropertySourceLoader接口，该接口的定义如下： 1234567public interface PropertySourceLoader &amp;#123;	// 支持的文件后缀	String[] getFileExtensions();	// 把资源Resource加载成属性源PropertySource	PropertySource&amp;lt">
+<meta name="keywords" content="java,springboot,springboot源码分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot源码分析之配置环境的构造过程">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/06/10/springboot-environment-analysis/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="SpringBoot把配置文件的加载封装成了PropertySourceLoader接口，该接口的定义如下： 1234567public interface PropertySourceLoader &amp;#123;	// 支持的文件后缀	String[] getFileExtensions();	// 把资源Resource加载成属性源PropertySource	PropertySource&amp;lt">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpringBoot源码分析之配置环境的构造过程">
+<meta name="twitter:description" content="SpringBoot把配置文件的加载封装成了PropertySourceLoader接口，该接口的定义如下： 1234567public interface PropertySourceLoader &amp;#123;	// 支持的文件后缀	String[] getFileExtensions();	// 把资源Resource加载成属性源PropertySource	PropertySource&amp;lt">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> SpringBoot源码分析之配置环境的构造过程 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                SpringBoot源码分析之配置环境的构造过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-06-10T19:30:30+08:00" content="2017-06-10">
+              2017-06-10
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/06/10/springboot-environment-analysis/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/06/10/springboot-environment-analysis/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/06/10/springboot-environment-analysis/" class="leancloud_visitors" data-flag-title="SpringBoot源码分析之配置环境的构造过程">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>SpringBoot把配置文件的加载封装成了PropertySourceLoader接口，该接口的定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">PropertySourceLoader</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 支持的文件后缀</span></span><br><span class="line">	String[] getFileExtensions();</span><br><span class="line">	<span class="comment">// 把资源Resource加载成属性源PropertySource</span></span><br><span class="line">	PropertySource&lt;?&gt; load(String name, Resource resource, String profile)</span><br><span class="line">			<span class="keyword">throws</span> IOException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>PropertySource是Spring对name/value键值对的封装接口。该定义了getSource()方法，这个方法会返回得到属性源的源头。比如MapPropertySource的源头就是一个Map，PropertiesPropertySource的源头就是一个Properties。</p>
+<p>PropertySource目前的实现类有不少，比如上面提到的MapPropertySource和PropertiesPropertySource，还有RandomValuePropertySource(source是Random)、SimpleCommandLinePropertySource(source是CommandLineArgs，命令行参数)、ServletConfigPropertySource(source是ServletConfig)等等。</p>
+<p>PropertySourceLoader接口目前有两个实现类：PropertiesPropertySourceLoader和YamlPropertySourceLoader。</p>
+<p>PropertiesPropertySourceLoader支持从xml或properties格式的文件中加载数据。</p>
+<p>YamlPropertySourceLoader支持从yml或者yaml格式的文件中加载数据。</p>
+<a id="more"></a>
+<h2 id="Environment的构造以及PropertySource的生成"><a href="#Environment的构造以及PropertySource的生成" class="headerlink" title="Environment的构造以及PropertySource的生成"></a>Environment的构造以及PropertySource的生成</h2><p>Environment接口是Spring对当前程序运行期间的环境的封装。主要提供了两大功能：profile和property(父接口PropertyResolver提供)。目前主要有StandardEnvironment、StandardServletEnvironment和MockEnvironment3种实现，分别代表普通程序、Web程序以及测试程序的环境。</p>
+<p>下面这段代码就是SpringBoot的run方法内调用的，它会在Spring容器构造之前调用，创建环境信息：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SpringApplication.class</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> ConfigurableApplicationContext <span class="title">createAndRefreshContext</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">		SpringApplicationRunListeners listeners,</span></span></span><br><span class="line"><span class="function"><span class="params">		ApplicationArguments applicationArguments)</span> </span>&#123;</span><br><span class="line">	ConfigurableApplicationContext context;</span><br><span class="line">	<span class="comment">// 如果是web环境，创建StandardServletEnvironment</span></span><br><span class="line">	<span class="comment">// 否则，创建StandardEnvironment</span></span><br><span class="line">	<span class="comment">// StandardServletEnvironment继承自StandardEnvironment，StandardEnvironment继承AbstractEnvironment</span></span><br><span class="line">	<span class="comment">// AbstractEnvironment内部有个MutablePropertySources类型的propertySources属性，用于存储多个属性源PropertySource</span></span><br><span class="line">	<span class="comment">// StandardEnvironment构造的时候会默认加上2个PropertySource。分别是MapPropertySource(调用System.getProperties()配置)和SystemEnvironmentPropertySource(调用System.getenv()配置)</span></span><br><span class="line">	ConfigurableEnvironment environment = getOrCreateEnvironment();</span><br><span class="line">	<span class="comment">// 如果设置了一些启动参数args，添加基于args的SimpleCommandLinePropertySource</span></span><br><span class="line">	<span class="comment">// 还会配置profile信息，比如设置了spring.profiles.active启动参数，设置到环境信息中</span></span><br><span class="line">	configureEnvironment(environment, applicationArguments.getSourceArgs());</span><br><span class="line">	<span class="comment">// 触发ApplicationEnvironmentPreparedEvent事件</span></span><br><span class="line">	listeners.environmentPrepared(environment);</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<a href="http://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a>这篇文章中，我们分析过SpringApplication启动的时候会使用<a href="http://fangjian0423.github.io/2017/06/05/springboot-factory-loading-mechanism/">工厂加载机制</a>初始化一些初始化器和监听器。其中org.springframework.boot.context.config.ConfigFileApplicationListener这个监听器会被加载：</p>
+<pre><code>// spring-boot-version.release/META-INF/spring.factories
+org.springframework.context.ApplicationListener=\
+...
+org.springframework.boot.context.config.ConfigFileApplicationListener,\
+...
+</code></pre><p>ConfigFileApplicationListener会监听SpringApplication启动的时候发生的事件，它的监听代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onApplicationEvent</span><span class="params">(ApplicationEvent event)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 应用环境信息准备好的时候对应的事件。此时Spring容器尚未创建，但是环境已经创建</span></span><br><span class="line">	<span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationEnvironmentPreparedEvent) &#123;</span><br><span class="line">		onApplicationEnvironmentPreparedEvent(</span><br><span class="line">				(ApplicationEnvironmentPreparedEvent) event);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// Spring容器创建完成并在refresh方法调用之前对应的事件</span></span><br><span class="line">	<span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationPreparedEvent) &#123;</span><br><span class="line">		onApplicationPreparedEvent(event);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onApplicationEnvironmentPreparedEvent</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">		ApplicationEnvironmentPreparedEvent event)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 使用工厂加载机制读取key为org.springframework.boot.env.EnvironmentPostProcessor的实现类</span></span><br><span class="line">	List&lt;EnvironmentPostProcessor&gt; postProcessors = loadPostProcessors();</span><br><span class="line">	<span class="comment">// 加上自己。ConfigFileApplicationListener也是一个EnvironmentPostProcessor接口的实现类</span></span><br><span class="line">	postProcessors.add(<span class="keyword">this</span>);</span><br><span class="line">	<span class="comment">// 排序</span></span><br><span class="line">	AnnotationAwareOrderComparator.sort(postProcessors);</span><br><span class="line">	<span class="comment">// 遍历这些EnvironmentPostProcessor，并调用postProcessEnvironment方法</span></span><br><span class="line">	<span class="keyword">for</span> (EnvironmentPostProcessor postProcessor : postProcessors) &#123;</span><br><span class="line">		postProcessor.postProcessEnvironment(event.getEnvironment(),</span><br><span class="line">				event.getSpringApplication());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConfigFileApplicationListener也是一个EnvironmentPostProcessor接口的实现类，在这里会被调用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ConfigFileApplicationListener的postProcessEnvironment方法</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessEnvironment</span><span class="params">(ConfigurableEnvironment environment,</span></span></span><br><span class="line"><span class="function"><span class="params">		SpringApplication application)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 添加属性源到环境中</span></span><br><span class="line">	addPropertySources(environment, application.getResourceLoader());</span><br><span class="line">	<span class="comment">// 配置需要ignore的beaninfo</span></span><br><span class="line">	configureIgnoreBeanInfo(environment);</span><br><span class="line">	<span class="comment">// 从环境中绑定一些参数到SpringApplication中</span></span><br><span class="line">	bindToSpringApplication(environment, application);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">addPropertySources</span><span class="params">(ConfigurableEnvironment environment,</span></span></span><br><span class="line"><span class="function"><span class="params">		ResourceLoader resourceLoader)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 添加一个RandomValuePropertySource到环境中</span></span><br><span class="line">	<span class="comment">// RandomValuePropertySource是一个用于处理随机数的PropertySource，内部存储一个Random类的实例</span></span><br><span class="line">	RandomValuePropertySource.addToEnvironment(environment);</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="comment">// 构造一个内部类Loader，并调用它的load方法</span></span><br><span class="line">		<span class="keyword">new</span> Loader(environment, resourceLoader).load();</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">catch</span> (IOException ex) &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Unable to load configuration files"</span>, ex);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内部类Loader的处理过程整理如下：</p>
+<ol>
+<li>创建PropertySourcesLoader。PropertySourcesLoader内部有2个属性，分别是PropertySourceLoader集合和MutablePropertySources(内部有PropertySource的集合)。最终加载完毕之后MutablePropertySources属性中的PropertySource会被添加到环境Environment中的属性源列表中。PropertySourcesLoader被构造的时候会使用工厂加载机制获得PropertySourceLoader集合(默认就2个：PropertiesPropertySourceLoader和YamlPropertySourceLoader；可以自己扩展)，然后设置到属性中</li>
+<li>获取环境信息中激活的profile(启动项目时设置的spring.profiles.active参数)。如果没设置profile，默认使用default这个profile，并添加到profiles队列中。最后会添加一个null到profiles队列中(为了获取没有指定profile的配置文件。比如环境中有application.yml和appliation-dev.yml，这个null就保证优先加载application.yml文件)</li>
+<li>profiles队列取出profile数据，使用PropertySourcesLoader内部的各个PropertySourceLoader支持的后缀去目录(默认识别4种目录classpath:/[类加载目录],classpath:/config/[类加载目录下的config目录],file:./[当前目录],file:./config/[当前目录下的config目录])查找application文件名(这4个目录是默认的，可以通过启动参数spring.config.location添加新的目录，文件名可以通过启动参数spring.config.name修改)。比如目录是file:/，文件名是application，后缀为properties，那么就会查找file:/application.properties文件，如果找到，执行第4步</li>
+<li>找出的属性源文件被加载，然后添加到PropertySourcesLoader内部的PropertySourceLoader集合中。如果该属性源文件中存在spring.profiles.active配置，识别出来并加入第2步中的profiles队列，然后重复第3步</li>
+<li>第4步找到的属性源从PropertySourcesLoader中全部添加到环境信息Environment中。如果这些属性源存在defaultProperties配置，那么会添加到Environment中的属性源集合头部，否则添加到尾部</li>
+</ol>
+<p>比如项目中classpath下存在application.yml文件和application-dev.yml，application.yml文件的内容如下：</p>
+<pre><code>spring.profiles.active: dev
+</code></pre><p>直接启动项目，开始解析，过程如下：</p>
+<ol>
+<li>从环境信息中找出是否设置profile，发现没有设置。 添加默认的profile - default，然后添加到队列里，最后添加null的profile。此时profiles队列中有2个元素：default和null</li>
+<li>profiles队列中先拿出null的profile。然后遍历4个目录和2个PropertySourceLoader中的4个后缀(PropertiesPropertySourceLoader的properties和xml以及YamlPropertySourceLoader的yml和yaml)的application文件名。file:./config/application.properties、file:./application.properties、classpath:/config/application.properties、classpath:/application.properties、file:./config/application.xml; file:./application.xml ….</li>
+<li>找到classpath:/application.yml文件，解析成PropertySource并添加到PropertySourcesLoader里的MutablePropertySources中。由于该文件存在spring.profiles.active配置，把dev添加到profiles队列中</li>
+<li>profiles队列拿出dev这个profile。由于存在profile，寻找文件的时候会带上profile，重复第3步，比如classpath:/application-dev.yml…</li>
+<li>找到classpath:/application-dev.yml文件，解析成PropertySource并添加到PropertySourcesLoader里的MutablePropertySources中</li>
+<li>profiles队列拿出default这个profile。寻找文件发现没有找到。结束</li>
+</ol>
+<p>这里需要注意一下一些常用的额外参数的问题，整理如下：</p>
+<ol>
+<li>如果启动程序的时候设置了系统参数spring.profiles.active，那么这个参数会被设置到环境信息中(由于设置了系统参数，在StandardEnvironment的钩子方法customizePropertySources中被封装成MapPropertySource并添加到Environment中)。这样PropertySourcesLoader加载的时候不会加上default这个默认profile，但是还是会读取profile为null的配置信息。spring.profiles.active支持多个profile，比如java -Dspring.profiles.active=”dev,custom” -jar yourjar.jar</li>
+<li>如果设置程序参数spring.config.location，那么查找目录的时候会多出设置的目录，也支持多个目录的设置。这些会在SpringApplication里的configureEnvironment方法中被封装成SimpleCommandLinePropertySource并添加到Environment中。比如java -jar yourjar.jar –spring.config.location=classpath:/custom,file:./custom 1 2 3。有4个参数会被设置到SimpleCommandLinePropertySource中。解析文件的时候会多出2个目录，分别是classpath:/custom和file:./custom</li>
+<li>如果设置程序参数spring.config.name，那么查找的文件名就是这个参数值。原理跟spring.config.location一样，都封装到了SimpleCommandLinePropertySource中。比如java -jar yourjar.jar –spring.config.name=myfile。 这样会去查找myfile文件，而不是默认的application文件</li>
+<li>如果设置程序参数spring.profiles.active。注意这是程序参数，不是系统参数。比如java -jar yourjar.jar –spring.profiles.active=prod。会去解析prod这个profile(不论是系统参数还是程序参数，都会被封装成多个PropertySource存在于环境信息中。最终获取profile的时候会去环境信息中拿，且都可以拿到)</li>
+<li>上面说的每个profile都是在不同文件里的。不同profile也可以存在在一个文件里。因为有profile会去加载带profile的文件的同时也会去加载不带profile的文件，并解析出这个文件中spring.profiles对应的值是profile的数据。比如profile为prod，会去查找application-prod.yml文件，也会去查找application.yml文件，其中application.yml文件只会查找spring.profiles为prod的数据</li>
+</ol>
+<p>比如第6点中profile.yml的数据如下：</p>
+<pre><code>spring:
+    profiles: prod
+my.name: 1
+
+---
+
+spring:
+    profiles: dev
+my.name: 2
+</code></pre><p>这里会解析出spring.profiles为prod的数据，也就是my.name为1的数据。</p>
+<p>优先级的问题：由于环境信息Environment中保存的PropertySource是MutablePropertySources，那么会去配置值的时候就存在优先级的问题。比如PropertySource1和PropertySource2都存在custom.name配置，那么会从哪个PropertySource中获取这个custom.name配置呢？它会遍历内部的PropertySource列表，越在前面的PropertySource，越先获取；比如PropertySource1在PropertySource2前面，那么会先获取PropertySource1的配置。MutablePropertySources内部添加PropertySource的时候可以选择元素的位置，可以addFirst，也可以addLast，也可以自定义位置。</p>
+<p>总结：SpringApplication启动的时候会构造环境信息Environment，如果是web环境，创建StandardServletEnvironment，否则，创建StandardEnvironment。这两种环境创建的时候都会在内部的propertySources属性中加入一些PropertySource。比如属性属性的配置信息封装成MapPropertySource，系统环境配置信息封装成SystemEnvironmentPropertySource等。这些PropertySource集合存在在环境信息中，从环境信息中读取配置的话会遍历这些PropertySource并找到相对应的配置和值。Environment构造完成之后会读取springboot相应的配置文件，从3个角度去查找：目录、文件名和profile。这3个角度有默认值，可以进行覆盖。springboot相关的配置文件读取完成之后会被封装成PropertySource并添加到环境信息中。</p>
+<h2 id="ConfigurationProperties和-EnableConfigurationProperties注解的原理"><a href="#ConfigurationProperties和-EnableConfigurationProperties注解的原理" class="headerlink" title="@ConfigurationProperties和@EnableConfigurationProperties注解的原理"></a>@ConfigurationProperties和@EnableConfigurationProperties注解的原理</h2><p>SpringBoot内部规定了一套配置和配置属性类映射规则，可以使用@ConfigurationProperties注解配合前缀属性完成属性类的读取；再通过@EnableConfigurationProperties注解设置配置类就可以把这个配置类注入进来。</p>
+<p>比如ES的配置类ElasticsearchProperties和对应的@EnableConfigurationProperties修饰的类ElasticsearchAutoConfiguration：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用前缀为spring.data.elasticsearch的配置</span></span><br><span class="line"><span class="meta">@ConfigurationProperties</span>(prefix = <span class="string">"spring.data.elasticsearch"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ElasticsearchProperties</span> </span>&#123;</span><br><span class="line">	<span class="keyword">private</span> String clusterName = <span class="string">"elasticsearch"</span>;</span><br><span class="line">	<span class="keyword">private</span> String clusterNodes;</span><br><span class="line">	<span class="keyword">private</span> Map&lt;String, String&gt; properties = <span class="keyword">new</span> HashMap&lt;String, String&gt;();</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ConditionalOnClass</span>(&#123; Client.class, TransportClientFactoryBean.class,</span><br><span class="line">		NodeClientFactoryBean.class &#125;)</span><br><span class="line"><span class="comment">// 使用@EnableConfigurationProperties注解让ElasticsearchProperties配置生效</span></span><br><span class="line"><span class="comment">// 这样ElasticsearchProperties就会自动注入到属性中</span></span><br><span class="line"><span class="meta">@EnableConfigurationProperties</span>(ElasticsearchProperties.class)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ElasticsearchAutoConfiguration</span> <span class="keyword">implements</span> <span class="title">DisposableBean</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="meta">@Autowired</span></span><br><span class="line">	<span class="keyword">private</span> ElasticsearchProperties properties;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们分析下这个过程的实现。</p>
+<p>@EnableConfigurationProperties注解有个属性value，是个Class数组，它会导入一个selector：EnableConfigurationPropertiesImportSelector。这个selector的selectImport方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> String[] selectImports(AnnotationMetadata metadata) &#123;</span><br><span class="line">	<span class="comment">// 获取@EnableConfigurationProperties注解的属性</span></span><br><span class="line">	MultiValueMap&lt;String, Object&gt; attributes = metadata.getAllAnnotationAttributes(</span><br><span class="line">			EnableConfigurationProperties.class.getName(), <span class="keyword">false</span>);</span><br><span class="line">	<span class="comment">// 得到value属性，是个Class数组</span></span><br><span class="line">	Object[] type = attributes == <span class="keyword">null</span> ? <span class="keyword">null</span></span><br><span class="line">			: (Object[]) attributes.getFirst(<span class="string">"value"</span>);</span><br><span class="line">	<span class="keyword">if</span> (type == <span class="keyword">null</span> || type.length == <span class="number">0</span>) &#123; <span class="comment">// 如果value属性不存在</span></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">new</span> String[] &#123;</span><br><span class="line">				<span class="comment">// 返回Registrar，Registrar内部会注册bean</span></span><br><span class="line">				ConfigurationPropertiesBindingPostProcessorRegistrar.class</span><br><span class="line">						.getName() &#125;;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 如果value属性存在</span></span><br><span class="line">	<span class="comment">// 返回Registrar，Registrar内部会注册bean</span></span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">new</span> String[] &#123; ConfigurationPropertiesBeanRegistrar.class.getName(),</span><br><span class="line">			ConfigurationPropertiesBindingPostProcessorRegistrar.class.getName() &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConfigurationPropertiesBeanRegistrar和ConfigurationPropertiesBindingPostProcessorRegistrar都实现了ImportBeanDefinitionRegistrar接口，会额外注册bean。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ConfigurationPropertiesBeanRegistrar的registerBeanDefinitions方法</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata,</span></span></span><br><span class="line"><span class="function"><span class="params">		BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 获取@EnableConfigurationProperties注解中的属性值Class数组</span></span><br><span class="line">	MultiValueMap&lt;String, Object&gt; attributes = metadata</span><br><span class="line">			.getAllAnnotationAttributes(</span><br><span class="line">					EnableConfigurationProperties.class.getName(), <span class="keyword">false</span>);</span><br><span class="line">	List&lt;Class&lt;?&gt;&gt; types = collectClasses(attributes.get(<span class="string">"value"</span>));</span><br><span class="line">	<span class="comment">// 遍历这些Class数组</span></span><br><span class="line">	<span class="keyword">for</span> (Class&lt;?&gt; type : types) &#123;</span><br><span class="line">		<span class="comment">// 如果这个class被@ConfigurationProperties注解修饰</span></span><br><span class="line">		<span class="comment">// 获取@ConfigurationProperties注解中的前缀属性</span></span><br><span class="line">		<span class="comment">// 否则该前缀为空字符串</span></span><br><span class="line">		String prefix = extractPrefix(type);</span><br><span class="line">		<span class="comment">// 构造bean的名字： 前缀-类全名</span></span><br><span class="line">		<span class="comment">// 比如ElasticsearchProperties对应的bean名字就是spring.data.elasticsearch-org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchProperties</span></span><br><span class="line">		String name = (StringUtils.hasText(prefix) ? prefix + <span class="string">"-"</span> + type.getName()</span><br><span class="line">				: type.getName());</span><br><span class="line">		<span class="keyword">if</span> (!registry.containsBeanDefinition(name)) &#123;</span><br><span class="line">			<span class="comment">// 这个bean没被注册的话进行注册</span></span><br><span class="line">			registerBeanDefinition(registry, type, name);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ConfigurationPropertiesBindingPostProcessorRegistrar的registerBeanDefinitions方法</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata,</span></span></span><br><span class="line"><span class="function"><span class="params">		BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 先判断Spring容器里是否有ConfigurationPropertiesBindingPostProcessor类型的bean</span></span><br><span class="line">	<span class="comment">// 由于条件里面会判断是否已经存在这个ConfigurationPropertiesBindingPostProcessor类型的bean</span></span><br><span class="line">	<span class="comment">// 所以实际上条件里的代码只会执行一次</span></span><br><span class="line">	<span class="keyword">if</span> (!registry.containsBeanDefinition(BINDER_BEAN_NAME)) &#123;</span><br><span class="line">		BeanDefinitionBuilder meta = BeanDefinitionBuilder</span><br><span class="line">				.genericBeanDefinition(ConfigurationBeanFactoryMetaData.class);</span><br><span class="line">		BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(</span><br><span class="line">				ConfigurationPropertiesBindingPostProcessor.class);</span><br><span class="line">		bean.addPropertyReference(<span class="string">"beanMetaDataStore"</span>, METADATA_BEAN_NAME);</span><br><span class="line">		registry.registerBeanDefinition(BINDER_BEAN_NAME, bean.getBeanDefinition());</span><br><span class="line">		registry.registerBeanDefinition(METADATA_BEAN_NAME, meta.getBeanDefinition());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConfigurationPropertiesBindingPostProcessor在ConfigurationPropertiesBindingPostProcessorRegistrar中被注册到Spring容器中，它是一个BeanPostProcessor，它的postProcessBeforeInitialization方法如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Spring容器中bean被实例化之前要做的事</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span></span></span><br><span class="line"><span class="function">		<span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">	<span class="comment">// 先获取bean对应的Class中的@ConfigurationProperties注解</span></span><br><span class="line">	ConfigurationProperties annotation = AnnotationUtils</span><br><span class="line">			.findAnnotation(bean.getClass(), ConfigurationProperties.class);</span><br><span class="line">	<span class="comment">// 如果@ConfigurationProperties注解，说明这是一个配置类。比如ElasticsearchProperties</span></span><br><span class="line">	<span class="keyword">if</span> (annotation != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="comment">// 调用postProcessBeforeInitialization方法</span></span><br><span class="line">		postProcessBeforeInitialization(bean, beanName, annotation);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 同样的方法使用beanName去查找</span></span><br><span class="line">	annotation = <span class="keyword">this</span>.beans.findFactoryAnnotation(beanName,</span><br><span class="line">			ConfigurationProperties.class);</span><br><span class="line">	<span class="keyword">if</span> (annotation != <span class="keyword">null</span>) &#123;</span><br><span class="line">		postProcessBeforeInitialization(bean, beanName, annotation);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName,</span></span></span><br><span class="line"><span class="function"><span class="params">		ConfigurationProperties annotation)</span> </span>&#123;</span><br><span class="line">	Object target = bean;</span><br><span class="line">	<span class="comment">// 构造一个PropertiesConfigurationFactory</span></span><br><span class="line">	PropertiesConfigurationFactory&lt;Object&gt; factory = <span class="keyword">new</span> PropertiesConfigurationFactory&lt;Object&gt;(</span><br><span class="line">			target);</span><br><span class="line">	<span class="comment">// 设置属性源，这里的属性源从环境信息Environment中得到</span></span><br><span class="line">	factory.setPropertySources(<span class="keyword">this</span>.propertySources);</span><br><span class="line">	<span class="comment">// 设置验证器</span></span><br><span class="line">	factory.setValidator(determineValidator(bean));</span><br><span class="line">	<span class="comment">// 设置ConversionService</span></span><br><span class="line">	factory.setConversionService(<span class="keyword">this</span>.conversionService == <span class="keyword">null</span></span><br><span class="line">			? getDefaultConversionService() : <span class="keyword">this</span>.conversionService);</span><br><span class="line">	<span class="keyword">if</span> (annotation != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="comment">// 设置@ConfigurationProperties注解对应的属性到PropertiesConfigurationFactory中</span></span><br><span class="line">		<span class="comment">// 比如是否忽略不合法的属性ignoreInvalidFields、忽略未知的字段、忽略嵌套属性、验证器验证不合法后是否抛出异常</span></span><br><span class="line">		factory.setIgnoreInvalidFields(annotation.ignoreInvalidFields());</span><br><span class="line">		factory.setIgnoreUnknownFields(annotation.ignoreUnknownFields());</span><br><span class="line">		factory.setExceptionIfInvalid(annotation.exceptionIfInvalid());</span><br><span class="line">		factory.setIgnoreNestedProperties(annotation.ignoreNestedProperties());</span><br><span class="line">		<span class="keyword">if</span> (StringUtils.hasLength(annotation.prefix())) &#123;</span><br><span class="line">			<span class="comment">// 设置前缀</span></span><br><span class="line">			factory.setTargetName(annotation.prefix());</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="comment">// 绑定属性到配置类中，比如ElasticsearchProperties</span></span><br><span class="line">		<span class="comment">// 会使用环境信息中的属性源进行绑定</span></span><br><span class="line">		<span class="comment">// 这样配置类就读取到了配置文件中的配置</span></span><br><span class="line">		factory.bindPropertiesToTarget();</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line">		String targetClass = ClassUtils.getShortName(target.getClass());</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName, <span class="string">"Could not bind properties to "</span></span><br><span class="line">				+ targetClass + <span class="string">" ("</span> + getAnnotationDetails(annotation) + <span class="string">")"</span>, ex);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总结：SpringBoot内部规定了一套配置和配置属性类映射规则，可以使用@ConfigurationProperties注解配合前缀属性完成属性类的读取；再通过@EnableConfigurationProperties注解设置配置类就可以把这个配置类注入进来。由于这个配置类是被注入进来的，所以它肯定在Spring容器中存在；这是因为在ConfigurationPropertiesBeanRegistrar内部会注册配置类到Spring容器中，这个配置类的实例化过程在ConfigurationPropertiesBindingPostProcessor这个BeanPostProcessor完成，它会在实例化bean之前会判断bean是否被@ConfigurationProperties注解修饰，如果有，使用PropertiesConfigurationFactory从环境信息Environment中进行值的绑定。这个ConfigurationPropertiesBeanRegistrar是在使用@EnableConfigurationProperties注解的时候被创建的(通过EnableConfigurationPropertiesImportSelector)。配置类内部属性的绑定成功与否是通过环境信息Environment中的属性源PropertySource决定的。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/06/10/springboot-environment-analysis/">http://fangjian0423.github.io/2017/06/10/springboot-environment-analysis/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/springboot/" rel="tag">#springboot</a>
+          
+            <a href="/tags/springboot源码分析/" rel="tag">#springboot源码分析</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/05/springboot-source-analysis-summary/" rel="next" title="SpringBoot源码分析系列">
+                <i class="fa fa-chevron-left"></i> SpringBoot源码分析系列
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/11/spring-custom-component-provider/" rel="prev" title="Spring自定义类扫描器">
+                Spring自定义类扫描器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Environment的构造以及PropertySource的生成"><span class="nav-number">1.</span> <span class="nav-text">Environment的构造以及PropertySource的生成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConfigurationProperties和-EnableConfigurationProperties注解的原理"><span class="nav-number">2.</span> <span class="nav-text">@ConfigurationProperties和@EnableConfigurationProperties注解的原理</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/06/10/springboot-environment-analysis/';
+      var disqus_title = "SpringBoot源码分析之配置环境的构造过程";
+      var disqus_url = 'http://fangjian0423.github.io/2017/06/10/springboot-environment-analysis/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

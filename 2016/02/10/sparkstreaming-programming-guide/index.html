@@ -1,0 +1,1439 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,spark," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Spark Streaming是Spark核心API的扩展，用于处理实时数据流。Spark Streaming处理的数据源可以是Kafka，Flume，Twitter，ZeroMQ，Kinesis或者Tcp Sockets ...">
+<meta name="keywords" content="big data,spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark Streaming编程指南笔记">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/02/10/sparkstreaming-programming-guide/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Spark Streaming是Spark核心API的扩展，用于处理实时数据流。Spark Streaming处理的数据源可以是Kafka，Flume，Twitter，ZeroMQ，Kinesis或者Tcp Sockets ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://spark.apache.org/docs/latest/img/streaming-arch.png">
+<meta property="og:image" content="http://spark.apache.org/docs/latest/img/streaming-flow.png">
+<meta property="og:image" content="http://spark.apache.org/docs/latest/img/streaming-dstream.png">
+<meta property="og:image" content="http://spark.apache.org/docs/latest/img/streaming-dstream-ops.png">
+<meta property="og:image" content="http://spark.apache.org/docs/latest/img/streaming-dstream-window.png">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark Streaming编程指南笔记">
+<meta name="twitter:description" content="Spark Streaming是Spark核心API的扩展，用于处理实时数据流。Spark Streaming处理的数据源可以是Kafka，Flume，Twitter，ZeroMQ，Kinesis或者Tcp Sockets ...">
+<meta name="twitter:image" content="http://spark.apache.org/docs/latest/img/streaming-arch.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Spark Streaming编程指南笔记 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark Streaming编程指南笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-02-10T01:36:17+08:00" content="2016-02-10">
+              2016-02-10
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/spark/" itemprop="url" rel="index">
+                    <span itemprop="name">spark</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/02/10/sparkstreaming-programming-guide/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/02/10/sparkstreaming-programming-guide/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/02/10/sparkstreaming-programming-guide/" class="leancloud_visitors" data-flag-title="Spark Streaming编程指南笔记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Spark Streaming是Spark核心API的扩展，用于处理实时数据流。Spark Streaming处理的数据源可以是Kafka，Flume，Twitter，ZeroMQ，Kinesis或者Tcp Sockets，这些数据可以使用map，reduce，join，window方法进行处转换，还可以直接使用Spark内置的机器学习算法，图算法包来处理数据。</p>
+<p><img src="http://spark.apache.org/docs/latest/img/streaming-arch.png" alt=""></p>
+<p>最终处理后的数据可以存入文件系统，数据库。</p>
+<p>Spark Streaming内部接收到实时数据之后，会把数据分成几个批次，这些批次数据会被Spark引擎处理并生成各个批次的结果。</p>
+<p><img src="http://spark.apache.org/docs/latest/img/streaming-flow.png" alt=""></p>
+<p>Spark Streaming提供了一个叫做<strong>discretized stream 或者 DStream</strong>的抽象概念，表示一段连续的数据流。DStream会在数据源中的数据流中创建，或者在别的DStream中使用类似map，join方法创建。一个DStream表示一个RDD序列。</p>
+<h2 id="一个快速例子"><a href="#一个快速例子" class="headerlink" title="一个快速例子"></a>一个快速例子</h2><p>以一个TCP Socket监听接收数据，并计算单词的个数为例子讲解。</p>
+<p>首先，需要import Spark Streaming中的一些类和StreamingContext中的一些隐式转换。我们会创建一个带有2个线程，1秒一个批次的StreamingContext。</p>
+<pre><code>import org.apache.spark.SparkConf
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+object SparkStreamTest extends App {
+
+  val conf = new SparkConf().setMaster(&quot;local[2]&quot;).setAppName(&quot;NetworkWordCount&quot;)
+
+  // 创建一个StreamingContext，每1秒钟处理一次计算程序
+  val ssc = new StreamingContext(conf, Seconds(1))
+
+  // 使用StreamingContext创建DStream，DStream表示TCP源中的流数据. lines这个DStream表示接收到的服务器数据，每一行都是文本
+  val lines = ssc.socketTextStream(&quot;localhost&quot;, 9999)
+
+  // 使用flatMap将每一行中的文本转换成每个单词，并产生一个新的DStream。
+  val words = lines.flatMap(_.split(&quot; &quot;))
+
+  // 使用map方法将每个单词转换成tuple
+  val pairs = words.map(word =&gt; (word, 1))
+
+  // 使用reduceByKey计算出每个单词的出现次数
+  val wordCounts = pairs.reduceByKey(_ + _)
+
+  wordCounts.print()
+
+  ssc.start() // 开始计算
+  ssc.awaitTermination() // 等待计算结束
+}
+</code></pre><p>在运行这段代码之前，首先先起一个netcat服务：</p>
+<pre><code>nc -lk 9999
+</code></pre><p>之后比如输入hello world之后，控制台会打印出如下数据：</p>
+<pre><code>-------------------------------------------
+Time: 1454684570000 ms
+-------------------------------------------
+(hello,1)
+(world,1)
+</code></pre><h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><h3 id="Linking-SparkStreaming的连接"><a href="#Linking-SparkStreaming的连接" class="headerlink" title="Linking(SparkStreaming的连接)"></a>Linking(SparkStreaming的连接)</h3><p>写Spark Streaming程序需要一些依赖。使用maven的话加入以下依赖：</p>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.apache.spark&lt;/groupId&gt;
+    &lt;artifactId&gt;spark-streaming_2.10&lt;/artifactId&gt;
+    &lt;version&gt;1.6.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre><p>使用sbt的话，加入以下依赖：</p>
+<pre><code>libraryDependencies += &quot;org.apache.spark&quot; % &quot;spark-streaming_2.10&quot; % &quot;1.6.0&quot;
+</code></pre><p>SparkStreaming核心不提供一些数据源的依赖，需要手动添加，一些数据源对应的Artifact如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">数据源</th>
+<th style="text-align:center">Artifact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Kafka</td>
+<td style="text-align:center">spark-streaming-kafka_2.10</td>
+</tr>
+<tr>
+<td style="text-align:center">Flume</td>
+<td style="text-align:center">spark-streaming-flume_2.10</td>
+</tr>
+<tr>
+<td style="text-align:center">Kinesis</td>
+<td style="text-align:center">spark-streaming-kinesis-asl_2.10 [Amazon Software License]</td>
+</tr>
+<tr>
+<td style="text-align:center">Twitter</td>
+<td style="text-align:center">spark-streaming-twitter_2.10</td>
+</tr>
+<tr>
+<td style="text-align:center">ZeroMQ</td>
+<td style="text-align:center">spark-streaming-zeromq_2.10</td>
+</tr>
+<tr>
+<td style="text-align:center">MQTT</td>
+<td style="text-align:center">spark-streaming-mqtt_2.10</td>
+</tr>
+</tbody>
+</table>
+<h3 id="StreamingContext的初始化"><a href="#StreamingContext的初始化" class="headerlink" title="StreamingContext的初始化"></a>StreamingContext的初始化</h3><p>StreamingContext的创建是Spark Streaming程序中最重要的一环。</p>
+<p>可以根据SparkConf对象创建出StreamingContext对象：</p>
+<pre><code>import org.apache.spark._
+import org.apache.spark.streaming._
+
+val conf = new SparkConf().setAppName(appName).setMaster(master)
+val ssc = new StreamingContext(conf, Seconds(1))
+</code></pre><p>appName参数是应用程序的名字，在cluster UI中显示的就是这个名字。master参数的意义跟spark中master参数的意义是一样的。</p>
+<p>StreamingContext内部会创建SparkContext，可以使用StreamingContext内部的sparkContext获得。</p>
+<pre><code>ssc.sparkContext // 得到SparkContext
+</code></pre><p>StreamingContext也可以根据SparkContext创建：</p>
+<pre><code>import org.apache.spark.streaming._
+
+val sc = ...                // existing SparkContext
+val ssc = new StreamingContext(sc, Seconds(1))
+</code></pre><p>StreamingContext创建之后，可以做以下几点：</p>
+<p>1.创建DStreams定义数据源<br>2.使用DStreams的transformation和output operations用于计算<br>3.使用streamingContext的start方法接收数据<br>4.使用streamingContext的awaitTermination方法等待处理结果<br>5.可以使用streamingContext的stop方法停止程序</p>
+<p>一些需要注意的点：</p>
+<p>1.context开始启动之后，一些streaming的计算不允许发生<br>2.context停掉之后不能重启<br>3.一个JVM在同一时刻只能有一个StreamingContext可以激活<br>4.StreamingContext中的stop方法内部也会stop SparkContext。如果只想stop StreamingContext，那么调用stop方法的时候参数设置为false<br>5.一个SparkContext可以用来创建多个StreamingContexts，只要上一个StreamingContext在下一个StreamingContext创建之前停掉</p>
+<h3 id="Discretized-Streams-DStreams"><a href="#Discretized-Streams-DStreams" class="headerlink" title="Discretized Streams (DStreams)"></a>Discretized Streams (DStreams)</h3><p>DStreams和Discretized Streams在Spark Streaming中代表相同的意思：</p>
+<p>1.一段连续的数据流<br>2.数据源中接收到的数据流<br>3.使用transforming处理过的流数据</p>
+<p>Spark内部一个DStream表示一段连续的RDD。DStream中每段RDD表示一段时间内的RDD，效果如下：</p>
+<p><img src="http://spark.apache.org/docs/latest/img/streaming-dstream.png" alt=""></p>
+<p>DStream可以使用一些transformation操作将内部的RDD转换成另外一种RDD。比如之前的一个单词统计例子中就将一行文本的DStream转换成每个单词的DStream，过程如下：</p>
+<p><img src="http://spark.apache.org/docs/latest/img/streaming-dstream-ops.png" alt=""></p>
+<h3 id="Input-DStreams-and-Receivers-数据源和接收器"><a href="#Input-DStreams-and-Receivers-数据源和接收器" class="headerlink" title="Input DStreams and Receivers(数据源和接收器)"></a>Input DStreams and Receivers(数据源和接收器)</h3><p>Input DStreams是DStreams从streaming source中接收到的输入流数据。在之前分析的一个单词统计例子中，lines就是个Input DStream，表示接收到的服务器数据，每一行都是文本。</p>
+<p>每一个Input DStream(除了file stream)都会关联一个Receiver对象，这个Receiver对象的作用是接收数据源中的数据并存储在内存中。</p>
+<p>Spark Streaming提供了两种类型的内置数据源：</p>
+<p>1.基础数据源。可以直接使用StreamingContext的API，比如文件系统，socket连接，Akka。<br>2.高级数据源。比如Flume，Kafka，Kinesis，Twitter等可以使用工具类的数据源。使用这些数据源需要对应的依赖，在Linking章节中已经介绍过。</p>
+<p>如果想在streaming程序中并行地接收多个数据源，需要创建多个Input DStream，有个多个Input DStream的话那就会对应地有多个Receiver。但是需要记住的是，Spark的worker/executor模式是一个相当耗时的任务，因此服务器的配置需要够好才能支撑多个Input DStream。</p>
+<p>一些注意点：</p>
+<p>1.当本地跑Spark Streaming程序的时候，不要使用”local”或者”local[1]”设置master URL。因为这两种master URL只会使用1个线程。当使用比如Flume，Kafka，socket这些数据源的时候，因为只有一个线程跑receiver接收数据，那么没有其他线程去处理接收后的数据了。所以，当在本地跑Spark Streaming程序的时候，需要将master URL设置为local[n]，n需要大于receiver的个数。<br>2.服务器的核数需要大于receiver的个数。否则程序只会接收数据，而不会处理数据。</p>
+<h4 id="Basic-Sources-基础数据源"><a href="#Basic-Sources-基础数据源" class="headerlink" title="Basic Sources(基础数据源)"></a>Basic Sources(基础数据源)</h4><p>基础数据源刚刚分析过，StreamingContext的API可以使用如文件系统，socket连接，Akka作为输入源。socket连接本文以开始的例子中已经使用过了。</p>
+<p>文件系统的输入源会读取文件或任何支持HDFS API(比如HDFS，S3，NFS)的文件系统的数据：</p>
+<pre><code>streamingContext.fileStream[KeyClass, ValueClass, InputFormatClass](dataDirectory)
+</code></pre><p>Spark Streaming会监测dataDirectory目录并且会处理这个目录中新创建的文件(老文件写新数据的话不会被支持)。使用文件数据源还需要这几点：</p>
+<p>1.所有文件的数据格式必须相同<br>2.dataDirectory目录中的文件必须是新创建的，也可以是从别的目录move进来的<br>3.文件内部的数据更改之后，新更改的数据不会被处理</p>
+<p>对于简单的文件，可以使用streamingContext的textFileStream方法处理。</p>
+<h4 id="Advanced-Sources-高级数据源"><a href="#Advanced-Sources-高级数据源" class="headerlink" title="Advanced Sources(高级数据源)"></a>Advanced Sources(高级数据源)</h4><p>高级数据源需要一些非Spark依赖。Spark Streaming把创建DStream的API移到了各自的API里。如果想创建一个使用Twitter的数据源，需要做以下三步：</p>
+<p>1.添加对应的Twitter依赖spark-streaming-twitter_2.10到项目里<br>2.import这个类TwitterUtils，使用TwitterUtils.createStream创建DStream<br>3.部署</p>
+<h4 id="Custom-Sources-自定义数据源"><a href="#Custom-Sources-自定义数据源" class="headerlink" title="Custom Sources(自定义数据源)"></a>Custom Sources(自定义数据源)</h4><p>要实现一个自定义的数据源，需要实现一个自定义的receiver</p>
+<h4 id="Receiver-Reliability-接收器的可靠性"><a href="#Receiver-Reliability-接收器的可靠性" class="headerlink" title="Receiver Reliability(接收器的可靠性)"></a>Receiver Reliability(接收器的可靠性)</h4><p>基于可靠性的数据源分为两种。</p>
+<p>1.可靠的接收器(Reliable Receiver)：一个可靠的接收器接收到数据之后会给数据源发送消息表示自己已经接收到数据<br>2.不可靠的接收器(Unreliable Receiver)：一个不可靠的接收器不会发送消息给数据源。</p>
+<p>想写出一个可靠的接收器可以参考 <a href="http://spark.apache.org/docs/latest/streaming-custom-receivers.html" target="_blank" rel="noopener">http://spark.apache.org/docs/latest/streaming-custom-receivers.html</a></p>
+<h3 id="DStreams的Transformations操作"><a href="#DStreams的Transformations操作" class="headerlink" title="DStreams的Transformations操作"></a>DStreams的Transformations操作</h3><p>DStream的Transformations操作跟RDD的Transformations操作类似，</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Transformation</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">map(func)</td>
+<td style="text-align:center">根据func函数生成一个新的DStream</td>
+</tr>
+<tr>
+<td style="text-align:center">flatMap(func)</td>
+<td style="text-align:center">跟map方法类似，但是每一项可以返回多个值。func函数的返回值是一个集合</td>
+</tr>
+<tr>
+<td style="text-align:center">filter(func)</td>
+<td style="text-align:center">根据func函数返回true的数据集</td>
+</tr>
+<tr>
+<td style="text-align:center">repartition(numPartitions)</td>
+<td style="text-align:center">重新给 DStream 分区</td>
+</tr>
+<tr>
+<td style="text-align:center">union(otherStream)</td>
+<td style="text-align:center">取2个DStream的并集，得到一个新的DStream</td>
+</tr>
+<tr>
+<td style="text-align:center">count()</td>
+<td style="text-align:center">返回一个新的只有一个元素的DStream，这个元素就是DStream中的所有RDD的个数</td>
+</tr>
+<tr>
+<td style="text-align:center">reduce(func)</td>
+<td style="text-align:center">返回一个新的只有一个元素的DStream，这个元素就是DStream中的所有RDD通过func函数聚合得到的结果</td>
+</tr>
+<tr>
+<td style="text-align:center">countByValue()</td>
+<td style="text-align:center">如果DStream的类型为K，那么返回一个新的DStream，这个新的DStream中的元素类型是(K, Long)，K是原先DStream的值，Long表示这个Key有多少次</td>
+</tr>
+<tr>
+<td style="text-align:center">reduceByKey(func, [numTasks])</td>
+<td style="text-align:center">本文的例子使用过这个方法，对于是键值对(K,V)的DStream，返回一个新的DStream以K为键，各个value使用func函数操作得到的聚合结果为value</td>
+</tr>
+<tr>
+<td style="text-align:center">join(otherStream, [numTasks])</td>
+<td style="text-align:center">基于(K, V)键值对的DStream，如果对(K, W)的键值对DStream使用join操作，可以产生(K, (V, W))键值对的DStream</td>
+</tr>
+<tr>
+<td style="text-align:center">cogroup(otherStream, [numTasks])</td>
+<td style="text-align:center">跟join方法类似，不过是基于(K, V)的DStream，cogroup基于(K, W)的DStream，产生(K, (Seq[V], Seq[W]))的DStream</td>
+</tr>
+<tr>
+<td style="text-align:center">transform(func)</td>
+<td style="text-align:center">基于DStream中的每个RDD调用func函数，func函数的参数是个RDD，返回值也是个RDD</td>
+</tr>
+<tr>
+<td style="text-align:center">updateStateByKey(func)</td>
+<td style="text-align:center">对于每个key都会调用func函数处理先前的状态和所有新的状态。比如就可以用来做累加，这个方法跟reduceByKey类似，但比它更加灵活</td>
+</tr>
+</tbody>
+</table>
+<h4 id="UpdateStateByKey操作"><a href="#UpdateStateByKey操作" class="headerlink" title="UpdateStateByKey操作"></a>UpdateStateByKey操作</h4><p>使用UpdateStateByKey方法需要做以下两步：</p>
+<p>1.定义状态：状态可以是任意的数据类型<br>2.定义状态更新函数：这个函数需要根据输入流把先前的状态和所有新的状态</p>
+<p>不管有没有新数据进来，在每个批次中，Spark都会对所有存在的key调用func方法，如果func函数返回None，那么key-value键值对不会被处理。</p>
+<p>以一个例子来讲解updateStateByKey方法，这个例子会统计每个单词的个数在一个文本输入流里：</p>
+<p>runningCount是一个状态并且是Int类型，所以这个状态的类型是Int，runningCount是先前的状态，newValues是所有新的状态，是一个集合，函数如下：</p>
+<pre><code>def updateFunction(newValues: Seq[Int], runningCount: Option[Int]): Option[Int] = {
+    val newCount = ...  // add the new values with the previous running count to get the new count
+    Some(newCount)
+}
+</code></pre><p>updateStateByKey方法的调用：</p>
+<pre><code>val runningCounts = pairs.updateStateByKey[Int](updateFunction _)
+</code></pre><h4 id="Transform操作"><a href="#Transform操作" class="headerlink" title="Transform操作"></a>Transform操作</h4><p>Transform操作针对的是RDD-RDD的操作，所以可以用来处理那些没有在DStream API中暴露的处理任意的RDD操作。比如在DStream中的每次批次没有join rdd的API，所以可以使用transform操作：</p>
+<pre><code>val spamInfoRDD = ssc.sparkContext.newAPIHadoopRDD(...) // RDD containing spam information
+
+val cleanedDStream = wordCounts.transform(rdd =&gt; {
+  rdd.join(spamInfoRDD).filter(...) // join data stream with spam information to do data cleaning
+  ...
+})
+</code></pre><h4 id="Window操作"><a href="#Window操作" class="headerlink" title="Window操作"></a>Window操作</h4><p>window操作效果图如下图所示，把几个批次的DStream合并成一个DStream：</p>
+<p><img src="http://spark.apache.org/docs/latest/img/streaming-dstream-window.png" alt=""></p>
+<p>每个window操作都需要2个参数：</p>
+<p>1.window length。每个window对应的批次数(上图中是3，time1-time3是一个window, time3-time5也是一个window)<br>2.sliding interval。每个window之间的间隔时间，上图下方的window1，window3，window5的间隔。上图这个值为2</p>
+<p>这两个参数必须是批次间隔的倍数。上个批次间隔值为1。</p>
+<p>以1个例子来讲解window操作，基于本文一开始的那个例子，生成最后30秒的数据，每10秒为单位，这里就需要使用reduceByKeyAndWindow方法：</p>
+<pre><code>val windowedWordCounts = pairs.reduceByKeyAndWindow((a:Int,b:Int) =&gt; (a + b), Seconds(30), Seconds(10))
+</code></pre><p>其他的一些window操作：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Transformation</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">window(windowLength, slideInterval)</td>
+<td style="text-align:center">根据window操作的2个参数得到新的DStream</td>
+</tr>
+<tr>
+<td style="text-align:center">countByWindow(windowLength, slideInterval)</td>
+<td style="text-align:center">基于window操作的count操作</td>
+</tr>
+<tr>
+<td style="text-align:center">reduceByWindow(func, windowLength, slideInterval)</td>
+<td style="text-align:center">基于window操作的reduce操作</td>
+</tr>
+<tr>
+<td style="text-align:center">reduceByKeyAndWindow(func, windowLength, slideInterval, [numTasks])</td>
+<td style="text-align:center">基于window操作的reduceByKey操作</td>
+</tr>
+<tr>
+<td style="text-align:center">reduceByKeyAndWindow(func, invFunc, windowLength, slideInterval, [numTasks])</td>
+<td style="text-align:center">跟reduceByKeyAndWindow方法类似，更有效率，invFunc方法跟func方法的参数返回值一样，表示从window离开的数据</td>
+</tr>
+<tr>
+<td style="text-align:center">countByValueAndWindow(windowLength, slideInterval, [numTasks])</td>
+<td style="text-align:center">基于window操作的countByValue操作</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Join操作"><a href="#Join操作" class="headerlink" title="Join操作"></a>Join操作</h4><p>DStream可以很容易地join其他DStream：</p>
+<pre><code>val stream1: DStream[String, String] = ...
+val stream2: DStream[String, String] = ...
+val joinedStream = stream1.join(stream2)
+</code></pre><p>还可以使用leftOuterJoin，rightOuterJoin，fullOuterJoin等。同样地，也可以在window操作后的DStream中使用join：</p>
+<pre><code>val windowedStream1 = stream1.window(Seconds(20))
+val windowedStream2 = stream2.window(Minutes(1))
+val joinedStream = windowedStream1.join(windowedStream2)
+</code></pre><p>基于rdd的join：</p>
+<pre><code>val dataset: RDD[String, String] = ...
+val windowedStream = stream.window(Seconds(20))...
+val joinedStream = windowedStream.transform { rdd =&gt; rdd.join(dataset) }
+</code></pre><h3 id="DStream的输出操作"><a href="#DStream的输出操作" class="headerlink" title="DStream的输出操作"></a>DStream的输出操作</h3><p>输出操作允许DStream中的数据输出到外部系统，比如像数据库、文件系统等。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">输出操作</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">print()</td>
+<td style="text-align:center">打印出DStream中每个批次的前10条数据</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsTextFiles(prefix, [suffix])</td>
+<td style="text-align:center">把DStream中的数据保存到文本文件里。每次批次的文件名根据参数prefix和suffix生成：”prefix-TIME_IN_MS[.suffix]”</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsObjectFiles(prefix, [suffix])</td>
+<td style="text-align:center">把DStream中的数据按照Java序列化的方式保存Sequence文件里，文件名规则跟saveAsTextFiles方法一样</td>
+</tr>
+<tr>
+<td style="text-align:center">saveAsHadoopFiles(prefix, [suffix])</td>
+<td style="text-align:center">把DStream中的数据保存到Hadoop文件里，文件名规则跟saveAsTextFiles方法一样</td>
+</tr>
+<tr>
+<td style="text-align:center">foreachRDD(func)</td>
+<td style="text-align:center">遍历DStream中的每段RDD，遍历的过程中可以将RDD中的数据保存到外部系统中</td>
+</tr>
+</tbody>
+</table>
+<h4 id="foreachRDD中的设计模式"><a href="#foreachRDD中的设计模式" class="headerlink" title="foreachRDD中的设计模式"></a>foreachRDD中的设计模式</h4><p>foreachRDD方法会遍历DStream中的每段RDD，遍历的过程中可以将RDD中的数据保存到外部系统中。这个方法很实用，所以理解foreachRDD方法显得很重要。</p>
+<p>将数据写到外部系统通常都需要一个connection对象，所以很多时候都会不经意地创建这个connection对象：</p>
+<pre><code>dstream.foreachRDD { rdd =&gt;
+  val connection = createNewConnection()  // executed at the driver
+  rdd.foreach { record =&gt;
+    connection.send(record) // executed at the worker
+  }
+}
+</code></pre><p>这种写法是不正确的。这里connection需要被序列化并且发送到worker，而且connection对象会跨机器传递，会发生序列化错误(connection对象是不可序列化的)，初始化错误(connection对象需要在worker中初始化)。这个错误的解决方案就是在worker中创建connection对象。</p>
+<p>为每条记录创建connection也是一个很常见的错误：</p>
+<pre><code>dstream.foreachRDD { rdd =&gt;
+  rdd.foreach { record =&gt;
+    val connection = createNewConnection()
+    connection.send(record)
+    connection.close()
+  }
+}
+</code></pre><p>因为创建connection对象是一种很耗资源，很耗时间的操作。对于每条数据都创建一个connection代驾更大。所有可以使用rdd.foreachPartition方法，这个方法会创建单一的connection并且在一个RDD分区中所有数据都使用这个connection：</p>
+<pre><code>dstream.foreachRDD { rdd =&gt;
+  rdd.foreachPartition { partitionOfRecords =&gt;
+    val connection = createNewConnection()
+    partitionOfRecords.foreach(record =&gt; connection.send(record))
+    connection.close()
+  }
+}
+</code></pre><p>一种更好的方式就是使用ConnectionPool，ConnectionPool可以重用connection对象在多个批次和RDD中。</p>
+<pre><code>dstream.foreachRDD { rdd =&gt;
+  rdd.foreachPartition { partitionOfRecords =&gt;
+    // ConnectionPool is a static, lazily initialized pool of connections
+    val connection = ConnectionPool.getConnection()
+    partitionOfRecords.foreach(record =&gt; connection.send(record))
+    ConnectionPool.returnConnection(connection)  // return to the pool for future reuse
+  }
+}
+</code></pre><p>其他需要注意的点：</p>
+<p>1.DStream的输出操作也是延迟执行的，就像RDD的action操作一样。RDD的action操作在DStream的输出操作内部执行的话会强制Spark Streaming执行。如果程序里没有任何输出操作，或者有比如像dstream.foreachRDD操作一样内部没有rdd的action操作的话，这样就不会执行任意操作，会被Spark忽略。<br>2.默认情况下，在一个时间点下，只有一个输出操作被执行。它们是根据程序里的编写顺序执行的。</p>
+<h3 id="DataFrame-and-SQL-Operations"><a href="#DataFrame-and-SQL-Operations" class="headerlink" title="DataFrame and SQL Operations"></a>DataFrame and SQL Operations</h3><p>在Spark Streaming中可以使用DataFrames and SQL操作。</p>
+<pre><code>/** DataFrame operations inside your streaming program */
+
+val words: DStream[String] = ...
+
+words.foreachRDD { rdd =&gt;
+
+  // Get the singleton instance of SQLContext
+  val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
+  import sqlContext.implicits._
+
+  // Convert RDD[String] to DataFrame
+  val wordsDataFrame = rdd.toDF(&quot;word&quot;)
+
+  // Register as table
+  wordsDataFrame.registerTempTable(&quot;words&quot;)
+
+  // Do word count on DataFrame using SQL and print it
+  val wordCountsDataFrame = 
+    sqlContext.sql(&quot;select word, count(*) as total from words group by word&quot;)
+  wordCountsDataFrame.show()
+}
+</code></pre><h3 id="Caching-Persistence"><a href="#Caching-Persistence" class="headerlink" title="Caching / Persistence"></a>Caching / Persistence</h3><p>跟RDD类似，DStream也允许将数据保存到内存中，使用persist方法可以做到这一点。</p>
+<p>但是基于window和state的操作，reduceByWindow,reduceByKeyAndWindow,updateStateByKey它们就是隐式的保存了，系统已经帮它自动保存了。</p>
+<p>从网络接收的数据(比如Kafka, Flume, sockets等)，默认是保存在两个节点来实现容错性，以序列化的方式保存在内存当中。</p>
+<h3 id="Checkpointing"><a href="#Checkpointing" class="headerlink" title="Checkpointing"></a>Checkpointing</h3><p>一个Spark Streaming程序必须是全天工作的，所以如果万一系统挂掉了或者JVM挂掉之后是要有容错性的。Spark Streaming需在容错存储系统做checkpoint，这样才能够处理错误信息。有两种类型的数据需要做checkpoint：</p>
+<p>1.metadata checkpointing：元数据检查点。主要包括3个元数据：<br>配置：创建streaming程序的的配置信息<br>DStream操作：streaming程序中DStream的操作集合<br>未完成的批次：在队列中未完成的批次<br>2.data checkpointing：数据检查点。保存已经生成的RDD数据。在一些有状态的transformation操作中，一些RDD数据会依赖之前批次的RDD数据，随时时间的推移，这种依赖情况就会越发严重。为了解决这个问题，需要保存这些有依赖关系的RDD数据到存储系统中(比如HDFS)来剪断这种依赖关系</p>
+<p>什么时候需要启用checkpoint？</p>
+<p>满足以下2个条件中的任意1个即可启用checkpoint:</p>
+<p>1.使用了有状态的transformation。比如使用了updateStateByKey或reduceByKeyAndWindow方法后，就需要启用checkpoint<br>2.恢复挂掉的程序。可以根据metadata数据恢复程序</p>
+<p>一些比较简单的streaming程序没有用到有状态的transformation，并且也可以接受程序挂掉之后丢失部分数据，那么就没有必要启用checkpoint。</p>
+<p>如何配置checkpoint？</p>
+<p>checkpoint的配置需要设置一个目录，使用streamingContext.checkpoint(checkpointDirectory)方法。</p>
+<pre><code>// Function to create and setup a new StreamingContext
+def functionToCreateContext(): StreamingContext = {
+    val ssc = new StreamingContext(...)   // new context
+    val lines = ssc.socketTextStream(...) // create DStreams
+    ...
+    ssc.checkpoint(checkpointDirectory)   // set checkpoint directory
+    ssc
+}
+
+// Get StreamingContext from checkpoint data or create a new one
+val context = StreamingContext.getOrCreate(checkpointDirectory, functionToCreateContext _)
+
+// Do additional setup on context that needs to be done,
+// irrespective of whether it is being started or restarted
+context. ...
+
+// Start the context
+context.start()
+context.awaitTermination()
+</code></pre><p>因为检查操作会导致保存到hdfs上的开销，所以设置这个时间间隔，要很慎重。对于小批次的数据，比如一秒的，检查操作会大大降低吞吐量。但是检查的间隔太长，会导致任务变大。通常来说，5-10秒的检查间隔时间是比较合适的。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/02/10/sparkstreaming-programming-guide/">http://fangjian0423.github.io/2016/02/10/sparkstreaming-programming-guide/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/spark/" rel="tag">#spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/27/spark-programming-guide/" rel="next" title="Spark编程指南笔记">
+                <i class="fa fa-chevron-left"></i> Spark编程指南笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/02/17/spark-sql/" rel="prev" title="Spark DataFrame介绍">
+                Spark DataFrame介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一个快速例子"><span class="nav-number">2.</span> <span class="nav-text">一个快速例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基础概念"><span class="nav-number">3.</span> <span class="nav-text">基础概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Linking-SparkStreaming的连接"><span class="nav-number">3.1.</span> <span class="nav-text">Linking(SparkStreaming的连接)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#StreamingContext的初始化"><span class="nav-number">3.2.</span> <span class="nav-text">StreamingContext的初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Discretized-Streams-DStreams"><span class="nav-number">3.3.</span> <span class="nav-text">Discretized Streams (DStreams)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Input-DStreams-and-Receivers-数据源和接收器"><span class="nav-number">3.4.</span> <span class="nav-text">Input DStreams and Receivers(数据源和接收器)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Basic-Sources-基础数据源"><span class="nav-number">3.4.1.</span> <span class="nav-text">Basic Sources(基础数据源)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advanced-Sources-高级数据源"><span class="nav-number">3.4.2.</span> <span class="nav-text">Advanced Sources(高级数据源)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Custom-Sources-自定义数据源"><span class="nav-number">3.4.3.</span> <span class="nav-text">Custom Sources(自定义数据源)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Receiver-Reliability-接收器的可靠性"><span class="nav-number">3.4.4.</span> <span class="nav-text">Receiver Reliability(接收器的可靠性)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DStreams的Transformations操作"><span class="nav-number">3.5.</span> <span class="nav-text">DStreams的Transformations操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#UpdateStateByKey操作"><span class="nav-number">3.5.1.</span> <span class="nav-text">UpdateStateByKey操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Transform操作"><span class="nav-number">3.5.2.</span> <span class="nav-text">Transform操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Window操作"><span class="nav-number">3.5.3.</span> <span class="nav-text">Window操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Join操作"><span class="nav-number">3.5.4.</span> <span class="nav-text">Join操作</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DStream的输出操作"><span class="nav-number">3.6.</span> <span class="nav-text">DStream的输出操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#foreachRDD中的设计模式"><span class="nav-number">3.6.1.</span> <span class="nav-text">foreachRDD中的设计模式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DataFrame-and-SQL-Operations"><span class="nav-number">3.7.</span> <span class="nav-text">DataFrame and SQL Operations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Caching-Persistence"><span class="nav-number">3.8.</span> <span class="nav-text">Caching / Persistence</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Checkpointing"><span class="nav-number">3.9.</span> <span class="nav-text">Checkpointing</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/02/10/sparkstreaming-programming-guide/';
+      var disqus_title = "Spark Streaming编程指南笔记";
+      var disqus_url = 'http://fangjian0423.github.io/2016/02/10/sparkstreaming-programming-guide/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

@@ -1,0 +1,1347 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,spark," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="DataFrame是一个以命名列方式组织的分布式数据集。在概念上，它跟关系型数据库中的一张表或者1个Python(或者R)中的data frame一样，但是比他们更优化。DataFrame可以根据结构化的数据文件、hive表、外部数据库或者已经存在的RDD构造 ...">
+<meta name="keywords" content="big data,spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark DataFrame介绍">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/02/17/spark-sql/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="DataFrame是一个以命名列方式组织的分布式数据集。在概念上，它跟关系型数据库中的一张表或者1个Python(或者R)中的data frame一样，但是比他们更优化。DataFrame可以根据结构化的数据文件、hive表、外部数据库或者已经存在的RDD构造 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark DataFrame介绍">
+<meta name="twitter:description" content="DataFrame是一个以命名列方式组织的分布式数据集。在概念上，它跟关系型数据库中的一张表或者1个Python(或者R)中的data frame一样，但是比他们更优化。DataFrame可以根据结构化的数据文件、hive表、外部数据库或者已经存在的RDD构造 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Spark DataFrame介绍 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark DataFrame介绍
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-02-17T09:22:22+08:00" content="2016-02-17">
+              2016-02-17
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/spark/" itemprop="url" rel="index">
+                    <span itemprop="name">spark</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/02/17/spark-sql/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/02/17/spark-sql/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/02/17/spark-sql/" class="leancloud_visitors" data-flag-title="Spark DataFrame介绍">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="DataFrame是什么"><a href="#DataFrame是什么" class="headerlink" title="DataFrame是什么"></a>DataFrame是什么</h2><p>DataFrame是一个以命名列方式组织的分布式数据集。在概念上，它跟关系型数据库中的一张表或者1个Python(或者R)中的data frame一样，但是比他们更优化。DataFrame可以根据结构化的数据文件、hive表、外部数据库或者已经存在的RDD构造。</p>
+<h2 id="DataFrame的创建"><a href="#DataFrame的创建" class="headerlink" title="DataFrame的创建"></a>DataFrame的创建</h2><p>Spark DataFrame可以从一个已经存在的RDD、hive表或者数据源中创建。</p>
+<p>以下一个例子就表示一个DataFrame基于一个json文件创建：</p>
+<pre><code>val sc: SparkContext // An existing SparkContext.
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+
+val df = sqlContext.read.json(&quot;examples/src/main/resources/people.json&quot;)
+
+// Displays the content of the DataFrame to stdout
+df.show()
+</code></pre><h2 id="DataFrame的操作"><a href="#DataFrame的操作" class="headerlink" title="DataFrame的操作"></a>DataFrame的操作</h2><p>直接以1个例子来说明DataFrame的操作：</p>
+<p>json文件内容：</p>
+<pre><code>{&quot;name&quot;:&quot;Michael&quot;}
+{&quot;name&quot;:&quot;Andy&quot;, &quot;age&quot;:30}
+{&quot;name&quot;:&quot;Justin&quot;, &quot;age&quot;:19}
+</code></pre><p>程序内容：</p>
+<pre><code>val conf = new SparkConf().setMaster(&quot;local&quot;).setAppName(&quot;DataFrameTest&quot;)
+
+val sc = new SparkContext(conf)
+
+val sqlContext = new SQLContext(sc)
+
+val df = sqlContext.read.json(this.getClass.getResource(&quot;/&quot;).toString + &quot;people.json&quot;)
+
+  /** 展示DataFrame的内容
++----+-------+
+| age|   name|
++----+-------+
+|null|Michael|
+|  30|   Andy|
+|  19| Justin|
++----+-------+  
+  **/
+df.show()
+
+/** 以树的形式打印出DataFrame的schema
+root
+ |-- age: long (nullable = true)
+ |-- name: string (nullable = true)
+**/
+df.printSchema()
+
+/** 打印出name列的数据
++-------+
+|   name|
++-------+
+|Michael|
+|   Andy|
+| Justin|
++-------+   
+**/
+df.select(&quot;name&quot;).show()
+
+/** 打印出name列和age列+1的数据，DataFrame的apply方法返回Column
++-------+---------+
+|   name|(age + 1)|
++-------+---------+
+|Michael|     null|
+|   Andy|       31|
+| Justin|       20|
++-------+---------+
+**/
+df.select(df(&quot;name&quot;), df(&quot;age&quot;) + 1).show()
+
+/** 添加过滤条件，过滤出age字段大于21的数据
++---+----+
+|age|name|
++---+----+
+| 30|Andy|
++---+----+
+**/
+df.filter(df(&quot;age&quot;) &gt; 21).show()
+
+/** 以age字段分组进行统计
++----+-----+
+| age|count|
++----+-----+
+|null|    1|
+|  19|    1|
+|  30|    1|
++----+-----+
+**/
+df.groupBy(df(&quot;age&quot;)).count().show()
+</code></pre><h2 id="使用反射推断出Schema"><a href="#使用反射推断出Schema" class="headerlink" title="使用反射推断出Schema"></a>使用反射推断出Schema</h2><p>Spark SQL的Scala接口支持将包括case class数据的RDD转换成DataFrame。</p>
+<p>case class定义表的schema，case class的属性会被读取并且成为列的名字，这里case class也可以被当成别的case class的属性或者是复杂的类型，比如Sequence或Array。</p>
+<p>RDD会被隐式转换成DataFrame并且被注册成一个表，这个表可以被用在查询语句中：</p>
+<pre><code>// sc is an existing SparkContext.
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+// this is used to implicitly convert an RDD to a DataFrame.
+import sqlContext.implicits._
+
+// Define the schema using a case class.
+// Note: Case classes in Scala 2.10 can support only up to 22 fields. To work around this limit,
+// you can use custom classes that implement the Product interface.
+case class Person(name: String, age: Int)
+
+// Create an RDD of Person objects and register it as a table.
+val people = sc.textFile(&quot;examples/src/main/resources/people.txt&quot;).map(_.split(&quot;,&quot;)).map(p =&gt; Person(p(0), p(1).trim.toInt)).toDF()
+people.registerTempTable(&quot;people&quot;)
+
+// SQL statements can be run by using the sql methods provided by sqlContext.
+val teenagers = sqlContext.sql(&quot;SELECT name, age FROM people WHERE age &gt;= 13 AND age &lt;= 19&quot;)
+
+// The results of SQL queries are DataFrames and support all the normal RDD operations.
+// The columns of a row in the result can be accessed by field index:
+teenagers.map(t =&gt; &quot;Name: &quot; + t(0)).collect().foreach(println)
+
+// or by field name:
+teenagers.map(t =&gt; &quot;Name: &quot; + t.getAs[String](&quot;name&quot;)).collect().foreach(println)
+
+// row.getValuesMap[T] retrieves multiple columns at once into a Map[String, T]
+teenagers.map(_.getValuesMap[Any](List(&quot;name&quot;, &quot;age&quot;))).collect().foreach(println)
+// Map(&quot;name&quot; -&gt; &quot;Justin&quot;, &quot;age&quot; -&gt; 19)
+</code></pre><h2 id="使用编程指定Schema"><a href="#使用编程指定Schema" class="headerlink" title="使用编程指定Schema"></a>使用编程指定Schema</h2><p>当case class不能提前确定（例如，记录的结构是经过编码的字符串，或者一个文本集合将会被解析，不同的字段投影给不同的用户），一个 DataFrame 可以通过三步来创建。</p>
+<p>1.从原来的 RDD 创建一个行的 RDD<br>2.创建由一个 StructType 表示的模式与第一步创建的 RDD 的行结构相匹配<br>3.在行 RDD 上通过 applySchema 方法应用模式</p>
+<pre><code>// sc is an existing SparkContext.
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+
+// Create an RDD
+val people = sc.textFile(&quot;examples/src/main/resources/people.txt&quot;)
+
+// The schema is encoded in a string
+val schemaString = &quot;name age&quot;
+
+// Import Row.
+import org.apache.spark.sql.Row;
+
+// Import Spark SQL data types
+import org.apache.spark.sql.types.{StructType,StructField,StringType};
+
+// Generate the schema based on the string of schema
+val schema =
+  StructType(
+    schemaString.split(&quot; &quot;).map(fieldName =&gt; StructField(fieldName, StringType, true)))
+
+// Convert records of the RDD (people) to Rows.
+val rowRDD = people.map(_.split(&quot;,&quot;)).map(p =&gt; Row(p(0), p(1).trim))
+
+// Apply the schema to the RDD.
+val peopleDataFrame = sqlContext.createDataFrame(rowRDD, schema)
+
+// Register the DataFrames as a table.
+peopleDataFrame.registerTempTable(&quot;people&quot;)
+
+// SQL statements can be run by using the sql methods provided by sqlContext.
+val results = sqlContext.sql(&quot;SELECT name FROM people&quot;)
+
+// The results of SQL queries are DataFrames and support all the normal RDD operations.
+// The columns of a row in the result can be accessed by field index or by field name.
+results.map(t =&gt; &quot;Name: &quot; + t(0)).collect().foreach(println)
+</code></pre><h2 id="数据源"><a href="#数据源" class="headerlink" title="数据源"></a>数据源</h2><p>Spark SQL默认使用的数据源是parquet(可以通过spark.sql.sources.default修改)。</p>
+<pre><code>val df = sqlContext.read.load(&quot;examples/src/main/resources/users.parquet&quot;)
+df.select(&quot;name&quot;, &quot;favorite_color&quot;).write.save(&quot;namesAndFavColors.parquet&quot;)
+</code></pre><p>可以在读取数据源的时候指定一些往外的参数。数据源也可以使用全名称，比如org.apache.spark.sql.parquet，但是内置的数据源可以使用短名称，比如json, parquet, jdbc。任何类型的DataFrame都可以使用这种方式转换成其他类型：</p>
+<pre><code>val df = sqlContext.read.format(&quot;json&quot;).load(&quot;examples/src/main/resources/people.json&quot;)
+df.select(&quot;name&quot;, &quot;age&quot;).write.format(&quot;parquet&quot;).save(&quot;namesAndAges.parquet&quot;)
+</code></pre><p>使用read方法读取数据源得到DataFrame，还可以使用sql直接查询文件的方式：</p>
+<pre><code>val df = sqlContext.sql(&quot;SELECT * FROM parquet.`examples/src/main/resources/users.parquet`&quot;)
+</code></pre><p>保存模式：</p>
+<p>保存方法会需要一个可选参数SaveMode，用于处理已经存在的数据。这些保存模式内部不会用到锁的概念，也不是一个原子操作。如果使用了Overwrite这种保存模式，那么写入数据前会清空之前的老数据。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Scala/Java</th>
+<th style="text-align:center">具体值</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">SaveMode.ErrorIfExists (默认值)</td>
+<td style="text-align:center">“error” (默认值)</td>
+<td style="text-align:center">当保存DataFrame到数据源的时候，如果数据源文件已经存在，那么会抛出异常</td>
+</tr>
+<tr>
+<td style="text-align:center">SaveMode.Append</td>
+<td style="text-align:center">“append”</td>
+<td style="text-align:center">如果数据源文件已经存在，append到文件末尾</td>
+</tr>
+<tr>
+<td style="text-align:center">SaveMode.Overwrite</td>
+<td style="text-align:center">“overwrite”</td>
+<td style="text-align:center">如果数据源文件已经存在，清空数据</td>
+</tr>
+<tr>
+<td style="text-align:center">SaveMode.Ignore</td>
+<td style="text-align:center">“ignore”</td>
+<td style="text-align:center">如果数据源文件已经存在，不做任何处理。跟SQL中的 CREATE TABLE IF NOT EXISTS 类似</td>
+</tr>
+</tbody>
+</table>
+<p>持久化表：</p>
+<p>当使用HiveContext的时候，使用saveAsTable方法可以把DataFrame持久化成表。跟registerTempTable方法不一样，saveAsTable方法会把DataFrame持久化成表，并且创建一个数据的指针到HiveMetastore对象中。只要获得了同一个HiveMetastore对象的链接，当Spark程序重启的时候，saveAsTable持久化后的表依然会存在。一个DataFrame持久化成一个table也可以通过SQLContext的table方法，参数就是表的名字。</p>
+<p>默认情况下，saveAsTable方法会创建一个”被管理的表”，被管理的表的意思是说表中数据的位置会被HiveMetastore所控制，如果表被删除了，HiveMetastore中的数据也相当于被删除了。</p>
+<h3 id="Parquet-Files"><a href="#Parquet-Files" class="headerlink" title="Parquet Files"></a>Parquet Files</h3><p>parquet是一种基于列的存储格式，并且可以被很多框架所支持。Spark SQL支持parquet文件的读和写操作，并且会自动维护原始数据的schema，当写一个parquet文件的时候，所有的列都允许为空。</p>
+<h4 id="加载Parquet文件"><a href="#加载Parquet文件" class="headerlink" title="加载Parquet文件"></a>加载Parquet文件</h4><pre><code>// sqlContext from the previous example is used in this example.
+// This is used to implicitly convert an RDD to a DataFrame.
+import sqlContext.implicits._
+
+val people: RDD[Person] = ... // An RDD of case class objects, from the previous example.
+
+// The RDD is implicitly converted to a DataFrame by implicits, allowing it to be stored using Parquet.
+people.write.parquet(&quot;people.parquet&quot;)
+
+// Read in the parquet file created above. Parquet files are self-describing so the schema is preserved.
+// The result of loading a Parquet file is also a DataFrame.
+val parquetFile = sqlContext.read.parquet(&quot;people.parquet&quot;)
+
+//Parquet files can also be registered as tables and then used in SQL statements.
+parquetFile.registerTempTable(&quot;parquetFile&quot;)
+val teenagers = sqlContext.sql(&quot;SELECT name FROM parquetFile WHERE age &gt;= 13 AND age &lt;= 19&quot;)
+teenagers.map(t =&gt; &quot;Name: &quot; + t(0)).collect().foreach(println)
+</code></pre><h4 id="Parquet文件的Partition"><a href="#Parquet文件的Partition" class="headerlink" title="Parquet文件的Partition"></a>Parquet文件的Partition</h4><p>Parquet文件可以根据列自动进行分区，只需要调用DataFrameWriter的partitionBy方法即可，该方法需要的参数是需要进行分区的列。比如需要分区成这样：</p>
+<pre><code>path
+└── to
+    └── table
+        ├── gender=male
+        │   ├── ...
+        │   │
+        │   ├── country=US
+        │   │   └── data.parquet
+        │   ├── country=CN
+        │   │   └── data.parquet
+        │   └── ...
+        └── gender=female
+            ├── ...
+            │
+            ├── country=US
+            │   └── data.parquet
+            ├── country=CN
+            │   └── data.parquet
+            └── ...
+</code></pre><p>这个需要DataFrame就需要4列，分别是name，age，gender和country，write的时候如下：</p>
+<pre><code>dataFrame.write.partitionBy(&quot;gender&quot;, &quot;country&quot;).parquet(&quot;path&quot;)
+</code></pre><h4 id="Schema-Merging"><a href="#Schema-Merging" class="headerlink" title="Schema Merging"></a>Schema Merging</h4><p>像ProtocolBuffer，Avro，Thrift一样，Parquet也支持schema的扩展。</p>
+<p>由于schema的自动扩展是一次昂贵的操作，所以默认情况下不是开启的，可以根据以下设置打开：</p>
+<p>读parquet文件的时候设置参数mergeSchema为true或者设置全局的sql属性spark.sql.parquet.mergeSchema为true：</p>
+<pre><code>// sqlContext from the previous example is used in this example.
+// This is used to implicitly convert an RDD to a DataFrame.
+import sqlContext.implicits._
+
+// Create a simple DataFrame, stored into a partition directory
+val df1 = sc.makeRDD(1 to 5).map(i =&gt; (i, i * 2)).toDF(&quot;single&quot;, &quot;double&quot;)
+df1.write.parquet(&quot;data/test_table/key=1&quot;)
+
+// Create another DataFrame in a new partition directory,
+// adding a new column and dropping an existing column
+val df2 = sc.makeRDD(6 to 10).map(i =&gt; (i, i * 3)).toDF(&quot;single&quot;, &quot;triple&quot;)
+df2.write.parquet(&quot;data/test_table/key=2&quot;)
+
+// Read the partitioned table
+val df3 = sqlContext.read.option(&quot;mergeSchema&quot;, &quot;true&quot;).parquet(&quot;data/test_table&quot;)
+df3.printSchema()
+
+// The final schema consists of all 3 columns in the Parquet files together
+// with the partitioning column appeared in the partition directory paths.
+// root
+// |-- single: int (nullable = true)
+// |-- double: int (nullable = true)
+// |-- triple: int (nullable = true)
+// |-- key : int (nullable = true)
+</code></pre><h3 id="JSON数据源"><a href="#JSON数据源" class="headerlink" title="JSON数据源"></a>JSON数据源</h3><p>本文之前的一个例子就是使用的JSON数据源，使用SQLContext.read.json()读取一个带有String类型的RDD或者一个json文件。</p>
+<p>需要注意的是json文件不是一个典型的json格式的文件，每一行都是一个json对象。</p>
+<pre><code>// sc is an existing SparkContext.
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+
+// A JSON dataset is pointed to by path.
+// The path can be either a single text file or a directory storing text files.
+val path = &quot;examples/src/main/resources/people.json&quot;
+val people = sqlContext.read.json(path)
+
+// The inferred schema can be visualized using the printSchema() method.
+people.printSchema()
+// root
+//  |-- age: integer (nullable = true)
+//  |-- name: string (nullable = true)
+
+// Register this DataFrame as a table.
+people.registerTempTable(&quot;people&quot;)
+
+// SQL statements can be run by using the sql methods provided by sqlContext.
+val teenagers = sqlContext.sql(&quot;SELECT name FROM people WHERE age &gt;= 13 AND age &lt;= 19&quot;)
+
+// Alternatively, a DataFrame can be created for a JSON dataset represented by
+// an RDD[String] storing one JSON object per string.
+val anotherPeopleRDD = sc.parallelize(
+  &quot;&quot;&quot;{&quot;name&quot;:&quot;Yin&quot;,&quot;address&quot;:{&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Ohio&quot;}}&quot;&quot;&quot; :: Nil)
+val anotherPeople = sqlContext.read.json(anotherPeopleRDD)
+</code></pre><h3 id="Hive表"><a href="#Hive表" class="headerlink" title="Hive表"></a>Hive表</h3><p>需要使用HiveContext。</p>
+<pre><code>// sc is an existing SparkContext.
+val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+
+sqlContext.sql(&quot;CREATE TABLE IF NOT EXISTS src (key INT, value STRING)&quot;)
+sqlContext.sql(&quot;LOAD DATA LOCAL INPATH &apos;examples/src/main/resources/kv1.txt&apos; INTO TABLE src&quot;)
+
+// Queries are expressed in HiveQL
+sqlContext.sql(&quot;FROM src SELECT key, value&quot;).collect().foreach(println)
+</code></pre><h3 id="JDBC"><a href="#JDBC" class="headerlink" title="JDBC"></a>JDBC</h3><p>直接使用load方法加载：</p>
+<pre><code>sqlContext.load(&quot;jdbc&quot;, Map(&quot;url&quot; -&gt; &quot;jdbc:mysql://localhost:3306/your_database?user=your_user&amp;password=your_password&quot;, &quot;dbtable&quot; -&gt; &quot;your_table&quot;))
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/02/17/spark-sql/">http://fangjian0423.github.io/2016/02/17/spark-sql/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/spark/" rel="tag">#spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/02/10/sparkstreaming-programming-guide/" rel="next" title="Spark Streaming编程指南笔记">
+                <i class="fa fa-chevron-left"></i> Spark Streaming编程指南笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/02/21/avro-intro/" rel="prev" title="Avro介绍">
+                Avro介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#DataFrame是什么"><span class="nav-number">1.</span> <span class="nav-text">DataFrame是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DataFrame的创建"><span class="nav-number">2.</span> <span class="nav-text">DataFrame的创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DataFrame的操作"><span class="nav-number">3.</span> <span class="nav-text">DataFrame的操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用反射推断出Schema"><span class="nav-number">4.</span> <span class="nav-text">使用反射推断出Schema</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用编程指定Schema"><span class="nav-number">5.</span> <span class="nav-text">使用编程指定Schema</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据源"><span class="nav-number">6.</span> <span class="nav-text">数据源</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parquet-Files"><span class="nav-number">6.1.</span> <span class="nav-text">Parquet Files</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#加载Parquet文件"><span class="nav-number">6.1.1.</span> <span class="nav-text">加载Parquet文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Parquet文件的Partition"><span class="nav-number">6.1.2.</span> <span class="nav-text">Parquet文件的Partition</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Schema-Merging"><span class="nav-number">6.1.3.</span> <span class="nav-text">Schema Merging</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JSON数据源"><span class="nav-number">6.2.</span> <span class="nav-text">JSON数据源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hive表"><span class="nav-number">6.3.</span> <span class="nav-text">Hive表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JDBC"><span class="nav-number">6.4.</span> <span class="nav-text">JDBC</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/02/17/spark-sql/';
+      var disqus_title = "Spark DataFrame介绍";
+      var disqus_url = 'http://fangjian0423.github.io/2016/02/17/spark-sql/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

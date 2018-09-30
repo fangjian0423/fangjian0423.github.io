@@ -1,0 +1,1256 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Java线程的生命周期中，存在几种状态。在Thread类里有一个枚举类型State，定义了线程的几种状态，分别有：  NEW: 线程创建之后，但是还没有启动(not yet started)。这时候它的状态就是NEW RUNNABLE: 正在Java虚拟机下跑任务的线程的状态。在RUNNABLE状态下的线程可能会处于等待状态， 因为它正在等待一些系统资源的释放，比如IO BLOCKED: 阻塞状态">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java线程状态分析">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/06/04/java-thread-state/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Java线程的生命周期中，存在几种状态。在Thread类里有一个枚举类型State，定义了线程的几种状态，分别有：  NEW: 线程创建之后，但是还没有启动(not yet started)。这时候它的状态就是NEW RUNNABLE: 正在Java虚拟机下跑任务的线程的状态。在RUNNABLE状态下的线程可能会处于等待状态， 因为它正在等待一些系统资源的释放，比如IO BLOCKED: 阻塞状态">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java线程状态分析">
+<meta name="twitter:description" content="Java线程的生命周期中，存在几种状态。在Thread类里有一个枚举类型State，定义了线程的几种状态，分别有：  NEW: 线程创建之后，但是还没有启动(not yet started)。这时候它的状态就是NEW RUNNABLE: 正在Java虚拟机下跑任务的线程的状态。在RUNNABLE状态下的线程可能会处于等待状态， 因为它正在等待一些系统资源的释放，比如IO BLOCKED: 阻塞状态">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Java线程状态分析 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java线程状态分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-06-04T23:53:35+08:00" content="2016-06-04">
+              2016-06-04
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/06/04/java-thread-state/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/04/java-thread-state/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/06/04/java-thread-state/" class="leancloud_visitors" data-flag-title="Java线程状态分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Java线程的生命周期中，存在几种状态。在Thread类里有一个枚举类型State，定义了线程的几种状态，分别有：</p>
+<ol>
+<li>NEW: 线程创建之后，但是还没有启动(not yet started)。这时候它的状态就是NEW</li>
+<li>RUNNABLE: 正在Java虚拟机下跑任务的线程的状态。在RUNNABLE状态下的线程可能会处于等待状态， 因为它正在等待一些系统资源的释放，比如IO</li>
+<li>BLOCKED: 阻塞状态，等待锁的释放，比如线程A进入了一个synchronized方法，线程B也想进入这个方法，但是这个方法的锁已经被线程A获取了，这个时候线程B就处于BLOCKED状态</li>
+<li>WAITING: 等待状态，处于等待状态的线程是由于执行了3个方法中的任意方法。 1. Object的wait方法，并且没有使用timeout参数; 2. Thread的join方法，没有使用timeout参数 3. LockSupport的park方法。  处于waiting状态的线程会等待另外一个线程处理特殊的行为。 再举个例子，如果一个线程调用了一个对象的wait方法，那么这个线程就会处于waiting状态直到另外一个线程调用这个对象的notify或者notifyAll方法后才会解除这个状态</li>
+<li>TIMED_WAITING: 有等待时间的等待状态，比如调用了以下几个方法中的任意方法，并且指定了等待时间，线程就会处于这个状态。 1. Thread.sleep方法 2. Object的wait方法，带有时间 3. Thread.join方法，带有时间 4. LockSupport的parkNanos方法，带有时间 5. LockSupport的parkUntil方法，带有时间</li>
+<li>TERMINATED: 线程中止的状态，这个线程已经完整地执行了它的任务</li>
+</ol>
+<a id="more"></a>
+<p>下面通过几个例子再次说明一下在什么情况下，线程会处于这几种状态：</p>
+<h2 id="NEW状态"><a href="#NEW状态" class="headerlink" title="NEW状态"></a>NEW状态</h2><p>NEW状态比较简单，实例化一个线程之后，并且这个线程没有开始执行，这个时候的状态就是NEW：</p>
+<pre><code>Thread thread = new Thread();
+System.out.println(thread.getState()); // NEW
+</code></pre><h2 id="RUNNABLE状态"><a href="#RUNNABLE状态" class="headerlink" title="RUNNABLE状态"></a>RUNNABLE状态</h2><p>正在运行的状态。</p>
+<pre><code>Thread thread = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        for(int i = 0; i &lt; Integer.MAX_VALUE; i ++) {
+            System.out.println(i);
+        }
+    }
+}, &quot;RUNNABLE-Thread&quot;);
+thread.start();
+</code></pre><p>使用jstack查看线程状态：</p>
+<pre><code>&quot;RUNNABLE-Thread&quot; #10 prio=5 os_prio=31 tid=0x00007f8e04981000 nid=0x4f03 runnable [0x000070000124c000]
+   java.lang.Thread.State: RUNNABLE
+  at java.io.FileOutputStream.writeBytes(Native Method)
+  at java.io.FileOutputStream.write(FileOutputStream.java:315)
+  at java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:82)
+  at java.io.BufferedOutputStream.flush(BufferedOutputStream.java:140)
+  - locked &lt;0x000000079764cc50&gt; (a java.io.BufferedOutputStream)
+  at java.io.PrintStream.write(PrintStream.java:482)
+  - locked &lt;0x0000000797604dc0&gt; (a java.io.PrintStream)
+  at sun.nio.cs.StreamEncoder.writeBytes(StreamEncoder.java:221)
+  at sun.nio.cs.StreamEncoder.implFlushBuffer(StreamEncoder.java:291)
+  at sun.nio.cs.StreamEncoder.flushBuffer(StreamEncoder.java:104)
+  - locked &lt;0x0000000797604d78&gt; (a java.io.OutputStreamWriter)
+  at java.io.OutputStreamWriter.flushBuffer(OutputStreamWriter.java:185)
+  at java.io.PrintStream.write(PrintStream.java:527)
+  - eliminated &lt;0x0000000797604dc0&gt; (a java.io.PrintStream)
+  at java.io.PrintStream.print(PrintStream.java:597)
+  at java.io.PrintStream.println(PrintStream.java:736)
+  - locked &lt;0x0000000797604dc0&gt; (a java.io.PrintStream)
+  at study.thread.ThreadStateTest$1.run(ThreadStateTest.java:23)
+  at java.lang.Thread.run(Thread.java:745)
+</code></pre><h2 id="BLOCKED状态"><a href="#BLOCKED状态" class="headerlink" title="BLOCKED状态"></a>BLOCKED状态</h2><p>线程A和线程B都需要持有lock对象的锁才能调用方法。如果线程A持有锁，那么线程B处于BLOCKED状态；如果线程B持有锁，那么线程A处于BLOCKED状态。例子中使用Thread.sleep方法主要是用于调试方便：</p>
+<pre><code>final Object lock = new Object();
+Thread threadA = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        synchronized (lock) {
+            System.out.println(Thread.currentThread().getName() + &quot; invoke&quot;);
+            try {
+                Thread.sleep(20000l);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}, &quot;BLOCKED-Thread-A&quot;);
+Thread threadB = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        synchronized (lock) {
+            System.out.println(Thread.currentThread().getName() + &quot; invoke&quot;);
+            try {
+                Thread.sleep(20000l);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}, &quot;BLOCKED-Thread-B&quot;);
+threadA.start();
+threadB.start();
+</code></pre><p>使用jstack查看线程状态。由于线程A先执行，线程B后执行，而且线程A执行后调用了Thread.sleep方法，所以线程A会处于TIMED_WAITING状态，线程B处于BLOCKED状态：</p>
+<pre><code>&quot;BLOCKED-Thread-B&quot; #11 prio=5 os_prio=31 tid=0x00007fa7db8ff000 nid=0x5103 waiting for monitor entry [0x000070000134f000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+  at study.thread.ThreadStateTest$3.run(ThreadStateTest.java:50)
+  - waiting to lock &lt;0x0000000795a03bf8&gt; (a java.lang.Object)
+  at java.lang.Thread.run(Thread.java:745)
+
+&quot;BLOCKED-Thread-A&quot; #10 prio=5 os_prio=31 tid=0x00007fa7db15a000 nid=0x4f03 waiting on condition [0x000070000124c000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+  at java.lang.Thread.sleep(Native Method)
+  at study.thread.ThreadStateTest$2.run(ThreadStateTest.java:39)
+  - locked &lt;0x0000000795a03bf8&gt; (a java.lang.Object)
+  at java.lang.Thread.run(Thread.java:745)
+</code></pre><h2 id="WAITING状态"><a href="#WAITING状态" class="headerlink" title="WAITING状态"></a>WAITING状态</h2><p>Object的wait方法、Thread的join方法以及Conditon的await方法都会产生WAITING状态。</p>
+<p>1.没有时间参数的Object的wait方法</p>
+<pre><code>final Object lock = new Object();
+Thread threadA = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        synchronized (lock) {
+            try {
+                lock.wait();
+                System.out.println(&quot;wait over&quot;);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}, &quot;WAITING-Thread-A&quot;);
+Thread threadB = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        synchronized (lock) {
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            lock.notifyAll();
+        }
+    }
+}, &quot;WAITING-Thread-B&quot;);
+threadA.start();
+threadB.start();
+</code></pre><p>WAITING-Thread-A调用了lock的wait，处于WAITING状态：</p>
+<pre><code>&quot;WAITING-Thread-B&quot; #11 prio=5 os_prio=31 tid=0x00007f8de992d800 nid=0x5103 waiting on condition [0x000070000134f000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+  at java.lang.Thread.sleep(Native Method)
+  at study.thread.ThreadStateTest$5.run(ThreadStateTest.java:84)
+  - locked &lt;0x0000000795a03e40&gt; (a java.lang.Object)
+  at java.lang.Thread.run(Thread.java:745)
+
+&quot;WAITING-Thread-A&quot; #10 prio=5 os_prio=31 tid=0x00007f8dea193000 nid=0x4f03 in Object.wait() [0x000070000124c000]
+   java.lang.Thread.State: WAITING (on object monitor)
+  at java.lang.Object.wait(Native Method)
+  - waiting on &lt;0x0000000795a03e40&gt; (a java.lang.Object)
+  at java.lang.Object.wait(Object.java:502)
+  at study.thread.ThreadStateTest$4.run(ThreadStateTest.java:71)
+  - locked &lt;0x0000000795a03e40&gt; (a java.lang.Object)
+  at java.lang.Thread.run(Thread.java:745)
+</code></pre><p>2.Thread的join方法</p>
+<pre><code>Thread threadA = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(&quot;Thread-A over&quot;);
+    }
+}, &quot;WAITING-Thread-A&quot;);
+threadA.start();
+try {
+    threadA.join();
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+</code></pre><p>主线程main处于WAITING状态：</p>
+<pre><code>&quot;WAITING-Thread-A&quot; #10 prio=5 os_prio=31 tid=0x00007fd2d5100000 nid=0x4e03 waiting on condition [0x000070000124c000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+  at java.lang.Thread.sleep(Native Method)
+  at study.thread.ThreadStateTest$6.run(ThreadStateTest.java:103)
+  at java.lang.Thread.run(Thread.java:745)
+&quot;main&quot; #1 prio=5 os_prio=31 tid=0x00007fd2d3815000 nid=0x1003 in Object.wait() [0x0000700000182000]
+   java.lang.Thread.State: WAITING (on object monitor)
+  at java.lang.Object.wait(Native Method)
+  - waiting on &lt;0x0000000795a03ec0&gt; (a java.lang.Thread)
+  at java.lang.Thread.join(Thread.java:1245)
+  - locked &lt;0x0000000795a03ec0&gt; (a java.lang.Thread)
+  at java.lang.Thread.join(Thread.java:1319)
+  at study.thread.ThreadStateTest.WAITING_join(ThreadStateTest.java:118)
+  at study.thread.ThreadStateTest.main(ThreadStateTest.java:13)
+  at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+  at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+  at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+  at java.lang.reflect.Method.invoke(Method.java:483)
+  at com.intellij.rt.execution.application.AppMain.main(AppMain.java:140)
+</code></pre><p>3.没有时间参数的Condition的await方法</p>
+<p>Condition的await方法跟Obejct的wait方法原理是一样的，故也是WAITING状态</p>
+<h2 id="TIMED-WAITING状态"><a href="#TIMED-WAITING状态" class="headerlink" title="TIMED_WAITING状态"></a>TIMED_WAITING状态</h2><p>TIMED_WAITING状态跟TIMEING状态类似，是一个有等待时间的等待状态，不会一直等待下去。</p>
+<p>最简单的TIMED_WAITING状态例子就是Thread的sleep方法：</p>
+<pre><code>Thread threadA = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(&quot;Thread-A over&quot;);
+    }
+}, &quot;WAITING-Thread-A&quot;);
+threadA.start();
+try {
+    Thread.sleep(5000);
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+System.out.println(threadA.getState()); // TIMED_WAITING
+</code></pre><p>或者是Object的wait方法带有时间参数、Thread的join方法带有时间参数也会让线程的状态处于TIMED_WAITING状态。</p>
+<h2 id="TERMINATED"><a href="#TERMINATED" class="headerlink" title="TERMINATED"></a>TERMINATED</h2><p>线程终止的状态，线程执行完成，结束生命周期。</p>
+<pre><code>Thread threadA = new Thread();
+threadA.start();
+try {
+    Thread.sleep(5000l);
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+System.out.println(threadA.getState()); // TERMINATED
+</code></pre><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>了解线程的状态可以分析一些问题。</p>
+<p>比如线程处于BLOCKED状态，这个时候可以分析一下是不是lock加锁的时候忘记释放了，或者释放的时机不对。导致另外的线程一直处于BLOCKED状态。</p>
+<p>比如线程处于WAITING状态，这个时候可以分析一下notifyAll或者signalAll方法的调用时机是否不对。</p>
+<p>java自带的jstack工具可以分析查看线程的状态、优先级、描述等具体信息。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/06/04/java-thread-state/">http://fangjian0423.github.io/2016/06/04/java-thread-state/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/10/java-arrayblockingqueue-linkedblockingqueue-analysis/" rel="next" title="Java阻塞队列ArrayBlockingQueue和LinkedBlockingQueue实现原理分析">
+                <i class="fa fa-chevron-left"></i> Java阻塞队列ArrayBlockingQueue和LinkedBlockingQueue实现原理分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/06/12/springboot-autoconfig-analysis/" rel="prev" title="SpringBoot内部的一些自动化配置原理">
+                SpringBoot内部的一些自动化配置原理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#NEW状态"><span class="nav-number">1.</span> <span class="nav-text">NEW状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RUNNABLE状态"><span class="nav-number">2.</span> <span class="nav-text">RUNNABLE状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLOCKED状态"><span class="nav-number">3.</span> <span class="nav-text">BLOCKED状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WAITING状态"><span class="nav-number">4.</span> <span class="nav-text">WAITING状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TIMED-WAITING状态"><span class="nav-number">5.</span> <span class="nav-text">TIMED_WAITING状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TERMINATED"><span class="nav-number">6.</span> <span class="nav-text">TERMINATED</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/06/04/java-thread-state/';
+      var disqus_title = "Java线程状态分析";
+      var disqus_url = 'http://fangjian0423.github.io/2016/06/04/java-thread-state/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

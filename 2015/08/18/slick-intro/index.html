@@ -1,0 +1,1276 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="scala,frm,orm," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="近看到了一个FRM的框架Slick。 FRM的意思是Functional Relational Mapping， 一种基于函数式的ORM ...">
+<meta name="keywords" content="scala,frm,orm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Scala持久层框架Slick介绍">
+<meta property="og:url" content="http://fangjian0423.github.io/2015/08/18/slick-intro/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="近看到了一个FRM的框架Slick。 FRM的意思是Functional Relational Mapping， 一种基于函数式的ORM ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scala持久层框架Slick介绍">
+<meta name="twitter:description" content="近看到了一个FRM的框架Slick。 FRM的意思是Functional Relational Mapping， 一种基于函数式的ORM ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Scala持久层框架Slick介绍 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Scala持久层框架Slick介绍
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-08-18T23:22:33+08:00" content="2015-08-18">
+              2015-08-18
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/scala/" itemprop="url" rel="index">
+                    <span itemprop="name">scala</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/08/18/slick-intro/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/08/18/slick-intro/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/08/18/slick-intro/" class="leancloud_visitors" data-flag-title="Scala持久层框架Slick介绍">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="FRM介绍"><a href="#FRM介绍" class="headerlink" title="FRM介绍"></a>FRM介绍</h2><p>最近看到了一个FRM的框架Slick。 FRM的意思是Functional Relational Mapping， 一种基于函数式的ORM。</p>
+<p>举一个最简单的例子：</p>
+<pre><code>val queryResult = db.query(queryStr)
+
+queryResult.onSuccess { result =&gt;
+    result.doSomething ...
+}
+</code></pre><p>数据库db查询一条sql语句。查询成功的时候使用闭包完成处理。 看到这段代码的第一反应就是js的ajax处理，代码几乎是一样的，也发现之前在学校里写nodejs的时候查询db也是这样的语法。</p>
+<pre><code>var jqxhr = $.ajax( {
+    url: &apos;url&apos;,
+    method: &apos;GET&apos;,
+    data: [user: &apos;format&apos;]
+});
+
+jqxhr.success(function() {
+    ...
+});
+</code></pre><p>FRM相比ORM最明显的优势就是FRM基于多线程的Future的数据查询，而ORM是单线程的线性执行。</p>
+<p>FRM构造sql查询也是相当简单的：</p>
+<pre><code>// 构造查询
+val newQuery = students.filter(_.age &gt; 24).sortBy(_.name)
+// 执行查询
+db.run(newQuery)
+</code></pre><p>FRM其他的优势可以参考<a href="http://slick.typesafe.com/doc/3.0.1/introduction.html#functional-relational-mapping" target="_blank" rel="noopener">官方文档</a>。</p>
+<h2 id="Slick实例"><a href="#Slick实例" class="headerlink" title="Slick实例"></a>Slick实例</h2><p>下面以一个Students和Classrooms的实例来说明一下Slick的使用。</p>
+<p>首先是创建对应的domain，学生与教室的关系是1对多。</p>
+<p>Students domain(使用Option类型说明该列是可为空的)：</p>
+<pre><code>class Student(tag: Tag) extends Table[(Int, String, Int, Int, Option[Date])](tag, &quot;Students&quot;) {
+
+  def id: Rep[Int] = column[Int](&quot;id&quot;, O.PrimaryKey, O.AutoInc)
+  def name: Rep[String] = column[String](&quot;name&quot;)
+  def age: Rep[Int] = column[Int](&quot;age&quot;)
+  def birthDate: Rep[Option[Date]] = column[Option[Date]](&quot;birth_date&quot;)
+  def classroomId = column[Int](&quot;classroom_id&quot;)
+
+   def * : ProvenShape[(Int, String, Int, Int, Option[Date])] = (id, name, age, classroomId, birthDate)
+
+  def classroom: ForeignKeyQuery[Classroom, (Int, String)] = foreignKey(&quot;FK_CLASSROOM&quot;, classroomId, TableQuery[Classroom])(_.id)
+}
+</code></pre><p>Classrooms domain：</p>
+<pre><code>class Classroom(tag: Tag) extends Table[(Int, String)](tag, &quot;Classrooms&quot;) {
+  def id = column[Int](&quot;id&quot;, O.PrimaryKey, O.AutoInc)
+  def name = column[String](&quot;name&quot;)
+
+  def * = (id, name)
+}
+</code></pre><p>各个db操作，schema创建，sql插入，sql查询等操作如下，加了几句备注，具体的代码就不分析了：</p>
+<pre><code>object SampleSlickDemo extends App {
+
+  val db = Database.forConfig(&quot;h2mem1&quot;)
+
+  try {
+
+    val classrooms = TableQuery[Classroom]
+    val students = TableQuery[Student]
+
+
+    val setupAction: DBIO[Unit] = DBIO.seq(
+      // create student and classroom table in database
+      (classrooms.schema ++ students.schema).create,
+      // insert some rows in classroom
+      classrooms += (1, &quot;classroom1&quot;),
+      classrooms += (2, &quot;classroom2&quot;),
+      classrooms += (3, &quot;classroom2&quot;)
+    )
+
+    val setupFuture = db.run(setupAction)
+
+    val f = setupFuture.flatMap { _ =&gt;
+
+      val insertAction: DBIO[Option[Int]] = students ++= Seq (
+        (1, &quot;format1&quot;, 11, 1, new Date(System.currentTimeMillis())),
+        (2, &quot;format2&quot;, 22, 2, new Date((System.currentTimeMillis()))),
+        (3, &quot;format3&quot;, 33, 3, new Date((System.currentTimeMillis())))
+      )
+
+      val insertAndPrintAction = insertAction.map { studentResult =&gt;
+        studentResult.foreach { numRows =&gt;
+          println(s&quot;inserted $numRows students&quot;)
+        }
+      }
+
+      db.run(insertAndPrintAction)
+    }.flatMap { _ =&gt;
+
+      // print All Classrooms
+      db.run(classrooms.result).map { classroom =&gt;
+        classroom.foreach(println);
+      }
+
+      // print All Students
+      db.run(students.result).map { studnet =&gt;
+        studnet.foreach(println);
+      }
+
+      // condition search
+      val studentQuery = students.filter(_.age &gt; 20).sortBy(_.name)
+      db.run(studentQuery.result).map { student =&gt;
+        student.foreach(println)
+      }
+    }
+    Await.result(f, Duration.Inf)
+  } finally db.close()
+}
+</code></pre><h2 id="数据库配置"><a href="#数据库配置" class="headerlink" title="数据库配置"></a>数据库配置</h2><p>在配置文件application.conf里配置数据库配置信息：</p>
+<pre><code>h2mem1 = {
+  url = &quot;jdbc:h2:mem:test1&quot;
+  driver = org.h2.Driver
+  connectionPool = disabled
+  keepAliveConnection = true
+}
+</code></pre><p>然后就可使用Database初始化数据库，参数就是配置文件里对应的数据库name：</p>
+<pre><code>val db = Database.forConfig(&quot;h2mem1&quot;)
+</code></pre><h2 id="DBIOAction介绍"><a href="#DBIOAction介绍" class="headerlink" title="DBIOAction介绍"></a>DBIOAction介绍</h2><p>DBIOAction就是数据库的一个操作，比如Insert，Update，Delete，Query等操作。</p>
+<p>可以使用上面分析的数据库配置变量db进行操作。</p>
+<p>db有个run方法使用DBIOAction作为参数，返回Future类型的返回值。</p>
+<p>DBIO是一个单例对象，它的seq方法可以传入多个DBIOAction，然后返回一个新的DBIOAction。 += 方法返回的也是DBIOAction。</p>
+<pre><code>val setupAction: DBIO[Unit] = DBIO.seq(
+  (classrooms.schema ++ students.schema).create,
+  classrooms += (1, &quot;classroom1&quot;),
+  classrooms += (2, &quot;classroom2&quot;),
+  classrooms += (3, &quot;classroom2&quot;)
+)
+</code></pre><p>++=方法跟+=方法一样会返回DBIOAction，只不过它的参数是个Iterable：</p>
+<pre><code>val insertAction: DBIO[Option[Int]] = students ++= Seq (
+    (1, &quot;format1&quot;, 11, 1, new Date(System.currentTimeMillis())),
+    (2, &quot;format2&quot;, 22, 2, new Date((System.currentTimeMillis()))),
+    (3, &quot;format3&quot;, 33, 3, new Date((System.currentTimeMillis())))
+  )
+</code></pre><p>DBIOAction提供许多好用的方法：</p>
+<p>map方法：参数是个函数，这个函数可以返回任意类型的值，返回是个DBIOAction。 所以可以使用map关联起来多个DBIOAction。</p>
+<p>flatMap方法：参数是个函数，这个函数的返回值必须是个DBIOAction，返回值是个DBIOAction。作用跟map类似，只不过函数参数的返回值不一样。</p>
+<p>filter方法：参数是个函数，这个函数的返回值必须是个Boolean，返回值是个DBIOAction。过滤作用。</p>
+<p>andThen方法：参数是个DBIOAction，返回值是个DBIOAction。在Action完成后执行另外一个Action。</p>
+<h2 id="增删改查操作"><a href="#增删改查操作" class="headerlink" title="增删改查操作"></a>增删改查操作</h2><h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><p>Slick的查询可以直接通过TableQuery操作，使用TableQuery提供的filter可以实现过滤操作，使用drop和take完成分页操作，使用sortBy完成排序操作。</p>
+<pre><code>students.filter(_.classroomId === 1)
+students.drop(1).take(2)
+students.sortBy(_.age.desc)
+</code></pre><p>可以使用map方法找出需要的列。 </p>
+<p>多列：</p>
+<pre><code>students.map { student =&gt;
+  (student.name, student.age)
+}
+</code></pre><p>一列：</p>
+<pre><code>students.map(_.name)
+</code></pre><p>Join方法：</p>
+<p>cross join操作：</p>
+<pre><code>val crossJoin = for {
+  (s, c) &lt;- students join classrooms
+} yield (s.name, c.name)
+</code></pre><p>inner Join操作：</p>
+<pre><code>val innerJoin = for {
+  (s, c) &lt;- students join classrooms on (_.classroomId === _.id)
+} yield (s.name, c.name)
+</code></pre><p>另外一个inner join：</p>
+<pre><code>val innerJoin = for {
+  s &lt;- students
+  c &lt;- classrooms if c.id === s.classroomId
+} yield (s.name, c.name)
+</code></pre><p>left join操作：</p>
+<pre><code>val leftJoin = for {
+  (s, c) &lt;- students joinLeft classrooms on (_.classroomId === _.id)
+} yield (s.name, c.map(_.name))
+</code></pre><p>right join操作：</p>
+<pre><code>val rightJoin = for {
+  (s, c) &lt;- students joinRight classrooms on (_.classroomId === _.id)
+} yield (s.map(_.name), c.name)
+</code></pre><h3 id="新增"><a href="#新增" class="headerlink" title="新增"></a>新增</h3><p>所有列都有值：</p>
+<pre><code>val insertAction = DBIO.seq(
+  students += (4, &quot;format4&quot;, 44, 3, new Date(System.currentTimeMillis())),
+  students += (5, &quot;format5&quot;, 55, 3, new Date(System.currentTimeMillis())),
+
+  students ++= Seq (
+    (6, &quot;format6&quot;, 66, 3, new Date(System.currentTimeMillis())),
+    (7, &quot;format7&quot;, 77, 3, new Date(System.currentTimeMillis()))
+  )
+)
+</code></pre><p>部分列有值：</p>
+<pre><code>students.map(s =&gt; (s.name, s.age, s.classroomId)) += (&quot;format8&quot;, 88, 3)
+</code></pre><h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>删除classroomId为3的所有数据：</p>
+<pre><code>val q = students.filter(_.classroomId === 3)
+val affectedRowsCountFuture = db.run(q.delete)
+affectedRowsCountFuture.map { rows =&gt;
+  println(rows)
+}
+</code></pre><h3 id="修改"><a href="#修改" class="headerlink" title="修改"></a>修改</h3><p>修改单列：</p>
+<pre><code>val q = students.filter(_.id === 2).map(_.name)
+val updateSql = q.update(&quot;format2222&quot;)
+db.run(updateSql)
+</code></pre><p>修改多列：</p>
+<pre><code>val q = students.filter(_.id === 2).map(s =&gt; (s.name, s.age))
+val updateSql = q.update((&quot;format2222&quot;, 222))
+db.run(updateSql)
+</code></pre><h2 id="CaseClass的使用"><a href="#CaseClass的使用" class="headerlink" title="CaseClass的使用"></a>CaseClass的使用</h2><p>之前的例子都是使用Tuple构造domain。 还有一种更方便的方式，那就是使用CaseClass。</p>
+<pre><code>case class People(id: Long, name: String, age: Int)
+</code></pre><p>例子：</p>
+<pre><code>private class PeopleTable(tag: Tag) extends Table[People](tag, &quot;people&quot;) {
+  val id = column[Long](&quot;id&quot;, O.PrimaryKey, O.AutoInc)
+  val name = column[String](&quot;name&quot;)
+  val age = column[Int](&quot;age&quot;)
+
+  def * = (id, name, age) &lt;&gt; ((People.apply _).tupled, People.unapply)
+}
+
+val db = Database.forConfig(&quot;h2mem1&quot;)
+
+try {
+
+  val people = TableQuery[PeopleTable]
+
+  val setupAction = DBIO.seq(
+      people.schema.create,
+      people += People(1, &quot;format1&quot;, 11)
+  )
+
+  val setupFuture = db.run(setupAction);
+
+  val f = setupFuture.flatMap { _ =&gt;
+    db.run(people.result).map { p =&gt;
+      p.foreach(println)
+    }
+  }
+
+  Await.result(f, Duration.Inf)
+
+} finally db.close()
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2015/08/18/slick-intro/">http://fangjian0423.github.io/2015/08/18/slick-intro/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/scala/" rel="tag">#scala</a>
+          
+            <a href="/tags/frm/" rel="tag">#frm</a>
+          
+            <a href="/tags/orm/" rel="tag">#orm</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/08/14/scala-future/" rel="next" title="Scala并发的Future">
+                <i class="fa fa-chevron-left"></i> Scala并发的Future
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/09/21/springboot-intro/" rel="prev" title="Spring Boot 部分特性记录">
+                Spring Boot 部分特性记录 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#FRM介绍"><span class="nav-number">1.</span> <span class="nav-text">FRM介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Slick实例"><span class="nav-number">2.</span> <span class="nav-text">Slick实例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库配置"><span class="nav-number">3.</span> <span class="nav-text">数据库配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DBIOAction介绍"><span class="nav-number">4.</span> <span class="nav-text">DBIOAction介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#增删改查操作"><span class="nav-number">5.</span> <span class="nav-text">增删改查操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查询"><span class="nav-number">5.1.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新增"><span class="nav-number">5.2.</span> <span class="nav-text">新增</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除"><span class="nav-number">5.3.</span> <span class="nav-text">删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改"><span class="nav-number">5.4.</span> <span class="nav-text">修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CaseClass的使用"><span class="nav-number">6.</span> <span class="nav-text">CaseClass的使用</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2015/08/18/slick-intro/';
+      var disqus_title = "Scala持久层框架Slick介绍";
+      var disqus_url = 'http://fangjian0423.github.io/2015/08/18/slick-intro/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

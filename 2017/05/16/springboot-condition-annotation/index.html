@@ -1,0 +1,1218 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,springboot,springboot源码分析," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="SpringBoot内部提供了特有的注解：条件注解(Conditional Annotation)。比如@ConditionalOnBean、@ConditionalOnClass、@ConditionalOnExpression、@ConditionalOnMissingBean等。 条件注解存在的意义在于动态识别(也可以说是代码自动化执行)。比如@ConditionalOnClass会检查类加">
+<meta name="keywords" content="java,springboot,springboot源码分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot源码分析之条件注解的底层实现">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/05/16/springboot-condition-annotation/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="SpringBoot内部提供了特有的注解：条件注解(Conditional Annotation)。比如@ConditionalOnBean、@ConditionalOnClass、@ConditionalOnExpression、@ConditionalOnMissingBean等。 条件注解存在的意义在于动态识别(也可以说是代码自动化执行)。比如@ConditionalOnClass会检查类加">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpringBoot源码分析之条件注解的底层实现">
+<meta name="twitter:description" content="SpringBoot内部提供了特有的注解：条件注解(Conditional Annotation)。比如@ConditionalOnBean、@ConditionalOnClass、@ConditionalOnExpression、@ConditionalOnMissingBean等。 条件注解存在的意义在于动态识别(也可以说是代码自动化执行)。比如@ConditionalOnClass会检查类加">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> SpringBoot源码分析之条件注解的底层实现 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                SpringBoot源码分析之条件注解的底层实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-16T19:40:13+08:00" content="2017-05-16">
+              2017-05-16
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/16/springboot-condition-annotation/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/05/16/springboot-condition-annotation/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/05/16/springboot-condition-annotation/" class="leancloud_visitors" data-flag-title="SpringBoot源码分析之条件注解的底层实现">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>SpringBoot内部提供了特有的注解：条件注解(Conditional Annotation)。比如@ConditionalOnBean、@ConditionalOnClass、@ConditionalOnExpression、@ConditionalOnMissingBean等。</p>
+<p>条件注解存在的意义在于动态识别(也可以说是代码自动化执行)。比如@ConditionalOnClass会检查类加载器中是否存在对应的类，如果有的话被注解修饰的类就有资格被Spring容器所注册，否则会被skip。</p>
+<p>比如FreemarkerAutoConfiguration这个自动化配置类的定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ConditionalOnClass</span>(&#123; freemarker.template.Configuration.class,</span><br><span class="line">		FreeMarkerConfigurationFactory.class &#125;)</span><br><span class="line"><span class="meta">@AutoConfigureAfter</span>(WebMvcAutoConfiguration.class)</span><br><span class="line"><span class="meta">@EnableConfigurationProperties</span>(FreeMarkerProperties.class)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FreeMarkerAutoConfiguration</span></span></span><br></pre></td></tr></table></figure>
+<p>这个自动化配置类被@ConditionalOnClass条件注解修饰，这个条件注解存在的意义在于判断类加载器中是否存在freemarker.template.Configuration和FreeMarkerConfigurationFactory这两个类，如果都存在的话会在Spring容器中加载这个FreeMarkerAutoConfiguration配置类；否则不会加载。</p>
+<a id="more"></a>
+<h2 id="条件注解内部的一些基础"><a href="#条件注解内部的一些基础" class="headerlink" title="条件注解内部的一些基础"></a>条件注解内部的一些基础</h2><p>在分析条件注解的底层实现之前，我们先来看一下这些条件注解的定义。以@ConditionalOnClass注解为例，它的定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(&#123; ElementType.TYPE, ElementType.METHOD &#125;)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Conditional</span>(OnClassCondition.class)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ConditionalOnClass &#123;</span><br><span class="line">  Class&lt;?&gt;[] value() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 需要匹配的类</span></span><br><span class="line">  String[] name() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 需要匹配的类名</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它有2个属性，分别是类数组和字符串数组(作用一样，类型不一样)，而且被@Conditional注解所修饰，这个@Conditional注解有个名为values的Class&lt;? extends Condition&gt;[]类型的属性。 这个Condition是个接口，用于匹配组件是否有资格被容器注册，定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Condition</span> </span>&#123;</span><br><span class="line">  <span class="comment">// ConditionContext内部会存储Spring容器、应用程序环境信息、资源加载器、类加载器</span></span><br><span class="line">  <span class="function"><span class="keyword">boolean</span> <span class="title">matches</span><span class="params">(ConditionContext context, AnnotatedTypeMetadata metadata)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也就是说@Conditional注解属性中可以持有多个Condition接口的实现类，所有的Condition接口需要全部匹配成功后这个@Conditional修饰的组件才有资格被注册。</p>
+<p>Condition接口有个子接口ConfigurationCondition：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ConfigurationCondition</span> <span class="keyword">extends</span> <span class="title">Condition</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function">ConfigurationPhase <span class="title">getConfigurationPhase</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">enum</span> ConfigurationPhase &#123;</span><br><span class="line"></span><br><span class="line">  	PARSE_CONFIGURATION,</span><br><span class="line"></span><br><span class="line">  	REGISTER_BEAN</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个子接口是一种特殊的条件接口，多了一个getConfigurationPhase方法，也就是条件注解的生效阶段。只有在ConfigurationPhase中定义的两种阶段下才会生效。</p>
+<p>Condition接口有个实现抽象类SpringBootCondition，SpringBoot中所有条件注解对应的条件类都继承这个抽象类。它实现了matches方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">matches</span><span class="params">(ConditionContext context,</span></span></span><br><span class="line"><span class="function"><span class="params">		AnnotatedTypeMetadata metadata)</span> </span>&#123;</span><br><span class="line">  String classOrMethodName = getClassOrMethodName(metadata); <span class="comment">// 得到类名或者方法名(条件注解可以作用的类或者方法上)</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">  	ConditionOutcome outcome = getMatchOutcome(context, metadata); <span class="comment">// 抽象方法，具体子类实现。ConditionOutcome记录了匹配结果boolean和log信息</span></span><br><span class="line">  	logOutcome(classOrMethodName, outcome); <span class="comment">// log记录一下匹配信息</span></span><br><span class="line">  	recordEvaluation(context, classOrMethodName, outcome); <span class="comment">// 报告记录一下匹配信息</span></span><br><span class="line">  	<span class="keyword">return</span> outcome.isMatch(); <span class="comment">// 返回是否匹配</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (NoClassDefFoundError ex) &#123;</span><br><span class="line">  	<span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line">  			<span class="string">"Could not evaluate condition on "</span> + classOrMethodName + <span class="string">" due to "</span></span><br><span class="line">  					+ ex.getMessage() + <span class="string">" not "</span></span><br><span class="line">  					+ <span class="string">"found. Make sure your own configuration does not rely on "</span></span><br><span class="line">  					+ <span class="string">"that class. This can also happen if you are "</span></span><br><span class="line">  					+ <span class="string">"@ComponentScanning a springframework package (e.g. if you "</span></span><br><span class="line">  					+ <span class="string">"put a @ComponentScan in the default package by mistake)"</span>,</span><br><span class="line">  			ex);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (RuntimeException ex) &#123;</span><br><span class="line">  	<span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line">  			<span class="string">"Error processing condition on "</span> + getName(metadata), ex);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="基于Class的条件注解"><a href="#基于Class的条件注解" class="headerlink" title="基于Class的条件注解"></a>基于Class的条件注解</h2><p>SpringBoot提供了两个基于Class的条件注解：@ConditionalOnClass(类加载器中存在指明的类)或者@ConditionalOnMissingClass(类加载器中不存在指明的类)。</p>
+<p>@ConditionalOnClass或者@ConditionalOnMissingClass注解对应的条件类是OnClassCondition，定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Order</span>(Ordered.HIGHEST_PRECEDENCE) <span class="comment">// 优先级、最高级别</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OnClassCondition</span> <span class="keyword">extends</span> <span class="title">SpringBootCondition</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> ConditionOutcome <span class="title">getMatchOutcome</span><span class="params">(ConditionContext context,</span></span></span><br><span class="line"><span class="function"><span class="params">  		AnnotatedTypeMetadata metadata)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  	StringBuffer matchMessage = <span class="keyword">new</span> StringBuffer(); <span class="comment">// 记录匹配信息</span></span><br><span class="line"></span><br><span class="line">  	MultiValueMap&lt;String, Object&gt; onClasses = getAttributes(metadata,</span><br><span class="line">  			ConditionalOnClass.class); <span class="comment">// 得到@ConditionalOnClass注解的属性</span></span><br><span class="line">  	<span class="keyword">if</span> (onClasses != <span class="keyword">null</span>) &#123; <span class="comment">// 如果属性存在</span></span><br><span class="line">  		List&lt;String&gt; missing = getMatchingClasses(onClasses, MatchType.MISSING,</span><br><span class="line">  				context); <span class="comment">// 得到在类加载器中不存在的类</span></span><br><span class="line">  		<span class="keyword">if</span> (!missing.isEmpty()) &#123; <span class="comment">// 如果存在类加载器中不存在对应的类，返回一个匹配失败的ConditionalOutcome</span></span><br><span class="line">  			<span class="keyword">return</span> ConditionOutcome</span><br><span class="line">  					.noMatch(<span class="string">"required @ConditionalOnClass classes not found: "</span></span><br><span class="line">  							+ StringUtils.collectionToCommaDelimitedString(missing));</span><br><span class="line">  		&#125;</span><br><span class="line">                <span class="comment">// 如果类加载器中存在对应的类的话，匹配信息进行记录</span></span><br><span class="line">  		matchMessage.append(<span class="string">"@ConditionalOnClass classes found: "</span></span><br><span class="line">  				+ StringUtils.collectionToCommaDelimitedString(</span><br><span class="line">  						getMatchingClasses(onClasses, MatchType.PRESENT, context)));</span><br><span class="line">  	&#125;</span><br><span class="line">        <span class="comment">// 对@ConditionalOnMissingClass注解做相同的逻辑处理(说明@ConditionalOnClass和@ConditionalOnMissingClass可以一起使用)</span></span><br><span class="line">  	MultiValueMap&lt;String, Object&gt; onMissingClasses = getAttributes(metadata,</span><br><span class="line">  			ConditionalOnMissingClass.class);</span><br><span class="line">  	<span class="keyword">if</span> (onMissingClasses != <span class="keyword">null</span>) &#123;</span><br><span class="line">  		List&lt;String&gt; present = getMatchingClasses(onMissingClasses, MatchType.PRESENT,</span><br><span class="line">  				context);</span><br><span class="line">  		<span class="keyword">if</span> (!present.isEmpty()) &#123;</span><br><span class="line">  			<span class="keyword">return</span> ConditionOutcome</span><br><span class="line">  					.noMatch(<span class="string">"required @ConditionalOnMissing classes found: "</span></span><br><span class="line">  							+ StringUtils.collectionToCommaDelimitedString(present));</span><br><span class="line">  		&#125;</span><br><span class="line">  		matchMessage.append(matchMessage.length() == <span class="number">0</span> ? <span class="string">""</span> : <span class="string">" "</span>);</span><br><span class="line">  		matchMessage.append(<span class="string">"@ConditionalOnMissing classes not found: "</span></span><br><span class="line">  				+ StringUtils.collectionToCommaDelimitedString(getMatchingClasses(</span><br><span class="line">  						onMissingClasses, MatchType.MISSING, context)));</span><br><span class="line">  	&#125;</span><br><span class="line">        <span class="comment">// 返回全部匹配成功的ConditionalOutcome</span></span><br><span class="line">  	<span class="keyword">return</span> ConditionOutcome.match(matchMessage.toString());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">enum</span> MatchType &#123; <span class="comment">// 枚举：匹配类型。用于查询类名在对应的类加载器中是否存在。</span></span><br><span class="line"></span><br><span class="line">  	PRESENT &#123; <span class="comment">// 匹配成功</span></span><br><span class="line">  		<span class="meta">@Override</span></span><br><span class="line">  		<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">matches</span><span class="params">(String className, ConditionContext context)</span> </span>&#123;</span><br><span class="line">  			<span class="keyword">return</span> ClassUtils.isPresent(className, context.getClassLoader());</span><br><span class="line">  		&#125;</span><br><span class="line">  	&#125;,</span><br><span class="line"></span><br><span class="line">  	MISSING &#123; <span class="comment">// 匹配不成功</span></span><br><span class="line">  		<span class="meta">@Override</span></span><br><span class="line">  		<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">matches</span><span class="params">(String className, ConditionContext context)</span> </span>&#123;</span><br><span class="line">  			<span class="keyword">return</span> !ClassUtils.isPresent(className, context.getClassLoader());</span><br><span class="line">  		&#125;</span><br><span class="line">  	&#125;;</span><br><span class="line"></span><br><span class="line">  	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">matches</span><span class="params">(String className, ConditionContext context)</span></span>;</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>比如FreemarkerAutoConfiguration中的@ConditionalOnClass注解中有value属性是freemarker.template.Configuration.class和FreeMarkerConfigurationFactory.class。在OnClassCondition执行过程中得到的最终ConditionalOutcome中的log message如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ConditionalOnClass</span> classes found: freemarker.template.Configuration,org.springframework.ui.freemarker.FreeMarkerConfigurationFactory</span><br></pre></td></tr></table></figure>
+<h2 id="基于Bean的条件注解"><a href="#基于Bean的条件注解" class="headerlink" title="基于Bean的条件注解"></a>基于Bean的条件注解</h2><p>@ConditionalOnBean(Spring容器中存在指明的bean)、@ConditionalOnMissingBean(Spring容器中不存在指明的bean)以及ConditionalOnSingleCandidate(Spring容器中存在且只存在一个指明的bean)都是基于Bean的条件注解，它们对应的条件类是ConditionOnBean。</p>
+<p>@ConditionOnBean注解定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(&#123; ElementType.TYPE, ElementType.METHOD &#125;)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Conditional</span>(OnBeanCondition.class)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ConditionalOnBean &#123;</span><br><span class="line">  Class&lt;?&gt;[] value() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 匹配的bean类型</span></span><br><span class="line">  String[] type() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 匹配的bean类型的类名</span></span><br><span class="line">  Class&lt;? extends Annotation&gt;[] annotation() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 匹配的bean注解</span></span><br><span class="line">  String[] name() <span class="keyword">default</span> &#123;&#125;; <span class="comment">// 匹配的bean的名字</span></span><br><span class="line">  <span class="function">SearchStrategy <span class="title">search</span><span class="params">()</span> <span class="keyword">default</span> SearchStrategy.ALL</span>; <span class="comment">// 搜索策略。提供CURRENT(只在当前容器中找)、PARENTS(只在所有的父容器中找；但是不包括当前容器)和ALL(CURRENT和PARENTS的组合)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>OnBeanCondition条件类的匹配代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ConditionOutcome <span class="title">getMatchOutcome</span><span class="params">(ConditionContext context,</span></span></span><br><span class="line"><span class="function"><span class="params">    AnnotatedTypeMetadata metadata)</span> </span>&#123;</span><br><span class="line">  StringBuffer matchMessage = <span class="keyword">new</span> StringBuffer(); <span class="comment">// 记录匹配信息</span></span><br><span class="line">  <span class="keyword">if</span> (metadata.isAnnotated(ConditionalOnBean.class.getName())) &#123;</span><br><span class="line">    BeanSearchSpec spec = <span class="keyword">new</span> BeanSearchSpec(context, metadata,</span><br><span class="line">        ConditionalOnBean.class); <span class="comment">// 构造一个BeanSearchSpec，会从@ConditionalOnBean注解中获取属性，然后设置到BeanSearchSpec中</span></span><br><span class="line">    List&lt;String&gt; matching = getMatchingBeans(context, spec); <span class="comment">// 从BeanFactory中根据策略找出所有匹配的bean</span></span><br><span class="line">    <span class="keyword">if</span> (matching.isEmpty()) &#123; <span class="comment">// 如果没有匹配的bean，返回一个没有匹配成功的ConditionalOutcome</span></span><br><span class="line">      <span class="keyword">return</span> ConditionOutcome</span><br><span class="line">          .noMatch(<span class="string">"@ConditionalOnBean "</span> + spec + <span class="string">" found no beans"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果找到匹配的bean，匹配信息进行记录</span></span><br><span class="line">    matchMessage.append(</span><br><span class="line">        <span class="string">"@ConditionalOnBean "</span> + spec + <span class="string">" found the following "</span> + matching);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (metadata.isAnnotated(ConditionalOnSingleCandidate.class.getName())) &#123; <span class="comment">// 相同的逻辑，针对@ConditionalOnSingleCandidate注解</span></span><br><span class="line">    BeanSearchSpec spec = <span class="keyword">new</span> SingleCandidateBeanSearchSpec(context, metadata,</span><br><span class="line">        ConditionalOnSingleCandidate.class);</span><br><span class="line">    List&lt;String&gt; matching = getMatchingBeans(context, spec);</span><br><span class="line">    <span class="keyword">if</span> (matching.isEmpty()) &#123;</span><br><span class="line">      <span class="keyword">return</span> ConditionOutcome.noMatch(</span><br><span class="line">          <span class="string">"@ConditionalOnSingleCandidate "</span> + spec + <span class="string">" found no beans"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (!hasSingleAutowireCandidate(context.getBeanFactory(), matching)) &#123; <span class="comment">// 多了一层判断，判断是否只有一个bean</span></span><br><span class="line">      <span class="keyword">return</span> ConditionOutcome.noMatch(<span class="string">"@ConditionalOnSingleCandidate "</span> + spec</span><br><span class="line">          + <span class="string">" found no primary candidate amongst the"</span> + <span class="string">" following "</span></span><br><span class="line">          + matching);</span><br><span class="line">    &#125;</span><br><span class="line">    matchMessage.append(<span class="string">"@ConditionalOnSingleCandidate "</span> + spec + <span class="string">" found "</span></span><br><span class="line">        + <span class="string">"a primary candidate amongst the following "</span> + matching);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (metadata.isAnnotated(ConditionalOnMissingBean.class.getName())) &#123; <span class="comment">// 相同的逻辑，针对@ConditionalOnMissingBean注解</span></span><br><span class="line">    BeanSearchSpec spec = <span class="keyword">new</span> BeanSearchSpec(context, metadata,</span><br><span class="line">        ConditionalOnMissingBean.class);</span><br><span class="line">    List&lt;String&gt; matching = getMatchingBeans(context, spec);</span><br><span class="line">    <span class="keyword">if</span> (!matching.isEmpty()) &#123;</span><br><span class="line">      <span class="keyword">return</span> ConditionOutcome.noMatch(<span class="string">"@ConditionalOnMissingBean "</span> + spec</span><br><span class="line">          + <span class="string">" found the following "</span> + matching);</span><br><span class="line">    &#125;</span><br><span class="line">    matchMessage.append(matchMessage.length() == <span class="number">0</span> ? <span class="string">""</span> : <span class="string">" "</span>);</span><br><span class="line">    matchMessage.append(<span class="string">"@ConditionalOnMissingBean "</span> + spec + <span class="string">" found no beans"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> ConditionOutcome.match(matchMessage.toString()); <span class="comment">//返回匹配成功的ConditonalOutcome</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SpringBoot还提供了其他比如ConditionalOnJava、ConditionalOnNotWebApplication、ConditionalOnWebApplication、ConditionalOnResource、ConditionalOnProperty、ConditionalOnExpression等条件注解，有兴趣的读者可以自行查看它们的底层处理逻辑。</p>
+<h2 id="各种条件注解的总结"><a href="#各种条件注解的总结" class="headerlink" title="各种条件注解的总结"></a>各种条件注解的总结</h2><table>
+<thead>
+<tr>
+<th>条件注解</th>
+<th>对应的Condition处理类</th>
+<th>处理逻辑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>@ConditionalOnBean</td>
+<td>OnBeanCondition</td>
+<td>Spring容器中是否存在对应的实例。可以通过实例的类型、类名、注解、昵称去容器中查找(可以配置从当前容器中查找或者父容器中查找或者两者一起查找)这些属性都是数组，通过”与”的关系进行查找</td>
+</tr>
+<tr>
+<td>@ConditionalOnClass</td>
+<td>OnClassCondition</td>
+<td>类加载器中是否存在对应的类。可以通过Class指定(value属性)或者Class的全名指定(name属性)。如果是多个类或者多个类名的话，关系是”与”关系，也就是说这些类或者类名都必须同时在类加载器中存在</td>
+</tr>
+<tr>
+<td>@ConditionalOnExpression</td>
+<td>OnExpressionCondition</td>
+<td>判断SpEL 表达式是否成立</td>
+</tr>
+<tr>
+<td>@ConditionalOnJava</td>
+<td>OnJavaCondition</td>
+<td>指定Java版本是否符合要求。内部有2个属性value和range。value表示一个枚举的Java版本，range表示比这个老或者新于等于指定的Java版本(默认是新于等于)。内部会基于某些jdk版本特有的类去类加载器中查询，比如如果是jdk9，类加载器中需要存在java.security.cert.URICertStoreParameters；如果是jdk8，类加载器中需要存在java.util.function.Function；如果是jdk7，类加载器中需要存在java.nio.file.Files；如果是jdk6，类加载器中需要存在java.util.ServiceLoader</td>
+</tr>
+<tr>
+<td>@ConditionalOnMissingBean</td>
+<td>OnBeanCondition</td>
+<td>Spring容器中是否缺少对应的实例。可以通过实例的类型、类名、注解、昵称去容器中查找(可以配置从当前容器中查找或者父容器中查找或者两者一起查找)这些属性都是数组，通过”与”的关系进行查找。还多了2个属性ignored(类名)和ignoredType(类名)，匹配的过程中会忽略这些bean</td>
+</tr>
+<tr>
+<td>@ConditionalOnMissingClass</td>
+<td>OnClassCondition</td>
+<td>跟ConditionalOnClass的处理逻辑一样，只是条件相反，在类加载器中不存在对应的类</td>
+</tr>
+<tr>
+<td>@ConditionalOnNotWebApplication</td>
+<td>OnWebApplicationCondition</td>
+<td>应用程序是否是非Web程序，没有提供属性，只是一个标识。会从判断Web程序特有的类是否存在，环境是否是Servlet环境，容器是否是Web容器等</td>
+</tr>
+<tr>
+<td>@ConditionalOnProperty</td>
+<td>OnPropertyCondition</td>
+<td>应用环境中的屬性是否存在。提供prefix、name、havingValue以及matchIfMissing属性。prefix表示属性名的前缀，name是属性名，havingValue是具体的属性值，matchIfMissing是个boolean值，如果属性不存在，这个matchIfMissing为true的话，会继续验证下去，否则属性不存在的话直接就相当于匹配不成功</td>
+</tr>
+<tr>
+<td>@ConditionalOnResource</td>
+<td>OnResourceCondition</td>
+<td>是否存在指定的资源文件。只有一个属性resources，是个String数组。会从类加载器中去查询对应的资源文件是否存在</td>
+</tr>
+<tr>
+<td>@ConditionalOnSingleCandidate</td>
+<td>OnBeanCondition</td>
+<td>Spring容器中是否存在且只存在一个对应的实例。只有3个属性value、type、search。跟ConditionalOnBean中的这3种属性值意义一样</td>
+</tr>
+<tr>
+<td>@ConditionalOnWebApplication</td>
+<td>OnWebApplicationCondition</td>
+<td>应用程序是否是Web程序，没有提供属性，只是一个标识。会从判断Web程序特有的类是否存在，环境是否是Servlet环境，容器是否是Web容器等</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>例子</th>
+<th>例子意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>@ConditionalOnBean(javax.sql.DataSource.class)</td>
+<td>Spring容器或者所有父容器中需要存在至少一个javax.sql.DataSource类的实例</td>
+</tr>
+<tr>
+<td>@ConditionalOnClass<br>({ Configuration.class,<br>FreeMarkerConfigurationFactory.class })</td>
+<td>类加载器中必须存在Configuration和FreeMarkerConfigurationFactory这两个类</td>
+</tr>
+<tr>
+<td>@ConditionalOnExpression<br>(“‘${server.host}’==’localhost’”)</td>
+<td>server.host配置项的值需要是localhost</td>
+</tr>
+<tr>
+<td>ConditionalOnJava(JavaVersion.EIGHT)</td>
+<td>Java版本至少是8</td>
+</tr>
+<tr>
+<td>@ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)</td>
+<td>Spring当前容器中不存在ErrorController类型的bean</td>
+</tr>
+<tr>
+<td>@ConditionalOnMissingClass<br>(“GenericObjectPool”)</td>
+<td>类加载器中不能存在GenericObjectPool这个类</td>
+</tr>
+<tr>
+<td>@ConditionalOnNotWebApplication</td>
+<td>必须在非Web应用下才会生效</td>
+</tr>
+<tr>
+<td>@ConditionalOnProperty(prefix = “spring.aop”, name = “auto”, havingValue = “true”, matchIfMissing = true)</td>
+<td>应用程序的环境中必须有spring.aop.auto这项配置，且它的值是true或者环境中不存在spring.aop.auto配置(matchIfMissing为true)</td>
+</tr>
+<tr>
+<td>@ConditionalOnResource<br>(resources=”mybatis.xml”)</td>
+<td>类加载路径中必须存在mybatis.xml文件</td>
+</tr>
+<tr>
+<td>@ConditionalOnSingleCandidate<br>(PlatformTransactionManager.class)</td>
+<td>Spring当前或父容器中必须存在PlatformTransactionManager这个类型的实例，且只有一个实例</td>
+</tr>
+<tr>
+<td>@ConditionalOnWebApplication</td>
+<td>必须在Web应用下才会生效</td>
+</tr>
+</tbody>
+</table>
+<h2 id="SpringBoot条件注解的激活机制"><a href="#SpringBoot条件注解的激活机制" class="headerlink" title="SpringBoot条件注解的激活机制"></a>SpringBoot条件注解的激活机制</h2><p>分析完了条件注解的执行逻辑之后，接下来的问题就是SpringBoot是如何让这些条件注解生效的？</p>
+<p>SpringBoot使用ConditionEvaluator这个内部类完成条件注解的解析和判断。</p>
+<p>在Spring容器的refresh过程中，只有跟解析或者注册bean有关系的类都会使用ConditionEvaluator完成条件注解的判断，这个过程中一些类不满足条件的话就会被skip。这些类比如有AnnotatedBeanDefinitionReader、ConfigurationClassBeanDefinitionReader、ConfigurationClassParse、ClassPathScanningCandidateComponentProvider等。</p>
+<p>比如ConfigurationClassParser的构造函数会初始化内部属性conditionEvaluator：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConfigurationClassParser</span><span class="params">(MetadataReaderFactory metadataReaderFactory,</span></span></span><br><span class="line"><span class="function"><span class="params">    ProblemReporter problemReporter, Environment environment, ResourceLoader resourceLoader,</span></span></span><br><span class="line"><span class="function"><span class="params">    BeanNameGenerator componentScanBeanNameGenerator, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">this</span>.metadataReaderFactory = metadataReaderFactory;</span><br><span class="line">  <span class="keyword">this</span>.problemReporter = problemReporter;</span><br><span class="line">  <span class="keyword">this</span>.environment = environment;</span><br><span class="line">  <span class="keyword">this</span>.resourceLoader = resourceLoader;</span><br><span class="line">  <span class="keyword">this</span>.registry = registry;</span><br><span class="line">  <span class="keyword">this</span>.componentScanParser = <span class="keyword">new</span> ComponentScanAnnotationParser(</span><br><span class="line">      resourceLoader, environment, componentScanBeanNameGenerator, registry);</span><br><span class="line">  <span class="comment">// 构造ConditionEvaluator用于处理条件注解</span></span><br><span class="line">  <span class="keyword">this</span>.conditionEvaluator = <span class="keyword">new</span> ConditionEvaluator(registry, environment, resourceLoader);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConfigurationClassParser对每个配置类进行解析的时候都会使用ConditionEvaluator：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) &#123;</span><br><span class="line">  <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConditionEvaluator的skip方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">shouldSkip</span><span class="params">(AnnotatedTypeMetadata metadata, ConfigurationPhase phase)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 如果这个类没有被@Conditional注解所修饰，不会skip</span></span><br><span class="line">  <span class="keyword">if</span> (metadata == <span class="keyword">null</span> || !metadata.isAnnotated(Conditional.class.getName())) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果参数中沒有设置条件注解的生效阶段</span></span><br><span class="line">  <span class="keyword">if</span> (phase == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 是配置类的话直接使用PARSE_CONFIGURATION阶段</span></span><br><span class="line">    <span class="keyword">if</span> (metadata <span class="keyword">instanceof</span> AnnotationMetadata &amp;&amp;</span><br><span class="line">        ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) &#123;</span><br><span class="line">      <span class="keyword">return</span> shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则使用REGISTER_BEAN阶段</span></span><br><span class="line">    <span class="keyword">return</span> shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 要解析的配置类的条件集合</span></span><br><span class="line">  List&lt;Condition&gt; conditions = <span class="keyword">new</span> ArrayList&lt;Condition&gt;();</span><br><span class="line">  <span class="comment">// 获取配置类的条件注解得到条件数据，并添加到集合中</span></span><br><span class="line">  <span class="keyword">for</span> (String[] conditionClasses : getConditionClasses(metadata)) &#123;</span><br><span class="line">    <span class="keyword">for</span> (String conditionClass : conditionClasses) &#123;</span><br><span class="line">      Condition condition = getCondition(conditionClass, <span class="keyword">this</span>.context.getClassLoader());</span><br><span class="line">      conditions.add(condition);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 对条件集合做个排序</span></span><br><span class="line">  AnnotationAwareOrderComparator.sort(conditions);</span><br><span class="line">  <span class="comment">// 遍历条件集合</span></span><br><span class="line">  <span class="keyword">for</span> (Condition condition : conditions) &#123;</span><br><span class="line">    ConfigurationPhase requiredPhase = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (condition <span class="keyword">instanceof</span> ConfigurationCondition) &#123;</span><br><span class="line">      requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 没有这个解析类不需要阶段的判断或者解析类和参数中的阶段一致才会继续进行</span></span><br><span class="line">    <span class="keyword">if</span> (requiredPhase == <span class="keyword">null</span> || requiredPhase == phase) &#123;</span><br><span class="line">      <span class="comment">// 阶段一致切不满足条件的话，返回true并跳过这个bean的解析</span></span><br><span class="line">      <span class="keyword">if</span> (!condition.matches(<span class="keyword">this</span>.context, metadata)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SpringBoot在条件注解的解析log记录在了ConditionEvaluationReport类中，可以通过BeanFactory获取(BeanFactory是有父子关系的；每个BeanFactory都存有一份ConditionEvaluationReport，互不相干)：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ConditionEvaluationReport conditionEvaluationReport = beanFactory.getBean(<span class="string">"autoConfigurationReport"</span>, ConditionEvaluationReport.class);</span><br><span class="line">Map&lt;String, ConditionEvaluationReport.ConditionAndOutcomes&gt; result = conditionEvaluationReport.getConditionAndOutcomesBySource();</span><br><span class="line"><span class="keyword">for</span>(String key : result.keySet()) &#123;</span><br><span class="line">    ConditionEvaluationReport.ConditionAndOutcomes conditionAndOutcomes = result.get(key);</span><br><span class="line">    Iterator&lt;ConditionEvaluationReport.ConditionAndOutcome&gt; iterator = conditionAndOutcomes.iterator();</span><br><span class="line">    <span class="keyword">while</span>(iterator.hasNext()) &#123;</span><br><span class="line">        ConditionEvaluationReport.ConditionAndOutcome conditionAndOutcome = iterator.next();</span><br><span class="line">        System.out.println(key + <span class="string">" -- "</span> + conditionAndOutcome.getCondition().getClass().getSimpleName() + <span class="string">" -- "</span> + conditionAndOutcome.getOutcome());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>打印出条件注解下的类加载信息：</p>
+<pre><code>.......
+org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: freemarker.template.Configuration,org.springframework.ui.freemarker.FreeMarkerConfigurationFactory
+org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: groovy.text.markup.MarkupTemplateEngine
+org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: com.google.gson.Gson
+org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: org.h2.server.web.WebServlet
+org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: org.springframework.hateoas.Resource,org.springframework.plugin.core.Plugin
+org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration -- OnClassCondition -- required @ConditionalOnClass classes not found: com.hazelcast.core.HazelcastInstance
+.......
+</code></pre><p>一些测试的例子代码在 <a href="https://github.com/fangjian0423/springboot-analysis/tree/master/springboot-conditional" target="_blank" rel="noopener">https://github.com/fangjian0423/springboot-analysis/tree/master/springboot-conditional</a> 上</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/05/16/springboot-condition-annotation/">http://fangjian0423.github.io/2017/05/16/springboot-condition-annotation/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/springboot/" rel="tag">#springboot</a>
+          
+            <a href="/tags/springboot源码分析/" rel="tag">#springboot源码分析</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/10/springboot-context-refresh/" rel="next" title="SpringBoot源码分析之Spring容器的refresh过程">
+                <i class="fa fa-chevron-left"></i> SpringBoot源码分析之Spring容器的refresh过程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/22/springboot-embedded-servlet-container/" rel="prev" title="SpringBoot源码分析之内置Servlet容器">
+                SpringBoot源码分析之内置Servlet容器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#条件注解内部的一些基础"><span class="nav-number">1.</span> <span class="nav-text">条件注解内部的一些基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于Class的条件注解"><span class="nav-number">2.</span> <span class="nav-text">基于Class的条件注解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于Bean的条件注解"><span class="nav-number">3.</span> <span class="nav-text">基于Bean的条件注解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#各种条件注解的总结"><span class="nav-number">4.</span> <span class="nav-text">各种条件注解的总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SpringBoot条件注解的激活机制"><span class="nav-number">5.</span> <span class="nav-text">SpringBoot条件注解的激活机制</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/05/16/springboot-condition-annotation/';
+      var disqus_title = "SpringBoot源码分析之条件注解的底层实现";
+      var disqus_url = 'http://fangjian0423.github.io/2017/05/16/springboot-condition-annotation/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

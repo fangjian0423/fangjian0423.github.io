@@ -1,0 +1,1102 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="spring,java,springboot," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Spring内置了一些很有用的BeanPostProcessor接口实现类。比如有AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor、CommonAnnotationBeanPostProcessor、EventListenerMethodProcessor等。这些Processor会处理各自的场景。 正">
+<meta name="keywords" content="spring,java,springboot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring内置的BeanPostProcessor总结">
+<meta property="og:url" content="http://fangjian0423.github.io/2017/06/24/spring-embedded-bean-post-processor/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Spring内置了一些很有用的BeanPostProcessor接口实现类。比如有AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor、CommonAnnotationBeanPostProcessor、EventListenerMethodProcessor等。这些Processor会处理各自的场景。 正">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring内置的BeanPostProcessor总结">
+<meta name="twitter:description" content="Spring内置了一些很有用的BeanPostProcessor接口实现类。比如有AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor、CommonAnnotationBeanPostProcessor、EventListenerMethodProcessor等。这些Processor会处理各自的场景。 正">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Spring内置的BeanPostProcessor总结 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring内置的BeanPostProcessor总结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-06-24T00:57:01+08:00" content="2017-06-24">
+              2017-06-24
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/06/24/spring-embedded-bean-post-processor/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/06/24/spring-embedded-bean-post-processor/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/06/24/spring-embedded-bean-post-processor/" class="leancloud_visitors" data-flag-title="Spring内置的BeanPostProcessor总结">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Spring内置了一些很有用的BeanPostProcessor接口实现类。比如有AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor、CommonAnnotationBeanPostProcessor、EventListenerMethodProcessor等。这些Processor会处理各自的场景。</p>
+<p>正是有了这些processor，把bean的构造过程中的一部分功能分配给了这些processor处理，减轻了BeanFactory的负担。</p>
+<p>而且添加一些新的功能也很方便。比如Spring Scheduling模块，只需要添加个@EnableScheduling注解，然后加个@Scheduled注解修饰的方法即可，这个Processor内部会自行处理。</p>
+<a id="more"></a>
+<h2 id="ApplicationContextAwareProcessor"><a href="#ApplicationContextAwareProcessor" class="headerlink" title="ApplicationContextAwareProcessor"></a>ApplicationContextAwareProcessor</h2><p>ApplicationContextAwareProcessor实现BeanPostProcessor接口。</p>
+<p>Spring容器的refresh方法内部调用prepareBeanFactory方法，prepareBeanFactory方法会添加ApplicationContextAwareProcessor到BeanFactory中。这个Processor的作用在于为实现*Aware接口的bean调用该Aware接口定义的方法，并传入对应的参数。比如实现EnvironmentAware接口的bean在该Processor内部会调用EnvironmentAware接口的setEnvironment方法，并把Spring容器内部的ConfigurableEnvironment传递进去。</p>
+<p>具体的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AbstractApplicationContext.class</span></span><br><span class="line">beanFactory.addBeanPostProcessor(<span class="keyword">new</span> ApplicationContextAwareProcessor(<span class="keyword">this</span>));</span><br><span class="line"><span class="comment">// ApplicationContextAwareProcessor.class</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">invokeAwareInterfaces</span><span class="params">(Object bean)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> Aware) &#123;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> EnvironmentAware) &#123;</span><br><span class="line">      ((EnvironmentAware) bean).setEnvironment(<span class="keyword">this</span>.applicationContext.getEnvironment());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> EmbeddedValueResolverAware) &#123;</span><br><span class="line">      ((EmbeddedValueResolverAware) bean).setEmbeddedValueResolver(</span><br><span class="line">          <span class="keyword">new</span> EmbeddedValueResolver(<span class="keyword">this</span>.applicationContext.getBeanFactory()));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ResourceLoaderAware) &#123;</span><br><span class="line">      ((ResourceLoaderAware) bean).setResourceLoader(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ApplicationEventPublisherAware) &#123;</span><br><span class="line">      ((ApplicationEventPublisherAware) bean).setApplicationEventPublisher(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> MessageSourceAware) &#123;</span><br><span class="line">      ((MessageSourceAware) bean).setMessageSource(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ApplicationContextAware) &#123;</span><br><span class="line">      ((ApplicationContextAware) bean).setApplicationContext(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="CommonAnnotationBeanPostProcessor"><a href="#CommonAnnotationBeanPostProcessor" class="headerlink" title="CommonAnnotationBeanPostProcessor"></a>CommonAnnotationBeanPostProcessor</h2><p>在AnnotationConfigUtils类的registerAnnotationConfigProcessors方法中被封装成RootBeanDefinition并注册到Spring容器中。registerAnnotationConfigProcessors方法在一些比如扫描类的场景下注册。比如 context:component-scan 标签或 context:annotation-config 标签的使用，或ClassPathBeanDefinitionScanner扫描器的使用、AnnotatedBeanDefinitionReader读取器的使用。</p>
+<p>主要处理@Resource、@PostConstruct和@PreDestroy注解的实现。</p>
+<p>在postProcessPropertyValues过程中，该processor会找出bean中被@Resource注解修饰的属性(Field)和方法(Method)，找出以后注入到bean中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CommonAnnotationBeanPostProcessor.class</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> PropertyValues <span class="title">postProcessPropertyValues</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="comment">// 找出bean中被@Resource注解修饰的属性(Field)和方法(Method)</span></span><br><span class="line">  InjectionMetadata metadata = findResourceMetadata(beanName, bean.getClass(), pvs);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 注入到bean中</span></span><br><span class="line">    metadata.inject(bean, beanName, pvs);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName, <span class="string">"Injection of resource dependencies failed"</span>, ex);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> pvs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>CommonAnnotationBeanPostProcessor的父类InitDestroyAnnotationBeanPostProcessor类的postProcessMergedBeanDefinition过程会找出被@PostConstruct和@PreDestroy注解修饰的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// InitDestroyAnnotationBeanPostProcessor.class</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessMergedBeanDefinition</span><span class="params">(RootBeanDefinition beanDefinition, Class&lt;?&gt; beanType, String beanName)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (beanType != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 找出被@PostConstruct和@PreDestroy注解修饰的方法</span></span><br><span class="line">    LifecycleMetadata metadata = findLifecycleMetadata(beanType);</span><br><span class="line">    metadata.checkConfigMembers(beanDefinition);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// postProcessBeforeInitialization在实例初始化之前调用</span></span><br><span class="line">    <span class="comment">// 这里调用了被@PostConstruct注解修饰的方法</span></span><br><span class="line">    metadata.invokeInitMethods(bean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (InvocationTargetException ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName, <span class="string">"Invocation of init method failed"</span>, ex.getTargetException());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName, <span class="string">"Couldn't invoke init method"</span>, ex);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeforeDestruction</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// postProcessBeforeDestruction在实例销毁之前调用</span></span><br><span class="line">    <span class="comment">// 这里调用了被@PreDestroy注解修饰的方法</span></span><br><span class="line">    metadata.invokeDestroyMethods(bean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (InvocationTargetException ex) &#123;</span><br><span class="line">    String msg = <span class="string">"Invocation of destroy method failed on bean with name '"</span> + beanName + <span class="string">"'"</span>;</span><br><span class="line">    <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">      logger.warn(msg, ex.getTargetException());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      logger.warn(msg + <span class="string">": "</span> + ex.getTargetException());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    logger.error(<span class="string">"Couldn't invoke destroy method on bean with name '"</span> + beanName + <span class="string">"'"</span>, ex);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="AutowiredAnnotationBeanPostProcessor"><a href="#AutowiredAnnotationBeanPostProcessor" class="headerlink" title="AutowiredAnnotationBeanPostProcessor"></a>AutowiredAnnotationBeanPostProcessor</h2><p>跟CommonAnnotationBeanPostProcessor一样，在AnnotationConfigUtils类的registerAnnotationConfigProcessors方法被注册到Spring容器中。</p>
+<p>主要处理@Autowired、@Value、@Lookup和@Inject注解的实现，处理逻辑跟CommonAnnotationBeanPostProcessor类似。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AutowiredAnnotationBeanPostProcessor.class</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> PropertyValues <span class="title">postProcessPropertyValues</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="comment">// 找出被@Autowired、@Value以及@Inject注解修饰的属性和方法</span></span><br><span class="line">  InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 注入到bean中</span></span><br><span class="line">    metadata.inject(bean, beanName, pvs);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName, <span class="string">"Injection of autowired dependencies failed"</span>, ex);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> pvs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于@Autowired注解可以在构造器中使用，所以AutowiredAnnotationBeanPostProcessor实现了determineCandidateConstructors方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Constructor&lt;?&gt;[] determineCandidateConstructors(Class&lt;?&gt; beanClass, <span class="keyword">final</span> String beanName) <span class="keyword">throws</span> BeansException &#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">for</span> (Constructor&lt;?&gt; candidate : rawCandidates) &#123; <span class="comment">// 遍历所有的构造器</span></span><br><span class="line">    <span class="comment">// 找出被@Autowired注解修饰的构造器</span></span><br><span class="line">    AnnotationAttributes ann = findAutowiredAnnotation(candidate);</span><br><span class="line">    <span class="keyword">if</span> (ann != <span class="keyword">null</span>) &#123;</span><br><span class="line">      ...</span><br><span class="line">      candidates.add(candidate);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (candidate.getParameterTypes().length == <span class="number">0</span>) &#123;</span><br><span class="line">      defaultConstructor = candidate;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!candidates.isEmpty()) &#123; <span class="comment">// 有找到的话使用这些构造器</span></span><br><span class="line">    ...</span><br><span class="line">    candidateConstructors = candidates.toArray(<span class="keyword">new</span> Constructor&lt;?&gt;[candidates.size()]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123; <span class="comment">// 否则使用默认的构造器</span></span><br><span class="line">    candidateConstructors = <span class="keyword">new</span> Constructor&lt;?&gt;[<span class="number">0</span>];</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="RequiredAnnotationBeanPostProcessor"><a href="#RequiredAnnotationBeanPostProcessor" class="headerlink" title="RequiredAnnotationBeanPostProcessor"></a>RequiredAnnotationBeanPostProcessor</h2><p>跟CommonAnnotationBeanPostProcessor一样，在AnnotationConfigUtils类的registerAnnotationConfigProcessors方法被注册到Spring容器中。</p>
+<p>主要处理@Required注解的实现(@Required注解只能修饰方法)，在postProcessPropertyValues过程中处理：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> PropertyValues <span class="title">postProcessPropertyValues</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.validatedBeanNames.contains(beanName)) &#123; <span class="comment">// 查看是否已经验证过</span></span><br><span class="line">    <span class="keyword">if</span> (!shouldSkip(<span class="keyword">this</span>.beanFactory, beanName)) &#123; <span class="comment">// 查看该bean是否不会被skip，如果在BeanDefinition中有个org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor.skipRequiredCheck属性，且值为true。那么这里会skip，不做required验证</span></span><br><span class="line">      List&lt;String&gt; invalidProperties = <span class="keyword">new</span> ArrayList&lt;String&gt;();</span><br><span class="line">      <span class="keyword">for</span> (PropertyDescriptor pd : pds) &#123;</span><br><span class="line">        <span class="keyword">if</span> (isRequiredProperty(pd) &amp;&amp; !pvs.contains(pd.getName())) &#123; <span class="comment">// 如果属性对应的set方法被@Required注解修饰并且该属性没有被设置值的话，添加到invalidProperties集合中</span></span><br><span class="line">          invalidProperties.add(pd.getName());</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (!invalidProperties.isEmpty()) &#123; <span class="comment">// 如果存在被@Required注解修饰的方法对应的属性，抛出BeanInitializationException异常</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> BeanInitializationException(buildExceptionMessage(invalidProperties, beanName));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.validatedBeanNames.add(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> pvs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="BeanValidationPostProcessor"><a href="#BeanValidationPostProcessor" class="headerlink" title="BeanValidationPostProcessor"></a>BeanValidationPostProcessor</h2><p>默认不添加，需要手动添加。主要提供对JSR-303验证的支持，内部有个boolean类型的属性afterInitialization，默认是false。如果是false，在postProcessBeforeInitialization过程中对bean进行验证，否则在postProcessAfterInitialization过程对bean进行验证。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 手动注册BeanValidationPostProcessor</span></span><br><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> BeanPostProcessor <span class="title">beanValidationPostProcessor</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> BeanValidationPostProcessor();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>定义一个使用JSR-303的bean：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BeanForBeanValidation</span> </span>&#123;</span><br><span class="line">    <span class="meta">@NotNull</span></span><br><span class="line">    <span class="keyword">private</span> String id;</span><br><span class="line">    <span class="meta">@Min</span>(value = <span class="number">10</span>)</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> age;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后实例化BeanForBeanValidation的时候，BeanValidationPostProcessor起作用，在postProcessBeforeInitialization过程中发现validate不通过，抛出异常：</p>
+<pre><code>Caused by: org.springframework.beans.factory.BeanInitializationException: Bean state is invalid: age - 最小不能小于10; id - 不能为null
+</code></pre><h2 id="AbstractAutoProxyCreator"><a href="#AbstractAutoProxyCreator" class="headerlink" title="AbstractAutoProxyCreator"></a>AbstractAutoProxyCreator</h2><p>这是一个抽象类，实现了SmartInstantiationAwareBeanPostProcessor接口。主要用于aop在Spring中的应用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInstantiation</span><span class="params">(Class&lt;?&gt; beanClass, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="comment">// 生成缓存key</span></span><br><span class="line">  <span class="comment">// AbstractAutoProxyCreator内部有个Map用于存储代理类的缓存信息</span></span><br><span class="line">  Object cacheKey = getCacheKey(beanClass, beanName);</span><br><span class="line">  <span class="comment">// targetSourcedBeans是个String集合，如果这个bean被内部的TargetSourceCreator数组属性处理过，那么targetSourcedBeans就会存储这个bean的beanName</span></span><br><span class="line">  <span class="comment">// 如果targetSourcedBeans内部没有包括当前beanName</span></span><br><span class="line">  <span class="keyword">if</span> (beanName == <span class="keyword">null</span> || !<span class="keyword">this</span>.targetSourcedBeans.contains(beanName)) &#123;</span><br><span class="line">    <span class="comment">// advisedBeans属性是个Map&lt;Object, Boolean&gt;类型的map，key为cacheKey，value是个Boolean，如果是true，说明这个bean已经被wrap成代理类，否则还是原先的bean</span></span><br><span class="line">    <span class="comment">// 这里判断cacheKey是否已经被wrap成代理类，如果没有，返回null，走Spring默认的构造bean流程</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.advisedBeans.containsKey(cacheKey)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// isInfrastructureClass方法判断该bean是否是aop相关的bean，比如Advice、Advisor、AopInfrastructureBean</span></span><br><span class="line">    <span class="comment">// shouldSkip方法默认返回false，子类可覆盖。比如AspectJAwareAdvisorAutoProxyCreator子类进行了覆盖，它内部会找出Spring容器中Advisor类型的bean，然后进行遍历判断处理的bean是否是这个Advisor，如果是则过滤</span></span><br><span class="line">    <span class="keyword">if</span> (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) &#123;</span><br><span class="line">      <span class="keyword">this</span>.advisedBeans.put(cacheKey, Boolean.FALSE);</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (beanName != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 遍历内部的TargetSourceCreator数组属性，根据bean信息得到TargetSource</span></span><br><span class="line">    <span class="comment">// 默认情况下TargetSourceCreator数组属性是空的</span></span><br><span class="line">    TargetSource targetSource = getCustomTargetSource(beanClass, beanName);</span><br><span class="line">    <span class="keyword">if</span> (targetSource != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">// 添加beanName到targetSourcedBeans中，证明这个bean被自定义的TargetSourceCreator处理过</span></span><br><span class="line">      <span class="keyword">this</span>.targetSourcedBeans.add(beanName);</span><br><span class="line">      <span class="comment">// 得到Advice</span></span><br><span class="line">      Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(beanClass, beanName, targetSource);</span><br><span class="line">      <span class="comment">// 创建代理</span></span><br><span class="line">      Object proxy = createProxy(beanClass, beanName, specificInterceptors, targetSource);</span><br><span class="line">      <span class="comment">// 添加到proxyTypes属性中</span></span><br><span class="line">      <span class="keyword">this</span>.proxyTypes.put(cacheKey, proxy.getClass());</span><br><span class="line">      <span class="comment">// 返回这个代理类，这样后续对该bean便不再处理，除了postProcessAfterInitialization过程</span></span><br><span class="line">      <span class="keyword">return</span> proxy;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这个postProcessBeforeInstantiation方法我们得出：如果使用了自定义的TargetSourceCreator，并且这个TargetSourceCreator得到了处理bean的TargetSource结果，那么直接基于这个bean和TargetSource结果构造出代理类。这个过程发生在postProcessBeforeInstantiation方法中，所以这个代理类直接代替了原本该生成的bean。如果没有使用自定义的TargetSourceCreator，那么走默认构造bean的流程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">getEarlyBeanReference</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="comment">// 生成缓存key</span></span><br><span class="line">  Object cacheKey = getCacheKey(bean.getClass(), beanName);</span><br><span class="line">  <span class="comment">// earlyProxyReferences用来存储提前暴露的代理对象的缓存key，这里判断是否已经处理过，没处理过的话放到earlyProxyReferences里</span></span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.earlyProxyReferences.contains(cacheKey)) &#123;</span><br><span class="line">    <span class="keyword">this</span>.earlyProxyReferences.add(cacheKey);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> wrapIfNecessary(bean, beanName, cacheKey);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">wrapIfNecessary</span><span class="params">(Object bean, String beanName, Object cacheKey)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 如果已经使用了自定义的TargetSourceCreator生成了代理类，直接返回这个代理类</span></span><br><span class="line">  <span class="keyword">if</span> (beanName != <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.targetSourcedBeans.contains(beanName)) &#123;</span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 该bean已经没有被wrap成代理类，直接返回原本生成的实例</span></span><br><span class="line">  <span class="keyword">if</span> (Boolean.FALSE.equals(<span class="keyword">this</span>.advisedBeans.get(cacheKey))) &#123;</span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果是处理aop自身相关的bean或者这些bean需要被skip，也直接返回这些bean</span></span><br><span class="line">  <span class="keyword">if</span> (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) &#123;</span><br><span class="line">    <span class="keyword">this</span>.advisedBeans.put(cacheKey, Boolean.FALSE);</span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 得到Advice</span></span><br><span class="line">  Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, <span class="keyword">null</span>);</span><br><span class="line">  <span class="keyword">if</span> (specificInterceptors != DO_NOT_PROXY) &#123; <span class="comment">// 如果被aop处理了</span></span><br><span class="line">    <span class="comment">// 添加到advisedBeans属性中，说明该bean已经被wrap成代理类</span></span><br><span class="line">    <span class="keyword">this</span>.advisedBeans.put(cacheKey, Boolean.TRUE);</span><br><span class="line">    <span class="comment">// 创建代理类</span></span><br><span class="line">    Object proxy = createProxy(</span><br><span class="line">        bean.getClass(), beanName, specificInterceptors, <span class="keyword">new</span> SingletonTargetSource(bean));</span><br><span class="line">    <span class="comment">// 添加到proxyTypes属性中</span></span><br><span class="line">    <span class="keyword">this</span>.proxyTypes.put(cacheKey, proxy.getClass());</span><br><span class="line">    <span class="keyword">return</span> proxy;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果没有被aop处理，添加到advisedBeans属性中，并说明不是代理类</span></span><br><span class="line">  <span class="keyword">this</span>.advisedBeans.put(cacheKey, Boolean.FALSE);</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessAfterInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (bean != <span class="keyword">null</span>) &#123;</span><br><span class="line">    Object cacheKey = getCacheKey(bean.getClass(), beanName);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">this</span>.earlyProxyReferences.contains(cacheKey)) &#123;</span><br><span class="line">      <span class="keyword">return</span> wrapIfNecessary(bean, beanName, cacheKey);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面这些方法看出，要实例化的bean会通过wrapIfNecessary进行处理，wrapIfNecessary方法会根据情况是否wrap成代理类，最终返回这个结果。getEarlyBeanReference和postProcessAfterInitialization处理流程是一样的，唯一的区别是getEarlyBeanReference是针对单例的，而postProcessAfterInitialization方法是针对prototype的，针对prototype的话，每次实例化都会wrap成代理对象，而单例的话只需要wrap一次即可。</p>
+<p>AbstractAutoProxyCreator抽象类有基于注解的子类AnnotationAwareAspectJAutoProxyCreator。这个AnnotationAwareAspectJAutoProxyCreator会扫描出Spring容器中带有@Aspect注解的bean，然后在getAdvicesAndAdvisorsForBean方法中会根据这个aspect查看是否被拦截，如果被拦截那么就wrap成代理类。</p>
+<p>默认情况下，AbstractAutoProxyCreator相关的BeanPostProcessor是不会注册到Spring容器中的。比如在SpringBoot中加入aop-starter之后，会触发AopAutoConfiguration自动化配置，然后将AnnotationAwareAspectJAutoProxyCreator注册到Spring容器中。</p>
+<h2 id="MethodValidationPostProcessor"><a href="#MethodValidationPostProcessor" class="headerlink" title="MethodValidationPostProcessor"></a>MethodValidationPostProcessor</h2><p>默认不添加，需要手动添加。支持方法级别的JSR-303规范。需要在类上加上@Validated注解，以及在方法的参数中加上验证注解，比如@Max，@Min，@NotEmpty …。 下面这个BeanForMethodValidation就加上了@Validated注解，并且在方法validate的参数里加上的JSR-303的验证注解。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Validated</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BeanForMethodValidation</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">validate</span><span class="params">(@NotEmpty String name, @Min(<span class="number">10</span>)</span> <span class="keyword">int</span> age) </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"validate, name: "</span> + name + <span class="string">", age: "</span> + age);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>MethodValidationPostProcessor内部使用aop完成对方法的调用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MethodValidationPostProcessor.class</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">afterPropertiesSet</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 基于validatedAnnotationType属性构造出Pointcut，这个validatedAnnotationType属性默认是@Validated注解类型，可以进行修改</span></span><br><span class="line">  Pointcut pointcut = <span class="keyword">new</span> AnnotationMatchingPointcut(<span class="keyword">this</span>.validatedAnnotationType, <span class="keyword">true</span>);</span><br><span class="line">  <span class="comment">// 基于Pointcut和Advice构造出Advisor</span></span><br><span class="line">  <span class="keyword">this</span>.advisor = <span class="keyword">new</span> DefaultPointcutAdvisor(pointcut, createMethodValidationAdvice(<span class="keyword">this</span>.validator));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// MethodValidationInterceptor这个Advice内部使用JSR完成方法参数的验证</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Advice <span class="title">createMethodValidationAdvice</span><span class="params">(Validator validator)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> (validator != <span class="keyword">null</span> ? <span class="keyword">new</span> MethodValidationInterceptor(validator) : <span class="keyword">new</span> MethodValidationInterceptor());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ScheduledAnnotationBeanPostProcessor"><a href="#ScheduledAnnotationBeanPostProcessor" class="headerlink" title="ScheduledAnnotationBeanPostProcessor"></a>ScheduledAnnotationBeanPostProcessor</h2><p>默认不添加，使用@EnableScheduling注解后，会被注册到Spring容器中。主要使用Spring Scheduling功能对bean中使用了@Scheduled注解的方法进行调度处理。实现了BeanPostProcessor接口。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessAfterInitialization</span><span class="params">(<span class="keyword">final</span> Object bean, String beanName)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 判断是否是代理类，如果是代理类，拿到真正的目标类</span></span><br><span class="line">  Class&lt;?&gt; targetClass = AopUtils.getTargetClass(bean);</span><br><span class="line">  <span class="comment">// 判断是否已经处理过。nonAnnotatedClasses属性是个Class集合，用于存储bean对应的class是否有@Scheduled注解的方法，如果没有，则添加到这个集合中</span></span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.nonAnnotatedClasses.contains(targetClass)) &#123;</span><br><span class="line">    <span class="comment">// 找出class中带有@Scheduled注解的方法</span></span><br><span class="line">    Map&lt;Method, Set&lt;Scheduled&gt;&gt; annotatedMethods = MethodIntrospector.selectMethods(targetClass,</span><br><span class="line">        <span class="keyword">new</span> MethodIntrospector.MetadataLookup&lt;Set&lt;Scheduled&gt;&gt;() &#123;</span><br><span class="line">          <span class="meta">@Override</span></span><br><span class="line">          <span class="function"><span class="keyword">public</span> Set&lt;Scheduled&gt; <span class="title">inspect</span><span class="params">(Method method)</span> </span>&#123;</span><br><span class="line">            Set&lt;Scheduled&gt; scheduledMethods =</span><br><span class="line">                AnnotationUtils.getRepeatableAnnotations(method, Scheduled.class, Schedules.class);</span><br><span class="line">            <span class="keyword">return</span> (!scheduledMethods.isEmpty() ? scheduledMethods : <span class="keyword">null</span>);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    <span class="comment">// 如果不存在@Scheduled注解的方法</span></span><br><span class="line">    <span class="keyword">if</span> (annotatedMethods.isEmpty()) &#123;</span><br><span class="line">      <span class="comment">// 添加到nonAnnotatedClasses集合中。下次不用重复处理该类</span></span><br><span class="line">      <span class="keyword">this</span>.nonAnnotatedClasses.add(targetClass);</span><br><span class="line">      <span class="keyword">if</span> (logger.isTraceEnabled()) &#123;</span><br><span class="line">        logger.trace(<span class="string">"No @Scheduled annotations found on bean class: "</span> + bean.getClass());</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123; <span class="comment">// 如果存在@Scheduled注解的方法</span></span><br><span class="line">      <span class="comment">// 遍历这些@Scheduled注解的方法</span></span><br><span class="line">      <span class="keyword">for</span> (Map.Entry&lt;Method, Set&lt;Scheduled&gt;&gt; entry : annotatedMethods.entrySet()) &#123;</span><br><span class="line">        Method method = entry.getKey();</span><br><span class="line">        <span class="keyword">for</span> (Scheduled scheduled : entry.getValue()) &#123;</span><br><span class="line">          <span class="comment">// 进行调度处理</span></span><br><span class="line">          processScheduled(scheduled, method, bean);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">        logger.debug(annotatedMethods.size() + <span class="string">" @Scheduled methods processed on bean '"</span> + beanName +</span><br><span class="line">            <span class="string">"': "</span> + annotatedMethods);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="AsyncAnnotationBeanPostProcessor"><a href="#AsyncAnnotationBeanPostProcessor" class="headerlink" title="AsyncAnnotationBeanPostProcessor"></a>AsyncAnnotationBeanPostProcessor</h2><p>默认不添加，使用@EnableAsync注解后，会被注册到Spring容器中。AsyncAnnotationBeanPostProcessor内部使用aop处理方法的调用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AsyncAnnotationBeanPostProcessor.class</span></span><br><span class="line"><span class="comment">// 实现了BeanFactoryAware接口，这里会得到beanFactory</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setBeanFactory</span><span class="params">(BeanFactory beanFactory)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">super</span>.setBeanFactory(beanFactory);</span><br><span class="line">  <span class="comment">// 构造一个AsyncAnnotationAdvisor</span></span><br><span class="line">  <span class="comment">// AsyncAnnotationAdvisor内部的Advice是AnnotationAsyncExecutionInterceptor，Pointcut会找出带有@Async的类和@Async的方法</span></span><br><span class="line">  AsyncAnnotationAdvisor advisor = <span class="keyword">new</span> AsyncAnnotationAdvisor(<span class="keyword">this</span>.executor, <span class="keyword">this</span>.exceptionHandler);</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.asyncAnnotationType != <span class="keyword">null</span>) &#123;</span><br><span class="line">    advisor.setAsyncAnnotationType(<span class="keyword">this</span>.asyncAnnotationType);</span><br><span class="line">  &#125;</span><br><span class="line">  advisor.setBeanFactory(beanFactory);</span><br><span class="line">  <span class="keyword">this</span>.advisor = advisor;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// AsyncExecutionInterceptor.class。 AnnotationAsyncExecutionInterceptor的父类</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(<span class="keyword">final</span> MethodInvocation invocation)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">  <span class="comment">// 得到方法的对应类</span></span><br><span class="line">  Class&lt;?&gt; targetClass = (invocation.getThis() != <span class="keyword">null</span> ? AopUtils.getTargetClass(invocation.getThis()) : <span class="keyword">null</span>);</span><br><span class="line">  <span class="comment">// 得到方法</span></span><br><span class="line">  Method specificMethod = ClassUtils.getMostSpecificMethod(invocation.getMethod(), targetClass);</span><br><span class="line">  <span class="keyword">final</span> Method userDeclaredMethod = BridgeMethodResolver.findBridgedMethod(specificMethod);</span><br><span class="line">  <span class="comment">// 得到Executor线程池。如果没有在Spring容器中找到TaskExecutor类型的线程池，直接构造一个SimpleAsyncTaskExecutor</span></span><br><span class="line">  AsyncTaskExecutor executor = determineAsyncExecutor(userDeclaredMethod);</span><br><span class="line">  <span class="keyword">if</span> (executor == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line">        <span class="string">"No executor specified and no default executor set on AsyncExecutionInterceptor either"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 把方法在调用封装到Callable中</span></span><br><span class="line">  Callable&lt;Object&gt; task = <span class="keyword">new</span> Callable&lt;Object&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">call</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        Object result = invocation.proceed();</span><br><span class="line">        <span class="keyword">if</span> (result <span class="keyword">instanceof</span> Future) &#123;</span><br><span class="line">          <span class="keyword">return</span> ((Future&lt;?&gt;) result).get();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">catch</span> (ExecutionException ex) &#123;</span><br><span class="line">        handleError(ex.getCause(), userDeclaredMethod, invocation.getArguments());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">        handleError(ex, userDeclaredMethod, invocation.getArguments());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="comment">// 提交任务</span></span><br><span class="line">  <span class="keyword">return</span> doSubmit(task, executor, invocation.getMethod().getReturnType());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ServletContextAwareProcessor"><a href="#ServletContextAwareProcessor" class="headerlink" title="ServletContextAwareProcessor"></a>ServletContextAwareProcessor</h2><p>默认不添加，如果Spring容器是个Web容器，那么会被添加。比如GenericWebApplicationContext容器就在postProcessBeanFactory中添加了ServletContextAwareProcessor。postProcessBeanFactory方法是在Spring容器的refresh过程中被调用的。</p>
+<p>ServletContextAwareProcessor实现了BeanPostProcessor接口，如果Spring容器中的bean实现了ServletContextAware或ServletConfigAware接口，那么会进行处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (getServletContext() != <span class="keyword">null</span> &amp;&amp; bean <span class="keyword">instanceof</span> ServletContextAware) &#123;</span><br><span class="line">    ((ServletContextAware) bean).setServletContext(getServletContext());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (getServletConfig() != <span class="keyword">null</span> &amp;&amp; bean <span class="keyword">instanceof</span> ServletConfigAware) &#123;</span><br><span class="line">    ((ServletConfigAware) bean).setServletConfig(getServletConfig());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="SpringBoot内部特有的BeanPostProcessor"><a href="#SpringBoot内部特有的BeanPostProcessor" class="headerlink" title="SpringBoot内部特有的BeanPostProcessor"></a>SpringBoot内部特有的BeanPostProcessor</h2><p>EmbeddedServletContainerCustomizerBeanPostProcessor主要处理实现EmbeddedServletContainerCustomizer接口的bean。EmbeddedServletContainerCustomizer接口是SpringBoot提供的用于处理内置的Servlet容器的接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">EmbeddedServletContainerCustomizer</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">customize</span><span class="params">(ConfigurableEmbeddedServletContainer container)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个EmbeddedServletContainerCustomizerBeanPostProcessor实现了BeanPostProcessor接口，处理过程：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">  <span class="comment">// 处理ConfigurableEmbeddedServletContainer类型的bean</span></span><br><span class="line">  <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ConfigurableEmbeddedServletContainer) &#123;</span><br><span class="line">    postProcessBeforeInitialization((ConfigurableEmbeddedServletContainer) bean);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> bean;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">postProcessBeforeInitialization</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">		ConfigurableEmbeddedServletContainer bean)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 找出Spring容器中EmbeddedServletContainerCustomizer接口的实现类，并遍历依次调用</span></span><br><span class="line">	<span class="keyword">for</span> (EmbeddedServletContainerCustomizer customizer : getCustomizers()) &#123;</span><br><span class="line">		customizer.customize(bean);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> Collection&lt;EmbeddedServletContainerCustomizer&gt; <span class="title">getCustomizers</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.customizers == <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="comment">// Look up does not include the parent context</span></span><br><span class="line">		<span class="keyword">this</span>.customizers = <span class="keyword">new</span> ArrayList&lt;EmbeddedServletContainerCustomizer&gt;(</span><br><span class="line">				<span class="keyword">this</span>.applicationContext</span><br><span class="line">						.getBeansOfType(EmbeddedServletContainerCustomizer.class,</span><br><span class="line">								<span class="keyword">false</span>, <span class="keyword">false</span>)</span><br><span class="line">						.values());</span><br><span class="line">		Collections.sort(<span class="keyword">this</span>.customizers, AnnotationAwareOrderComparator.INSTANCE);</span><br><span class="line">		<span class="keyword">this</span>.customizers = Collections.unmodifiableList(<span class="keyword">this</span>.customizers);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">this</span>.customizers;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SpringBoot内部EmbeddedServletContainerCustomizer接口的实现类有ServerProperties、ErrorMvcAutoConfiguration的内部类ErrorPageCustomizer等。 我们也可以实现自定义的EmbeddedServletContainerCustomizer用于修改内置Servlet容器的属性。</p>
+<p>SpringBoot内部还有一些比如ConfigurationPropertiesBindingPostProcessor用于处于@ConfigurationProperties注解的processor、DataSourceInitializedPublisher用于发布DataSourceInitializedEvent事件等。读者可查看相关源码。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2017/06/24/spring-embedded-bean-post-processor/">http://fangjian0423.github.io/2017/06/24/spring-embedded-bean-post-processor/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/spring/" rel="tag">#spring</a>
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/springboot/" rel="tag">#springboot</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/20/spring-bean-post-processor/" rel="next" title="Spring内部的BeanPostProcessor接口总结">
+                <i class="fa fa-chevron-left"></i> Spring内部的BeanPostProcessor接口总结
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/28/springboot-application-exit/" rel="prev" title="SpringBoot应用程序的关闭">
+                SpringBoot应用程序的关闭 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ApplicationContextAwareProcessor"><span class="nav-number">1.</span> <span class="nav-text">ApplicationContextAwareProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CommonAnnotationBeanPostProcessor"><span class="nav-number">2.</span> <span class="nav-text">CommonAnnotationBeanPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AutowiredAnnotationBeanPostProcessor"><span class="nav-number">3.</span> <span class="nav-text">AutowiredAnnotationBeanPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RequiredAnnotationBeanPostProcessor"><span class="nav-number">4.</span> <span class="nav-text">RequiredAnnotationBeanPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BeanValidationPostProcessor"><span class="nav-number">5.</span> <span class="nav-text">BeanValidationPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AbstractAutoProxyCreator"><span class="nav-number">6.</span> <span class="nav-text">AbstractAutoProxyCreator</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MethodValidationPostProcessor"><span class="nav-number">7.</span> <span class="nav-text">MethodValidationPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ScheduledAnnotationBeanPostProcessor"><span class="nav-number">8.</span> <span class="nav-text">ScheduledAnnotationBeanPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AsyncAnnotationBeanPostProcessor"><span class="nav-number">9.</span> <span class="nav-text">AsyncAnnotationBeanPostProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ServletContextAwareProcessor"><span class="nav-number">10.</span> <span class="nav-text">ServletContextAwareProcessor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SpringBoot内部特有的BeanPostProcessor"><span class="nav-number">11.</span> <span class="nav-text">SpringBoot内部特有的BeanPostProcessor</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2017/06/24/spring-embedded-bean-post-processor/';
+      var disqus_title = "Spring内置的BeanPostProcessor总结";
+      var disqus_url = 'http://fangjian0423.github.io/2017/06/24/spring-embedded-bean-post-processor/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>

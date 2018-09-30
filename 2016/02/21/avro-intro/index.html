@@ -1,0 +1,1327 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="big data,avro," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Apache Avro是一个数据序列化系统, 提供丰富的数据结构，使用快速的压缩二进制数据格式，提供容器文件用于持久化数据 ...">
+<meta name="keywords" content="big data,avro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Avro介绍">
+<meta property="og:url" content="http://fangjian0423.github.io/2016/02/21/avro-intro/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="Apache Avro是一个数据序列化系统, 提供丰富的数据结构，使用快速的压缩二进制数据格式，提供容器文件用于持久化数据 ...">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-30T17:54:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Avro介绍">
+<meta name="twitter:description" content="Apache Avro是一个数据序列化系统, 提供丰富的数据结构，使用快速的压缩二进制数据格式，提供容器文件用于持久化数据 ...">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Avro介绍 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Avro介绍
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-02-21T01:23:22+08:00" content="2016-02-21">
+              2016-02-21
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/avro/" itemprop="url" rel="index">
+                    <span itemprop="name">avro</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/02/21/avro-intro/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/02/21/avro-intro/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/02/21/avro-intro/" class="leancloud_visitors" data-flag-title="Avro介绍">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Avro介绍"><a href="#Avro介绍" class="headerlink" title="Avro介绍"></a>Avro介绍</h2><p>Apache Avro是一个数据序列化系统。</p>
+<p>Avro所提供的属性：</p>
+<p>1.丰富的数据结构<br>2.使用快速的压缩二进制数据格式<br>3.提供容器文件用于持久化数据<br>4.远程过程调用RPC<br>5.简单的动态语言结合功能，Avro 和动态语言结合后，读写数据文件和使用 RPC 协议都不需要生成代码，而代码生成作为一种可选的优化只值得在静态类型语言中实现。</p>
+<h2 id="Avro的Schema"><a href="#Avro的Schema" class="headerlink" title="Avro的Schema"></a>Avro的Schema</h2><p>Avro的Schema用JSON表示。Schema定义了简单数据类型和复杂数据类型。</p>
+<h3 id="基本类型"><a href="#基本类型" class="headerlink" title="基本类型"></a>基本类型</h3><p>其中简单数据类型有以下8种：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">null</td>
+<td style="text-align:center">没有值</td>
+</tr>
+<tr>
+<td style="text-align:center">boolean</td>
+<td style="text-align:center">布尔值</td>
+</tr>
+<tr>
+<td style="text-align:center">int</td>
+<td style="text-align:center">32位有符号整数</td>
+</tr>
+<tr>
+<td style="text-align:center">long</td>
+<td style="text-align:center">64位有符号整数</td>
+</tr>
+<tr>
+<td style="text-align:center">float</td>
+<td style="text-align:center">单精度（32位）的IEEE 754浮点数</td>
+</tr>
+<tr>
+<td style="text-align:center">double</td>
+<td style="text-align:center">双精度（64位）的IEEE 754浮点数</td>
+</tr>
+<tr>
+<td style="text-align:center">bytes</td>
+<td style="text-align:center">8位无符号字节序列</td>
+</tr>
+<tr>
+<td style="text-align:center">string</td>
+<td style="text-align:center">字符串</td>
+</tr>
+</tbody>
+</table>
+<p>基本类型没有属性，基本类型的名字也就是类型的名字，比如：</p>
+<pre><code>{&quot;type&quot;: &quot;string&quot;}
+</code></pre><h3 id="复杂类型"><a href="#复杂类型" class="headerlink" title="复杂类型"></a>复杂类型</h3><p>Avro提供了6种复杂类型。分别是Record，Enum，Array，Map，Union和Fixed。</p>
+<h4 id="Record"><a href="#Record" class="headerlink" title="Record"></a>Record</h4><p>Record类型使用的类型名字是 “record”，还支持其它属性的设置：</p>
+<p>name：record类型的名字(必填)</p>
+<p>namespace：命名空间(可选)</p>
+<p>doc：这个类型的文档说明(可选)</p>
+<p>aliases：record类型的别名，是个字符串数组(可选)</p>
+<p>fields：record类型中的字段，是个对象数组(必填)。每个字段需要以下属性：</p>
+<ol>
+<li>name：字段名字(必填)</li>
+<li>doc：字段说明文档(可选)</li>
+<li>type：一个schema的json对象或者一个类型名字(必填)</li>
+<li>default：默认值(可选)</li>
+<li>order：排序(可选)，只有3个值ascending(默认)，descending或ignore</li>
+<li>aliases：别名，字符串数组(可选)</li>
+</ol>
+<p>一个Record类型例子，定义一个元素类型是Long的链表：</p>
+<pre><code>{
+  &quot;type&quot;: &quot;record&quot;, 
+  &quot;name&quot;: &quot;LongList&quot;,
+  &quot;aliases&quot;: [&quot;LinkedLongs&quot;],                      // old name for this
+  &quot;fields&quot; : [
+    {&quot;name&quot;: &quot;value&quot;, &quot;type&quot;: &quot;long&quot;},             // each element has a long
+    {&quot;name&quot;: &quot;next&quot;, &quot;type&quot;: [&quot;null&quot;, &quot;LongList&quot;]} // optional next element
+  ]
+}
+</code></pre><h4 id="Enum"><a href="#Enum" class="headerlink" title="Enum"></a>Enum</h4><p>枚举类型的类型名字是”enum”，还支持其它属性的设置：</p>
+<p>name：枚举类型的名字(必填)<br>namespace：命名空间(可选)<br>aliases：字符串数组，别名(可选)<br>doc：说明文档(可选)<br>symbols：字符串数组，所有的枚举值(必填)，不允许重复数据。</p>
+<p>一个枚举类型的例子：</p>
+<pre><code>{ &quot;type&quot;: &quot;enum&quot;,
+  &quot;name&quot;: &quot;Suit&quot;,
+  &quot;symbols&quot; : [&quot;SPADES&quot;, &quot;HEARTS&quot;, &quot;DIAMONDS&quot;, &quot;CLUBS&quot;]
+}
+</code></pre><h4 id="Array"><a href="#Array" class="headerlink" title="Array"></a>Array</h4><p>数组类型的类型名字是”array”并且只支持一个属性：</p>
+<p>items：数组元素的schema</p>
+<p>一个数组例子：</p>
+<pre><code>{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: &quot;string&quot;}
+</code></pre><h4 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h4><p>Map类型的类型名字是”map”并且只支持一个属性：</p>
+<p>values：map值的schema</p>
+<p>Map的key必须是字符串。</p>
+<p>一个Map例子：</p>
+<pre><code>{&quot;type&quot;: &quot;map&quot;, &quot;values&quot;: &quot;long&quot;}
+</code></pre><h4 id="Union"><a href="#Union" class="headerlink" title="Union"></a>Union</h4><p>组合类型，表示各种类型的组合，使用数组进行组合。比如[“null”, “string”]表示类型可以为null或者string。</p>
+<p>组合类型的默认值是看组合类型的第一个元素，因此如果一个组合类型包括null类型，那么null类型一般都会放在第一个位置，这样子的话这个组合类型的默认值就是null。</p>
+<p>组合类型中不允许同一种类型的元素的个数不会超过1个，除了record，fixed和enum。比如组合类中有2个array类型或者2个map类型，这是不允许的。</p>
+<p>组合类型不允许嵌套组合类型。</p>
+<h4 id="Fixed"><a href="#Fixed" class="headerlink" title="Fixed"></a>Fixed</h4><p>混合类型的类型名字是fixed，支持以下属性：</p>
+<p>name：名字(必填)<br>namespace：命名空间(可选)<br>aliases：字符串数组，别名(可选)<br>size：一个整数，表示每个值的字节数(必填)</p>
+<p>比如16个字节数的fixed类型例子如下：</p>
+<pre><code>{&quot;type&quot;: &quot;fixed&quot;, &quot;size&quot;: 16, &quot;name&quot;: &quot;md5&quot;}
+</code></pre><h2 id="1个Avro例子"><a href="#1个Avro例子" class="headerlink" title="1个Avro例子"></a>1个Avro例子</h2><p>首先定义一个User的schema：</p>
+<pre><code>{
+&quot;namespace&quot;: &quot;example.avro&quot;,
+ &quot;type&quot;: &quot;record&quot;,
+ &quot;name&quot;: &quot;User&quot;,
+ &quot;fields&quot;: [
+     {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;},
+     {&quot;name&quot;: &quot;favorite_number&quot;,  &quot;type&quot;: &quot;int&quot;},
+     {&quot;name&quot;: &quot;favorite_color&quot;, &quot;type&quot;: &quot;string&quot;}
+ ]
+}
+</code></pre><p>User有3个属性，分别是name，favorite_number和favorite_color。</p>
+<p>json文件内容：</p>
+<pre><code>{&quot;name&quot;:&quot;format&quot;,&quot;favorite_number&quot;:1,&quot;favorite_color&quot;:&quot;red&quot;}
+{&quot;name&quot;:&quot;format2&quot;,&quot;favorite_number&quot;:2,&quot;favorite_color&quot;:&quot;black&quot;}
+{&quot;name&quot;:&quot;format3&quot;,&quot;favorite_number&quot;:666,&quot;favorite_color&quot;:&quot;blue&quot;}
+</code></pre><p>使用avro工具将json文件转换成avro文件：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar fromjson --schema-file user.avsc user.json &gt; user.avro
+</code></pre><p>可以设置压缩格式：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar fromjson --codec snappy --schema-file user.avsc user.json &gt; user2.avro
+</code></pre><p>将avro文件反转换成json文件：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar tojson user.avro
+java -jar avro-tools-1.8.0.jar --pretty tojson user.avro
+</code></pre><p>得到avro文件的meta：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar getmeta user.avro
+</code></pre><p>输出：</p>
+<pre><code>avro.codec    null
+avro.schema    {&quot;type&quot;:&quot;record&quot;,&quot;name&quot;:&quot;User&quot;,&quot;namespace&quot;:&quot;example.avro&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;type&quot;:&quot;string&quot;},{&quot;name&quot;:&quot;favorite_number&quot;,&quot;type&quot;:&quot;int&quot;},{&quot;name&quot;:&quot;favorite_color&quot;,&quot;type&quot;:&quot;string&quot;}]}
+</code></pre><p>得到avro文件的schema：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar getschema user.avro
+</code></pre><p>将文本文件转换成avro文件：</p>
+<pre><code>java -jar avro-tools-1.8.0.jar fromtext user.txt usertxt.avro
+</code></pre><h2 id="Avro使用生成的代码进行序列化和反序列化"><a href="#Avro使用生成的代码进行序列化和反序列化" class="headerlink" title="Avro使用生成的代码进行序列化和反序列化"></a>Avro使用生成的代码进行序列化和反序列化</h2><p>以上面一个例子的schema为例讲解。</p>
+<p>Avro可以根据schema自动生成对应的类：</p>
+<pre><code>java -jar /path/to/avro-tools-1.8.0.jar compile schema user.avsc .
+</code></pre><p>user.avsc的namespace为example.avro，name为User。最终在当前目录生成的example/avro目录下有个User.java文件。</p>
+<pre><code>├── example
+│   └── avro
+│       └── User.java
+</code></pre><p><strong>使用Avro生成的代码创建User：</strong></p>
+<pre><code>User user1 = new User();
+user1.setName(&quot;Format&quot;);
+user1.setFavoriteColor(&quot;red&quot;);
+user1.setFavoriteNumber(666);
+
+User user2 = new User(&quot;Format2&quot;, 66, &quot;blue&quot;);
+
+User user3 = User.newBuilder()
+                .setName(&quot;Format3&quot;)
+                .setFavoriteNumber(6)
+                .setFavoriteColor(&quot;black&quot;).build();
+</code></pre><p>可以使用有参的构造函数和无参的构造函数，也可以使用Builder构造User。</p>
+<p><strong>序列化：</strong></p>
+<p>DatumWrite接口用来把java对象转换成内存中的序列化格式，SpecificDatumWriter用来生成类并且指定生成的类型。</p>
+<p>最后使用DataFileWriter来进行具体的序列化，create方法指定文件和schema信息，append方法用来写数据，最后写完后close文件。</p>
+<pre><code>DatumWriter&lt;User&gt; userDatumWriter = new SpecificDatumWriter&lt;User&gt;(User.class);
+        DataFileWriter&lt;User&gt; dataFileWriter = new DataFileWriter&lt;User&gt;(userDatumWriter);
+dataFileWriter.create(user1.getSchema(), new File(&quot;users.avro&quot;));
+dataFileWriter.append(user1);
+dataFileWriter.append(user2);
+dataFileWriter.append(user3);
+dataFileWriter.close();
+</code></pre><p><strong>反序列化：</strong></p>
+<p>反序列化跟序列化很像，相应的Writer换成Reader。这里只创建一个User对象是为了性能优化，每次都重用这个User对象，如果文件量很大，对象分配和垃圾收集处理的代价很昂贵。如果不考虑性能，可以使用 for (User user : dataFileReader) 循环遍历对象</p>
+<pre><code>File file = new File(&quot;users.avro&quot;);
+DatumReader&lt;User&gt; userDatumReader = new SpecificDatumReader&lt;User&gt;(User.class);
+DataFileReader&lt;User&gt; dataFileReader = new DataFileReader&lt;User&gt;(file, userDatumReader);
+User user = null;
+while(dataFileReader.hasNext()) {
+    user = dataFileReader.next(user);
+    System.out.println(user);
+}
+</code></pre><p>打印出：</p>
+<pre><code>{&quot;name&quot;: &quot;Format&quot;, &quot;favorite_number&quot;: 666, &quot;favorite_color&quot;: &quot;red&quot;}
+{&quot;name&quot;: &quot;Format2&quot;, &quot;favorite_number&quot;: 66, &quot;favorite_color&quot;: &quot;blue&quot;}
+{&quot;name&quot;: &quot;Format3&quot;, &quot;favorite_number&quot;: 6, &quot;favorite_color&quot;: &quot;black&quot;}
+</code></pre><h2 id="Avro不使用生成的代码进行序列化和反序列化"><a href="#Avro不使用生成的代码进行序列化和反序列化" class="headerlink" title="Avro不使用生成的代码进行序列化和反序列化"></a>Avro不使用生成的代码进行序列化和反序列化</h2><p>虽然Avro为我们提供了根据schema自动生成类的方法，我们也可以自己创建类，不使用Avro的自动生成工具。</p>
+<p><strong>创建User：</strong></p>
+<p>首先使用Parser读取schema信息并且创建Schema类：</p>
+<pre><code>Schema schema = new Schema.Parser().parse(new File(&quot;user.avsc&quot;));
+</code></pre><p>有了Schema之后可以创建record：</p>
+<pre><code>GenericRecord user1 = new GenericData.Record(schema);
+user1.put(&quot;name&quot;, &quot;Format&quot;);
+user1.put(&quot;favorite_number&quot;, 666);
+user1.put(&quot;favorite_color&quot;, &quot;red&quot;);
+
+GenericRecord user2 = new GenericData.Record(schema);
+user2.put(&quot;name&quot;, &quot;Format2&quot;);
+user2.put(&quot;favorite_number&quot;, 66);
+user2.put(&quot;favorite_color&quot;, &quot;blue&quot;);
+</code></pre><p>使用GenericRecord表示User，GenericRecord会根据schema验证字段是否正确，如果put进了不存在的字段 user1.put(“favorite_animal”, “cat”) ，那么运行的时候会得到AvroRuntimeException异常。</p>
+<p><strong>序列化：</strong></p>
+<p>序列化跟生成的User类似，只不过schema是自己构造的，不是User中拿的。</p>
+<pre><code>Schema schema = new Schema.Parser().parse(new File(&quot;user.avsc&quot;));
+GenericRecord user1 = new GenericData.Record(schema);
+user1.put(&quot;name&quot;, &quot;Format&quot;);
+user1.put(&quot;favorite_number&quot;, 666);
+user1.put(&quot;favorite_color&quot;, &quot;red&quot;);
+
+GenericRecord user2 = new GenericData.Record(schema);
+user2.put(&quot;name&quot;, &quot;Format2&quot;);
+user2.put(&quot;favorite_number&quot;, 66);
+user2.put(&quot;favorite_color&quot;, &quot;blue&quot;);
+
+DatumWriter&lt;GenericRecord&gt; datumWriter = new SpecificDatumWriter&lt;GenericRecord&gt;(schema);
+DataFileWriter&lt;GenericRecord&gt; dataFileWriter = new DataFileWriter&lt;GenericRecord&gt;(datumWriter);
+dataFileWriter.create(schema, new File(&quot;users2.avro&quot;));
+dataFileWriter.append(user1);
+dataFileWriter.append(user2);
+dataFileWriter.close();
+</code></pre><p><strong>反序列化：</strong></p>
+<p>反序列化跟生成的User类似，只不过schema是自己构造的，不是User中拿的。</p>
+<pre><code>Schema schema = new Schema.Parser().parse(new File(&quot;user.avsc&quot;));
+File file = new File(&quot;users2.avro&quot;);
+DatumReader&lt;GenericRecord&gt; datumReader = new SpecificDatumReader&lt;GenericRecord&gt;(schema);
+DataFileReader&lt;GenericRecord&gt; dataFileReader = new DataFileReader&lt;GenericRecord&gt;(file, datumReader);
+GenericRecord user = null;
+while(dataFileReader.hasNext()) {
+    user = dataFileReader.next(user);
+    System.out.println(user);
+}
+</code></pre><p>打印出：</p>
+<pre><code>{&quot;name&quot;: &quot;Format&quot;, &quot;favorite_number&quot;: 666, &quot;favorite_color&quot;: &quot;red&quot;}
+{&quot;name&quot;: &quot;Format2&quot;, &quot;favorite_number&quot;: 66, &quot;favorite_color&quot;: &quot;blue&quot;}
+</code></pre><h2 id="一些注意点"><a href="#一些注意点" class="headerlink" title="一些注意点"></a>一些注意点</h2><p>Avro解析json文件的时候，如果类型是Record并且里面有字段是union并且允许空值的话，需要进行转换。因为[“bytes”, “string”]和[“int”,”long”]这2个union类型在json中是有歧义的，第一个union在json中都会被转换成string类型，第二个union在json中都会被转换成数字类型。</p>
+<p>所以如果json值的null的话，在avro提供的json中直接写null，否则使用只有一个键值对的对象，键是类型，值的具体的值。</p>
+<p>比如：</p>
+<pre><code>{
+&quot;namespace&quot;: &quot;example.avro&quot;,
+ &quot;type&quot;: &quot;record&quot;,
+ &quot;name&quot;: &quot;User&quot;,
+ &quot;fields&quot;: [
+     {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;},
+     {&quot;name&quot;: &quot;favorite_number&quot;,  &quot;type&quot;: [&quot;int&quot;,&quot;null&quot;]},
+     {&quot;name&quot;: &quot;favorite_color&quot;, &quot;type&quot;: [&quot;string&quot;,&quot;null&quot;]}
+ ]
+}
+</code></pre><p>在要转换成json文件的时候要写成这样：</p>
+<pre><code>{&quot;name&quot;:&quot;format&quot;,&quot;favorite_number&quot;:{&quot;int&quot;:1},&quot;favorite_color&quot;:{&quot;string&quot;:&quot;red&quot;}}
+{&quot;name&quot;:&quot;format2&quot;,&quot;favorite_number&quot;:null,&quot;favorite_color&quot;:{&quot;string&quot;:&quot;black&quot;}}
+{&quot;name&quot;:&quot;format3&quot;,&quot;favorite_number&quot;:{&quot;int&quot;:66},&quot;favorite_color&quot;:null}
+</code></pre><h2 id="Spark读取Avro文件"><a href="#Spark读取Avro文件" class="headerlink" title="Spark读取Avro文件"></a>Spark读取Avro文件</h2><p>直接遍历avro文件，得到GenericRecord进行处理：</p>
+<pre><code>val conf = new SparkConf().setMaster(&quot;local&quot;).setAppName(&quot;AvroTest&quot;)
+
+val sc = new SparkContext(conf)
+
+val rdd = sc.hadoopFile[AvroWrapper[GenericRecord], NullWritable, AvroInputFormat[GenericRecord]](this.getClass.getResource(&quot;/&quot;).toString + &quot;users.avro&quot;)
+
+val nameRdd = rdd.map(s =&gt; s._1.datum().get(&quot;name&quot;).toString)
+
+nameRdd.collect().foreach(println)
+</code></pre><h2 id="使用Avro需要注意的地方"><a href="#使用Avro需要注意的地方" class="headerlink" title="使用Avro需要注意的地方"></a>使用Avro需要注意的地方</h2><p>笔者使用Avro的时候暂时遇到了下面2个坑。先记录一下，以后遇到新的坑会更新这篇文章。</p>
+<p>1.如果定义了unions类型的字段，而且unions中有null选项的schema，比如如下schema：</p>
+<pre><code>{
+&quot;namespace&quot;: &quot;example.avro&quot;,
+ &quot;type&quot;: &quot;record&quot;,
+ &quot;name&quot;: &quot;User2&quot;,
+ &quot;fields&quot;: [
+     {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;},
+     {&quot;name&quot;: &quot;favorite_number&quot;,  &quot;type&quot;: [&quot;null&quot;,&quot;int&quot;]},
+     {&quot;name&quot;: &quot;favorite_color&quot;, &quot;type&quot;: [&quot;null&quot;,&quot;string&quot;]}
+ ]
+}
+</code></pre><p>这样的schema，如果不使用Avro自动生成的model代码进行insert，并且insert中的model数据有null数据的话。然后用spark读avro文件的话，会报org.apache.avro.AvroTypeException: Found null, expecting int … 这样的错误。</p>
+<p>这一点很奇怪，但是使用Avro生成的Model进行insert的话，sprak读取就没有任何问题。 很困惑。</p>
+<p>2.如果使用了Map类型的字段，avro生成的model中的Map的Key默认类型为CharSequence。这种model我们insert数据的话，用String是没有问题的。但是spark读取之后要根据Key拿这个Map数据的时候，永远得到的是null。</p>
+<p>stackoverflow上有一个页面说到了这个问题。<a href="http://stackoverflow.com/questions/19728853/apache-avro-map-uses-charsequence-as-key" target="_blank" rel="noopener">http://stackoverflow.com/questions/19728853/apache-avro-map-uses-charsequence-as-key
+</a></p>
+<p>需要在map类型的字段里加上”avro.java.string”: “String”这个选项, 然后compile的时候使用-string参数即可。</p>
+<p>比如以下这个schema：</p>
+<pre><code>{
+&quot;namespace&quot;: &quot;example.avro&quot;,
+ &quot;type&quot;: &quot;record&quot;,
+ &quot;name&quot;: &quot;User3&quot;,
+ &quot;fields&quot;: [
+     {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;},
+     {&quot;name&quot;: &quot;favorite_number&quot;,  &quot;type&quot;: [&quot;null&quot;,&quot;int&quot;]},
+     {&quot;name&quot;: &quot;favorite_color&quot;, &quot;type&quot;: [&quot;null&quot;,&quot;string&quot;]},
+     {&quot;name&quot;: &quot;scores&quot;, &quot;type&quot;: [&quot;null&quot;, {&quot;type&quot;: &quot;map&quot;, &quot;values&quot;: &quot;string&quot;, &quot;avro.java.string&quot;: &quot;String&quot;}]}
+ ]
+}
+</code></pre>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2016/02/21/avro-intro/">http://fangjian0423.github.io/2016/02/21/avro-intro/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/big-data/" rel="tag">#big data</a>
+          
+            <a href="/tags/avro/" rel="tag">#avro</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/02/17/spark-sql/" rel="next" title="Spark DataFrame介绍">
+                <i class="fa fa-chevron-left"></i> Spark DataFrame介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/12/java-Object-method/" rel="prev" title="Java根类Object的方法说明">
+                Java根类Object的方法说明 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">118</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Avro介绍"><span class="nav-number">1.</span> <span class="nav-text">Avro介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Avro的Schema"><span class="nav-number">2.</span> <span class="nav-text">Avro的Schema</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本类型"><span class="nav-number">2.1.</span> <span class="nav-text">基本类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复杂类型"><span class="nav-number">2.2.</span> <span class="nav-text">复杂类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Record"><span class="nav-number">2.2.1.</span> <span class="nav-text">Record</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Enum"><span class="nav-number">2.2.2.</span> <span class="nav-text">Enum</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Array"><span class="nav-number">2.2.3.</span> <span class="nav-text">Array</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Map"><span class="nav-number">2.2.4.</span> <span class="nav-text">Map</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Union"><span class="nav-number">2.2.5.</span> <span class="nav-text">Union</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Fixed"><span class="nav-number">2.2.6.</span> <span class="nav-text">Fixed</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1个Avro例子"><span class="nav-number">3.</span> <span class="nav-text">1个Avro例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Avro使用生成的代码进行序列化和反序列化"><span class="nav-number">4.</span> <span class="nav-text">Avro使用生成的代码进行序列化和反序列化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Avro不使用生成的代码进行序列化和反序列化"><span class="nav-number">5.</span> <span class="nav-text">Avro不使用生成的代码进行序列化和反序列化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一些注意点"><span class="nav-number">6.</span> <span class="nav-text">一些注意点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spark读取Avro文件"><span class="nav-number">7.</span> <span class="nav-text">Spark读取Avro文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Avro需要注意的地方"><span class="nav-number">8.</span> <span class="nav-text">使用Avro需要注意的地方</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2016/02/21/avro-intro/';
+      var disqus_title = "Avro介绍";
+      var disqus_url = 'http://fangjian0423.github.io/2016/02/21/avro-intro/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>
