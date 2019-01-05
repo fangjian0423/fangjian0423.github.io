@@ -1,0 +1,1134 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,springcloud," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Format's Notes" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="前段时间 Hystrix 宣布不再维护之后，Feign 作为一个跟 Hystrix 强依赖的组件，必然会有所担心后续的使用。 作为 Spring Cloud Alibaba 体系中的熔断器 Sentinel，Sentinel Starter 目前整合了 Feign，本文对整合过程做一次总结，欢迎大家讨论和使用。">
+<meta name="keywords" content="java,springcloud">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现">
+<meta property="og:url" content="http://fangjian0423.github.io/2018/12/27/spring-cloud-alibaba-sentinel-feign/index.html">
+<meta property="og:site_name" content="Format&#39;s Notes">
+<meta property="og:description" content="前段时间 Hystrix 宣布不再维护之后，Feign 作为一个跟 Hystrix 强依赖的组件，必然会有所担心后续的使用。 作为 Spring Cloud Alibaba 体系中的熔断器 Sentinel，Sentinel Starter 目前整合了 Feign，本文对整合过程做一次总结，欢迎大家讨论和使用。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://cdn.nlark.com/lark/0/2018/png/64647/1544585446790-8affc733-701e-4ff1-819b-c8b7980de337.png">
+<meta property="og:updated_time" content="2019-01-05T13:43:54.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现">
+<meta name="twitter:description" content="前段时间 Hystrix 宣布不再维护之后，Feign 作为一个跟 Hystrix 强依赖的组件，必然会有所担心后续的使用。 作为 Spring Cloud Alibaba 体系中的熔断器 Sentinel，Sentinel Starter 目前整合了 Feign，本文对整合过程做一次总结，欢迎大家讨论和使用。">
+<meta name="twitter:image" content="https://cdn.nlark.com/lark/0/2018/png/64647/1544585446790-8affc733-701e-4ff1-819b-c8b7980de337.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+
+  <title> Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现 | Format's Notes </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74587201-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?b4a6a45360609483811f20bc2c62654c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Format's Notes</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">吃饭睡觉撸代码</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-12-27T14:21:49+08:00" content="2018-12-27">
+              2018-12-27
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springcloud/" itemprop="url" rel="index">
+                    <span itemprop="name">springcloud</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/12/27/spring-cloud-alibaba-sentinel-feign/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/12/27/spring-cloud-alibaba-sentinel-feign/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/12/27/spring-cloud-alibaba-sentinel-feign/" class="leancloud_visitors" data-flag-title="Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前段时间 <a href="https://github.com/Netflix/Hystrix" target="_blank" rel="noopener">Hystrix</a> 宣布不再维护之后，Feign 作为一个跟 Hystrix 强依赖的组件，必然会有所担心后续的使用。</p>
+<p>作为 <a href="https://github.com/spring-cloud-incubator/spring-cloud-alibaba" target="_blank" rel="noopener">Spring Cloud Alibaba</a> 体系中的熔断器 <a href="https://github.com/alibaba/Sentinel" target="_blank" rel="noopener">Sentinel</a>，<a href="https://github.com/spring-cloud-incubator/spring-cloud-alibaba" target="_blank" rel="noopener">Sentinel Starter</a> 目前整合了 Feign，本文对整合过程做一次总结，欢迎大家讨论和使用。</p>
+<a id="more"></a>
+<p><a href="https://github.com/OpenFeign/feign" target="_blank" rel="noopener">Feign</a> 是什么？</p>
+<ul>
+<li>Feign 是一个 Java 实现的 Http 客户端，用于简化 Restful 调用</li>
+<li>Feign 跟 <a href="http://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp</a>、<a href="https://hc.apache.org/httpcomponents-client-ga/" target="_blank" rel="noopener">HttpClient</a> 这种客户端实现理念不一样。Feign 强调接口的定义，接口中的一个方法对应一个 Http 请求，调用方法即发送一个 Http 请求；OkHttp 或 HttpClient 以过程式的方式发送 Http 请求。Feign 底层发送请求的实现可以跟 OkHttp 或 HttpClient 整合</li>
+</ul>
+<h1 id="Feign-的使用及执行过程"><a href="#Feign-的使用及执行过程" class="headerlink" title="Feign 的使用及执行过程"></a>Feign 的使用及执行过程</h1><p>要想整合 Feign，首先要了解 Feign 的使用以及执行过程，然后看 Sentinel 如何整合进去。</p>
+<h2 id="Feign-的使用"><a href="#Feign-的使用" class="headerlink" title="Feign 的使用"></a>Feign 的使用</h2><p>需要两个步骤：</p>
+<ul>
+<li>使用 <code>@EnableFeignClients</code> 注解开启 Feign 功能</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="meta">@EnableFeignClients</span> <span class="comment">// 开启 Feign 功能</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplication</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>@EnableFeignClients</code> 属性介绍：</p>
+<ol>
+<li>value:String[] 包路径。比如 <code>org.my.pkg</code>，会扫描这个包路径下带有 <code>@FeignClient</code> 注解的类并处理</li>
+<li>basePackages:String[] 跟 value 属性作用一致</li>
+<li>basePackageClasses:Class&lt;?&gt;[] 跟 basePackages 作用一致，basePackages 是个 String 数组，而 basePackageClasses 是个 Class 数组，用于扫描这些类对应的 package</li>
+<li>defaultConfiguration:Class&lt;?&gt;[] 默认的配置类，对于所有的 Feign Client，这些配置类里的配置都会对它们生效，可以在配置类里构造 <code>feign.codec.Decoder</code>, <code>feign.codec.Encoder</code> 或 <code>feign.Contract</code> 等bean</li>
+<li>clients:Class&lt;?&gt;[] 表示 <code>@FeignClient</code> 注解修饰的类集合，如果指定了该属性，那么扫描功能相关的属性就是失效。比如 value、basePackages 和 basePackageClasses</li>
+</ol>
+<ul>
+<li>使用 <code>@FeignClient</code> 注解修饰接口，这样会基于跟接口生成代理类</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@FeignClient</span>(name = <span class="string">"service-provider"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">EchoService</span> </span>&#123;</span><br><span class="line">  <span class="meta">@RequestMapping</span>(value = <span class="string">"/echo/&#123;str&#125;"</span>, method = RequestMethod.GET)</span><br><span class="line">  <span class="function">String <span class="title">echo</span><span class="params">(@PathVariable(<span class="string">"str"</span>)</span> String str)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>只要确保这个被 <code>@FeignClient</code> 注解修饰到的接口能被 <code>@EnableFeignClients</code> 注解扫描到，就会基于 <code>java.lang.reflect.Proxy</code> 根据这个接口生成一个代理类。</p>
+<p>生成代理类之后，会被注入到 <code>ApplicationContext</code> 中，直接 AutoWired 就能使用，使用的时候调用 <code>echo</code> 方法就相当于是发起一个 Restful 请求。</p>
+<p><code>@FeignClient</code> 属性介绍：</p>
+<ol>
+<li>value:String 服务名。比如 <code>service-provider</code>, <code>http://service-provider</code>。比如 <code>EchoService</code> 中如果配置了 <code>value=service-provider</code>，那么调用 <code>echo</code> 方法的 url 为  <code>http://service-provider/echo</code>；如果配置了 <code>value=https://service-provider</code>，那么调用 <code>echo</code> 方法的 url 为 <code>https://service-provider/divide</code></li>
+<li>serviceId:String 该属性已过期，但还能用。作用跟 value 一致</li>
+<li>name:String 跟 value 属性作用一致</li>
+<li>qualifier:String 给 FeignClient 设置 <code>@Qualifier</code> 注解</li>
+<li>url:String 绝对路径，用于替换服务名。优先级比服务名高。比如 <code>EchoService</code> 中如果配置了 <code>url=aaa</code>，那么调用 <code>echo</code> 方法的 url 为  <code>http://aaa/echo</code>；如果配置了 <code>url=https://aaa</code>，那么调用 <code>echo</code> 方法的 url 为 <code>https://aaa/divide</code></li>
+<li>decode404:boolean 默认是 false，表示对于一个 http status code 为 404 的请求是否需要进行 decode，默认不进行 decode，当成一个异常处理。设置为true之后，遇到 404 的 response 还是会解析 body</li>
+<li>configuration:Class&lt;?&gt;[] 跟 <code>@EnableFeignClients</code>  注解的 <code>defaultConfiguration</code> 属性作用一致，但是这个对于单个 FeignClient 的配置，而 <code>@EnableFeignClients</code>  里的 <code>defaultConfiguration</code> 属性是作用域全局的，针对所有的 FeignClient</li>
+<li>fallback:Class&lt;?&gt; 默认值是 <code>void.class</code>，表示 fallback 类，需要实现 FeignClient 对应的接口，当调用方法发生异常的时候会调用这个 Fallback 类对应的 FeignClient 接口方法。如果配置了 fallback 属性，那么会把这个 Fallback 类包装在一个默认的 <code>FallbackFactory</code> 实现类 <code>FallbackFactory.Default</code> 上，而不使用 fallbackFactory 属性对应的 <code>FallbackFactory</code> 实现类</li>
+<li>fallbackFactory:Class&lt;?&gt; 默认值是 <code>void.class</code>，表示生产 fallback 类的 Factory，可以实现 <code>feign.hystrix.FallbackFactory</code> 接口，<code>FallbackFactory</code> 内部会针对一个 <code>Throwable</code> 异常返回一个 Fallback 类进行 fallback 操作</li>
+<li>path:String 请求路径。 在服务名或 url 与 requestPath 之间</li>
+<li>primary:boolean 默认是 true，表示当前这个 FeignClient 生成的 bean 是否是 primary。 <strong>所以如果在 <code>ApplicationContext</code>中存在一个实现 <code>EchoService</code> 接口的 Bean，但是注入的时候并不会使用该Bean，因为 FeignClient 生成的 Bean 是 primary</strong></li>
+</ol>
+<h2 id="Feign-的执行过程"><a href="#Feign-的执行过程" class="headerlink" title="Feign 的执行过程"></a>Feign 的执行过程</h2><p>了解了 Feign 的使用之后，接下来我们来看 Feign 构造一个 Client 的过程。</p>
+<p>从 <code>@EnableFeignClients</code> 注解可以看到，入口在该注解上的 <code>FeignClientsRegistrar</code> 类上，整个链路是这样的：</p>
+<p><img src="https://cdn.nlark.com/lark/0/2018/png/64647/1544585446790-8affc733-701e-4ff1-819b-c8b7980de337.png" alt="Feign.png"> </p>
+<p>从这个链路上我们可以得到几个信息：</p>
+<ol>
+<li><code>@FeignClient</code> 注解修饰的接口最终会被转换成 <code>FeignClientFactoryBean</code> 这个 <code>FactoryBean</code>，<code>FactoryBean</code>内部的 getObject 方法最终会返回一个 Proxy</li>
+<li>在构造 Proxy 的过程中会根据 <code>org.springframework.cloud.openfeign.Targeter</code> 接口的 <code>target</code> 方法去构造。如果启动了hystrix开关(<code>feign.hystrix.enabled=true</code>)，会使用 <code>HystrixTargeter</code>，否则使用默认的 <code>DefaultTargeter</code></li>
+<li><code>Targeter</code> 内部构造 Proxy 的过程中会使用 <code>feign.Feign.Builder</code> 去调用它的 <code>build</code> 方法构造 <code>feign.Feign</code> 实例(默认只有一个子类 <code>ReflectiveFeign</code>)。如果启动了 hystrix 开关(<code>feign.hystrix.enabled=true</code>)，会使用 <code>feign.hystrix.HystrixFeign.Builder</code>，否则使用默认的<code>feign.Feign.Builder</code></li>
+<li>构造出 <code>feign.Feign</code> 实例之后，调用 <code>newInstance</code> 方法返回一个 Proxy</li>
+</ol>
+<p>简单看下这个 <code>newInstance</code> 方法内部的逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">newInstance</span><span class="params">(Target&lt;T&gt; target)</span> </span>&#123;</span><br><span class="line">    Map&lt;String, MethodHandler&gt; nameToHandler = targetToHandlersByName.apply(target);</span><br><span class="line">    Map&lt;Method, MethodHandler&gt; methodToHandler = <span class="keyword">new</span> LinkedHashMap&lt;Method, MethodHandler&gt;();</span><br><span class="line">    List&lt;DefaultMethodHandler&gt; defaultMethodHandlers = <span class="keyword">new</span> LinkedList&lt;DefaultMethodHandler&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (Method method : target.type().getMethods()) &#123;</span><br><span class="line">      <span class="keyword">if</span> (method.getDeclaringClass() == Object.class) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span>(Util.isDefault(method)) &#123;</span><br><span class="line">        DefaultMethodHandler handler = <span class="keyword">new</span> DefaultMethodHandler(method);</span><br><span class="line">        defaultMethodHandlers.add(handler);</span><br><span class="line">        methodToHandler.put(method, handler);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        methodToHandler.put(method, nameToHandler.get(Feign.configKey(target.type(), method)));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 使用 InvocationHandlerFactory 根据接口的方法信息和 target 对象构造 InvocationHandler</span></span><br><span class="line">    InvocationHandler handler = factory.create(target, methodToHandler);</span><br><span class="line">    <span class="comment">// 构造代理</span></span><br><span class="line">    T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(), <span class="keyword">new</span> Class&lt;?&gt;[]&#123;target.type()&#125;, handler);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(DefaultMethodHandler defaultMethodHandler : defaultMethodHandlers) &#123;</span><br><span class="line">      defaultMethodHandler.bindTo(proxy);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> proxy;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>InvocationHandlerFactory</code> 是通过构造 <code>Feign</code> 的时候传入的：</p>
+<ul>
+<li>使用原生的 <code>DefaultTargeter</code>: 那么会使用 <code>feign.InvocationHandlerFactory.Default</code> 这个 factory，并且构造出来的 <code>InvocationHandler</code> 是 <code>feign.ReflectiveFeign.FeignInvocationHandler</code></li>
+<li>使用 hystrix 的 <code>HystrixTargeter</code>: 那么会在<code>feign.hystrix.HystrixFeign.Builder#build(feign.hystrix.FallbackFactory&lt;?&gt;)</code> 方法中调用父类的 <code>invocationHandlerFactory</code> 方法传入一个匿名的 <code>InvocationHandlerFactory</code> 实现类，该类内部构造出的 <code>InvocationHandler</code> 为 <code>HystrixInvocationHandler</code></li>
+</ul>
+<h1 id="Sentinel-整合-Feign"><a href="#Sentinel-整合-Feign" class="headerlink" title="Sentinel 整合 Feign"></a>Sentinel 整合 Feign</h1><p>理解了 Feign 的执行过程之后，Sentinel 想要整合 Feign，可以参考 Hystrix 的实现：</p>
+<ol>
+<li>❌ 实现 <code>Targeter</code> 接口 <code>SentinelTargeter</code>。 <strong>很不幸，<code>Targeter</code> 这个接口属于包级别的接口，在外部包中无法使用，这个 <code>Targeter</code> 无法使用。没关系，我们可以沿用默认的<code>HystrixTargeter</code>(实际上会用 <code>DefaultTargeter</code>，下文 Note 有解释)</strong></li>
+<li>✅  <code>FeignClientFactoryBean</code> 内部构造 <code>Targeter</code>、<code>feign.Feign.Builder</code> 的时候，都会从 <code>FeignContext</code> 中获取。所以我们沿用默认的 <code>DefaultTargeter</code> 的时候，内部使用的 <code>feign.Feign.Builder</code> 可控，而且这个 Builder 不是包级别的类，可在外部使用<ul>
+<li>创建 <code>SentinelFeign.Builder</code> 继承 <code>feign.Feign.Builder</code> ，用来构造 <code>Feign</code></li>
+<li><code>SentinelFeign.Builder</code> 内部需要获取 <code>FeignClientFactoryBean</code> 中的属性进行处理，比如获取 <code>fallback</code>, <code>name</code>, <code>fallbackFactory</code>。<strong>很不幸，<code>FeignClientFactoryBean</code> 这个类也是包级别的类。没关系，我们知道它存在在 <code>ApplicationContext</code> 中的 beanName， 拿到 bean 之后根据反射获取属性就行(该过程在初始化的时候进行，不会在调用的时候进行，所以不会影响性能)</strong></li>
+<li><code>SentinelFeign.Builder</code> 调用 <code>build</code> 方法构造 <code>Feign</code> 的过程中，我们不需要实现一个新的 <code>Feign</code>，跟 hystrix 一样沿用 <code>ReflectiveFeign</code> 即可，在沿用的过程中调用父类 <code>feign.Feign.Builder</code> 的一些方法进行改造即可，比如 <code>invocationHandlerFactory</code> 方法设置 <code>InvocationHandlerFactory</code> ，<code>contract</code> 的调用</li>
+</ul>
+</li>
+<li>✅ 跟 hystrix 一样实现自定义的 <code>InvocationHandler</code> 接口 <code>SentinelInvocationHandler</code> 用来处理方法的调用 </li>
+<li>✅ <code>SentinelInvocationHandler</code> 内部使用 Sentinel 进行保护，这个时候涉及到资源名的获取。<code>SentinelInvocationHandler</code> 内部的 <code>feign.Target</code> 能获取服务名信息，<code>feign.InvocationHandlerFactory.MethodHandler</code> 的实现类 <code>feign.SynchronousMethodHandler</code> 能拿到对应的请求路径信息。<strong>很不幸，<code>feign.SynchronousMethodHandler</code> 这个类也是包级别的类。没关系，我们可以自定义一个 <code>feign.Contract</code> 的实现类 <code>SentinelContractHolder</code> 在处理 <code>MethodMetadata</code> 的过程把这些 metadata 保存下来</strong>(<code>feign.Contract</code> 这个接口在 Builder 构造 Feign 的过程中会对方法进行解析并验证)。在 <code>SentinelFeign.Builder</code> 中调用 <code>contract</code> 进行设置，<code>SentinelContractHolder</code> 内部保存一个 <code>Contract</code> 使用委托方式不影响原先的 <code>Contract</code> 过程</li>
+</ol>
+<p>Note:  <code>spring-cloud-starter-openfeign</code> 依赖内部包含了 <code>feign-hystrix</code>。所以是说默认使用 <code>HystrixTargeter</code> 这个 <code>Targeter</code> ，进入 <code>HystrixTargeter</code> 的 <code>target</code> 方法内部一看，发现有段逻辑这么写的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">target</span><span class="params">(FeignClientFactoryBean factory, Feign.Builder feign, FeignContext context,</span></span></span><br><span class="line"><span class="function"><span class="params">                    Target.HardCodedTarget&lt;T&gt; target)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!(feign <span class="keyword">instanceof</span> feign.hystrix.HystrixFeign.Builder)) &#123;</span><br><span class="line">    <span class="comment">// 如果 Builder 不是 feign.hystrix.HystrixFeign.Builder，使用这个 Builder 进行处理</span></span><br><span class="line">    <span class="comment">// 我们默认构造了 SentinelFeign.Builder 这个 Builder，默认使用 feign-hystrix 依赖也没有什么问题</span></span><br><span class="line">    <span class="keyword">return</span> feign.target(target);</span><br><span class="line">  &#125;</span><br><span class="line">  feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 <code>SentinelInvocationHandler</code> 内部我们对资源名的处理策略是: <code>http方法:protocol://服务名/请求路径跟参数</code></p>
+<p>比如这个 <code>TestService</code>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@FeignClient</span>(name = <span class="string">"test-service"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">TestService</span> </span>&#123;</span><br><span class="line">  <span class="meta">@RequestMapping</span>(value = <span class="string">"/echo/&#123;str&#125;"</span>, method = RequestMethod.GET)</span><br><span class="line">  <span class="function">String <span class="title">echo</span><span class="params">(@PathVariable(<span class="string">"str"</span>)</span> String str)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@RequestMapping</span>(value = <span class="string">"/divide"</span>, method = RequestMethod.GET)</span><br><span class="line">  <span class="function">String <span class="title">divide</span><span class="params">(@RequestParam(<span class="string">"a"</span>)</span> Integer a, @<span class="title">RequestParam</span><span class="params">(<span class="string">"b"</span>)</span> Integer b)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>echo</code> 方法对应的资源名：<code>GET:http://test-service/echo/{str}</code></li>
+<li><code>divide</code> 方法对应的资源名：<code>GET:http://test-service/divide</code></li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ol>
+<li>Feign 的内部很多类都是 package 级别的，外部 package 无法引用某些类，这个时候只能想办法绕过去，比如使用反射</li>
+<li>目前这种实现有风险，万一哪天 starter 内部使用的 Feign 相关类变成了 package 级别，那么会改造代码。所以把 Sentinel 的实现放到 Feign 里并给 Feign 官方提 pr 可能更加合适</li>
+<li>Feign的处理流程还是比较清晰的，只要能够理解其设计原理，我们就能容易地整合进去</li>
+</ol>
+<p>欢迎大家对整合方案进行讨论，并能给出不合理的地方，当然能提pr解决不合理的地方就更好了。</p>
+<p>Sentinel Starter 整合 Feign 的代码目前已经在 github 仓库上，对应的版本是 0.2.1.RELEASE 或 0.1.1.RELEASE。</p>
+<p>最后再附上一个使用 Nacos 做服务发现和 Sentinel 做限流的 <a href="https://github.com/spring-cloud-incubator/spring-cloud-alibaba/tree/master/spring-cloud-alibaba-examples/nacos-example/nacos-discovery-example" target="_blank" rel="noopener">Feign 例子</a> 。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/wechat.png" alt="Format WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+<div style="border: 1px solid black; background-color: #bbbbbb">
+  <div style="margin-left:10px">
+    <span style="font-size: 10px;">本文作者：Format</span><br/>
+    <span style="font-size: 10px;">原文链接： <a href="http://fangjian0423.github.io/2018/12/27/spring-cloud-alibaba-sentinel-feign/">http://fangjian0423.github.io/2018/12/27/spring-cloud-alibaba-sentinel-feign/</a></span><br/>
+    <span style="font-size: 10px;">版权归作者所有，转载请注明出处</span><br/>
+  </div>
+</div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+            <a href="/tags/springcloud/" rel="tag">#springcloud</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/02/spring-cloud-commons-analysis/" rel="next" title="spring-cloud-commons 源码分析">
+                <i class="fa fa-chevron-left"></i> spring-cloud-commons 源码分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
+               alt="Format" />
+          <p class="site-author-name" itemprop="name">Format</p>
+          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">119</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">65</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/fangjian0423" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/fangjian0423" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2952387973" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://spring4all.com/" title="Spring4All社区" target="_blank">Spring4All社区</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.bysocket.com/" title="泥瓦匠BYSocket" target="_blank">泥瓦匠BYSocket</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://xtutu.me/" title="xtutu" target="_blank">xtutu</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://blog.zlf.me" title="Felix" target="_blank">Felix</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://stockgraph.net/" title="WhiteAmber" target="_blank">WhiteAmber</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.yuzhouwan.com" title="yuzhouwan" target="_blank">yuzhouwan</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.animeimg.club/" title="斗图" target="_blank">斗图</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Feign-的使用及执行过程"><span class="nav-number">1.</span> <span class="nav-text">Feign 的使用及执行过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Feign-的使用"><span class="nav-number">1.1.</span> <span class="nav-text">Feign 的使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Feign-的执行过程"><span class="nav-number">1.2.</span> <span class="nav-text">Feign 的执行过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Sentinel-整合-Feign"><span class="nav-number">2.</span> <span class="nav-text">Sentinel 整合 Feign</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Format</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'fangjian0423';
+      var disqus_identifier = '2018/12/27/spring-cloud-alibaba-sentinel-feign/';
+      var disqus_title = "Spring Cloud Alibaba Sentinel 整合 Feign 的设计实现";
+      var disqus_url = 'http://fangjian0423.github.io/2018/12/27/spring-cloud-alibaba-sentinel-feign/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("j0kf51JIU0t3ut5Blb5fX00b-gzGzoHsz", "9xlMXFV1I8vh3NoBMzCIwsH5");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>
