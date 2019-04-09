@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="java,scala,big data,javascript" />
+  <meta name="keywords" content="springcloud," />
 
 
 
@@ -86,22 +86,23 @@
 
 
 
-<meta name="description" content="title: 干货｜Spring Cloud Bus 消息总线介绍date: 2019-04-09 16:20:00tags:  springcloudcategories: springcloud  继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring">
+<meta name="description" content="继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring Cloud Stream，不然无法理解 Spring Cloud Bus 内部的代码)。 Spring Cloud Bus 对自己的定位是 Spring Cloud 体系内的消息总线，使用 messa">
+<meta name="keywords" content="springcloud">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Format&#39;s Notes">
+<meta property="og:title" content="干货｜Spring Cloud Bus 消息总线介绍">
 <meta property="og:url" content="http://fangjian0423.github.io/2019/04/09/spring-cloud-bus-intro/index.html">
 <meta property="og:site_name" content="Format&#39;s Notes">
-<meta property="og:description" content="title: 干货｜Spring Cloud Bus 消息总线介绍date: 2019-04-09 16:20:00tags:  springcloudcategories: springcloud  继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring">
+<meta property="og:description" content="继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring Cloud Stream，不然无法理解 Spring Cloud Bus 内部的代码)。 Spring Cloud Bus 对自己的定位是 Spring Cloud 体系内的消息总线，使用 messa">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/bus-code.png">
 <meta property="og:image" content="http://blog.didispace.com/assets/5-6.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/bus-event.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/bus-flow-diagram.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/sca-qrcode.png">
-<meta property="og:updated_time" content="2019-04-09T08:22:12.000Z">
+<meta property="og:updated_time" content="2019-04-09T08:25:18.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Format&#39;s Notes">
-<meta name="twitter:description" content="title: 干货｜Spring Cloud Bus 消息总线介绍date: 2019-04-09 16:20:00tags:  springcloudcategories: springcloud  继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring">
+<meta name="twitter:title" content="干货｜Spring Cloud Bus 消息总线介绍">
+<meta name="twitter:description" content="继上一篇 干货｜Spring Cloud Stream 体系及原理介绍 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring Cloud Stream，不然无法理解 Spring Cloud Bus 内部的代码)。 Spring Cloud Bus 对自己的定位是 Spring Cloud 体系内的消息总线，使用 messa">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/bus-code.png">
 
 
@@ -124,7 +125,7 @@
 
 
 
-  <title>  | Format's Notes </title>
+  <title> 干货｜Spring Cloud Bus 消息总线介绍 | Format's Notes </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -306,7 +307,7 @@
             
             
               
-                
+                干货｜Spring Cloud Bus 消息总线介绍
               
             
           </h1>
@@ -318,11 +319,30 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-04-09T16:22:11+08:00" content="2019-04-09">
+            <time itemprop="dateCreated" datetime="2019-04-09T16:20:00+08:00" content="2019-04-09">
               2019-04-09
             </time>
           </span>
 
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springcloud/" itemprop="url" rel="index">
+                    <span itemprop="name">springcloud</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
           
 
           
@@ -340,7 +360,7 @@
 
           
           
-             <span id="/2019/04/09/spring-cloud-bus-intro/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2019/04/09/spring-cloud-bus-intro/" class="leancloud_visitors" data-flag-title="干货｜Spring Cloud Bus 消息总线介绍">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -362,11 +382,7 @@
       
 
       
-        <p>title: 干货｜Spring Cloud Bus 消息总线介绍<br>date: 2019-04-09 16:20:00<br>tags:</p>
-<ul>
-<li>springcloud<br>categories: springcloud</li>
-</ul>
-<p>继上一篇 <a href="https://mp.weixin.qq.com/s/e_pDTFmFcSqHH-uSIzNmMg" target="_blank" rel="noopener">干货｜Spring Cloud Stream 体系及原理介绍</a> 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring Cloud Stream，不然无法理解 Spring Cloud Bus 内部的代码)。</p>
+        <p>继上一篇 <a href="https://mp.weixin.qq.com/s/e_pDTFmFcSqHH-uSIzNmMg" target="_blank" rel="noopener">干货｜Spring Cloud Stream 体系及原理介绍</a> 之后，我们来了解下 Spring Cloud 体系中的另外一个组件 Spring Cloud Bus(必须要熟悉 Spring Cloud Stream，不然无法理解 Spring Cloud Bus 内部的代码)。</p>
 <p><a href="https://spring.io/projects/spring-cloud-bus" target="_blank" rel="noopener">Spring Cloud Bus</a> 对自己的定位是 Spring Cloud 体系内的消息总线，使用 message broker 来连接分布式系统的所有节点。</p>
 <p>Bus 官方的 <a href="https://cloud.spring.io/spring-cloud-static/spring-cloud-bus/2.1.0.RELEASE/single/spring-cloud-bus.html" target="_blank" rel="noopener">Reference 文档</a> 比较简单，简单到连一张图都没有。</p>
 <a id="more"></a>
@@ -508,6 +524,12 @@
     </div>
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/springcloud/" rel="tag">#springcloud</a>
+          
+        </div>
       
 
       
@@ -843,7 +865,7 @@
     <script type="text/javascript">
       var disqus_shortname = 'fangjian0423';
       var disqus_identifier = '2019/04/09/spring-cloud-bus-intro/';
-      var disqus_title = "";
+      var disqus_title = "干货｜Spring Cloud Bus 消息总线介绍";
       var disqus_url = 'http://fangjian0423.github.io/2019/04/09/spring-cloud-bus-intro/';
 
       function run_disqus_script(disqus_script){
