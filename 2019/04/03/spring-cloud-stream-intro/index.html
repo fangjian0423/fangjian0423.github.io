@@ -96,15 +96,15 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://docs.spring.io/spring-integration/reference/html/images/message.jpg">
 <meta property="og:image" content="https://docs.spring.io/spring-integration/reference/html/images/channel.jpg">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754307021-46642a2f-47a6-4858-8e16-3658ddf728b8.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754322311-4681f969-4b03-4dce-8499-365e1a844bfa.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553755454652-f8d51c26-dcf0-4503-a2a8-9d933e079583.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754807263-b549f00c-8313-4b73-9250-d1a97bdf0d57.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-splitter.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-aggr.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-filter.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-dispatcher.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream/master/docs/src/main/asciidoc/images/SCSt-overview.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553764692990-013f4ce0-b06c-4d63-a877-b824596b98eb.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553761917318-6446dc92-28b1-4d85-970c-2aec0acf5514.png">
-<meta property="og:image" content="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553769833837-e869e73a-9c9f-4a40-9736-72445724f321.png">
-<meta property="og:updated_time" content="2019-04-09T08:04:44.000Z">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/scs-progress.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/scs-architecture.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/sca-qrcode.png">
+<meta property="og:updated_time" content="2019-04-09T08:20:40.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="干货｜Spring Cloud Stream 体系及原理介绍">
 <meta name="twitter:description" content="Spring Cloud Stream 在 Spring Cloud 体系内用于构建高度可扩展的基于事件驱动的微服务。 Spring Cloud Stream 本身内容很多，而且它还有很多外部的依赖，想要熟悉 Spring Cloud Stream，需要了解以下知识：  Spring Framework(Spring Messaging, Spring Environment) Spring Bo">
@@ -423,13 +423,13 @@
 <p>Spring Integration 是对 Spring Messaging 的扩展。它提出了不少新的概念，包括消息的路由 <code>MessageRoute</code>、消息的分发 <code>MessageDispatcher</code>、消息的过滤 <code>Filter</code>、消息的转换 <code>Transformer</code>、消息的聚合 <code>Aggregator</code>、消息的分割 <code>Splitter</code> 等等。同时还提供了包括 <code>MessageChannel</code> 的实现 <code>DirectChannel</code>、<code>ExecutorChannel</code>、<code>PublishSubscribeChannel</code> 等; <code>MessageHandler</code> 的实现 <code>MessageFilter</code>、<code>ServiceActivatingHandler</code>、<code>MethodInvokingSplitter</code> 等内容。</p>
 <p>几种消息的处理方式：</p>
 <p>消息的分割：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754307021-46642a2f-47a6-4858-8e16-3658ddf728b8.png" alt="undefined"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-splitter.png" alt="undefined"> </p>
 <p>消息的聚合：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754322311-4681f969-4b03-4dce-8499-365e1a844bfa.png" alt="undefined"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-aggr.png" alt="undefined"> </p>
 <p>消息的过滤：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553755454652-f8d51c26-dcf0-4503-a2a8-9d933e079583.png" alt="undefined"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-filter.png" alt="undefined"> </p>
 <p>消息的分发：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553754807263-b549f00c-8313-4b73-9250-d1a97bdf0d57.png" alt="undefined"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/msg-dispatcher.png" alt="undefined"> </p>
 <p>我们以一个最简单的例子来尝试一下 Spring Integration:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SubscribableChannel messageChannel = <span class="keyword">new</span> DirectChannel(); <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123; <span class="comment">// 2</span></span><br><span class="line">  System.out.println(<span class="string">"receive: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build()); <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
 <p>这段代码解释：</p>
@@ -443,11 +443,11 @@
 <p>我们对上段代码做一点修改，使用多个 <code>MessageHandler</code> 去处理消息：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">SubscribableChannel messageChannel = <span class="keyword">new</span> DirectChannel();</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive1: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive2: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br></pre></td></tr></table></figure>
 <p>由于 <code>DirectChannel</code> 内部的消息分发器是 <code>UnicastingDispatcher</code> 单播的方式，并且采用轮询的负载均衡策略，所以这里两次的消费分别对应这两个 <code>MessageHandler</code>。控制台打印出：</p>
-<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br></pre></td></tr></table></figure>
 <p>既然存在单播的消息分发器 <code>UnicastingDispatcher</code>，必然也会存在广播的消息分发器，那就是 <code>BroadcastingDispatcher</code>，它被 <code>PublishSubscribeChannel</code> 这个消息通道所使用。广播消息分发器会把消息分发给所有的 <code>MessageHandler</code>：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">SubscribableChannel messageChannel = <span class="keyword">new</span> PublishSubscribeChannel();</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive1: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive2: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br></pre></td></tr></table></figure>
 <p>发送两个消息，都被所有的 <code>MessageHandler</code> 所消费。控制台打印：</p>
-<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br></pre></td></tr></table></figure>
 <h3 id="Spring-Cloud-Stream"><a href="#Spring-Cloud-Stream" class="headerlink" title="Spring Cloud Stream"></a>Spring Cloud Stream</h3><p>SCS 在 Spring Integration 的基础上进行了封装，提出了 <code>Binder</code>, <code>Binding</code>, <code>@EnableBinding</code>, <code>@StreamListener</code> 等概念; 与 Spring Boot Actuator 整合，提供了 <code>/bindings</code>, <code>/channels</code> endpoint; 与 Spring Boot Externalized Configuration 整合，提供了 <code>BindingProperties</code>, <code>BinderProperties</code> 等外部化配置类; 增强了消息发送失败的和消费失败情况下的处理逻辑等功能。</p>
 <p>SCS 是 Spring Integration 的加强，同时与 Spring Boot 体系进行了融合，也是 Spring Cloud Bus 的基础。它屏蔽了底层消息中间件的实现细节，希望以统一的一套 API 来进行消息的发送/消费，底层消息中间件的实现细节由各消息中间件的 Binder 完成。</p>
 <p><img src="https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream/master/docs/src/main/asciidoc/images/SCSt-overview.png" alt=""></p>
@@ -480,18 +480,18 @@
 </li>
 </ol>
 <p>这个过程文字描述有点啰嗦，用一张图总结一下(黄色部分涉及到各消息中间件的 Binder 实现以及 MQ 基本的订阅发布功能)：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553764692990-013f4ce0-b06c-4d63-a877-b824596b98eb.png" alt="Spring Cloud Stream.png"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/scs-progress.png" alt="Spring Cloud Stream.png"> </p>
 <p>SCS 章节的最后，我们来看一段 SCS 关于消息的处理方式的一段代码：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@StreamListener</span>(value = Sink.INPUT, condition = <span class="string">"headers['index']=='1'"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">receiveByHeader</span><span class="params">(Message msg)</span> </span>&#123;</span><br><span class="line">  System.out.println(<span class="string">"receive by headers['index']=='1': "</span> + msg);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@StreamListener</span>(value = Sink.INPUT, condition = <span class="string">"headers['index']=='9999'"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">receivePerson</span><span class="params">(@Payload Person person)</span> </span>&#123;</span><br><span class="line">  System.out.println(<span class="string">"receive Person: "</span> + person);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@StreamListener</span>(value = Sink.INPUT)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">receiveAllMsg</span><span class="params">(String msg)</span> </span>&#123;</span><br><span class="line">  System.out.println(<span class="string">"receive allMsg by StreamListener. content: "</span> + msg);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@StreamListener</span>(value = Sink.INPUT)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">receiveHeaderAndMsg</span><span class="params">(@Header(<span class="string">"index"</span>)</span> String index, Message msg) </span>&#123;</span><br><span class="line">  System.out.println(<span class="string">"receive by HeaderAndMsg by StreamListener. content: "</span> + msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>有没有发现这段代码跟 Spring MVC Controller 中接收请求的代码很像? 实际上他们的架构都是类似的，Spring MVC 对于 Controller 中参数和返回值的处理类分别是 <code>org.springframework.web.method.support.HandlerMethodArgumentResolver</code>、 <code>org.springframework.web.method.support.HandlerMethodReturnValueHandler</code>。</p>
 <p>Spring Messaging 中对于参数和返回值的处理类之前也提到过，分别是 <code>org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver</code>、<code>org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler</code>。</p>
 <p>它们的类名一模一样，甚至内部的方法名也一样。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这个是 SCS 体系相关类说明的总结：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553761917318-6446dc92-28b1-4d85-970c-2aec0acf5514.png" alt="Spring Cloud Stream.png"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/scs-architecture.png" alt="Spring Cloud Stream.png"> </p>
 <p>关于 SCS 以及 RocketMQ Binder 更多相关的示例，可以参考 <a href="https://github.com/fangjian0423/rocketmq-binder-demo" target="_blank" rel="noopener">RocketMQ Binder Demos</a>，包含了消息的聚合、分割、过滤；消息异常处理；消息标签、sql过滤；同步、异步消费等等。</p>
 <p>下一篇文章，我会分析 <a href="https://spring.io/projects/spring-cloud-bus" target="_blank" rel="noopener">消息总线(Spring Cloud Bus)</a> 在 Spring Cloud 体系中的作用。然后后面的文章会分析 Spring Cloud Alibaba RocketMQ Binder 如何实现 Spring Cloud Stream 标准。</p>
 <p>文章的最后，欢迎大家使用钉钉扫描二维码加入 Spring Cloud Alibaba 开源讨论群：</p>
-<p><img src="https://intranetproxy.alipay.com/skylark/lark/0/2019/png/64647/1553769833837-e869e73a-9c9f-4a40-9736-72445724f321.png" alt="undefined"> </p>
+<p><img src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/sca-qrcode.png" alt="undefined"> </p>
 
       
     </div>
@@ -561,6 +561,10 @@
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/04/09/spring-cloud-bus-intro/" rel="prev" title="">
+                 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -635,7 +639,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">120</span>
+              <span class="site-state-item-count">121</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
