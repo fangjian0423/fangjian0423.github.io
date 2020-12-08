@@ -184,7 +184,7 @@
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
-  <p class="site-subtitle">吃饭睡觉撸代码</p>
+  <p class="site-subtitle">分享技术和生活</p>
 </div>
 
 <div class="site-nav-toggle">
@@ -443,11 +443,11 @@
 <p>我们对上段代码做一点修改，使用多个 <code>MessageHandler</code> 去处理消息：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">SubscribableChannel messageChannel = <span class="keyword">new</span> DirectChannel();</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive1: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive2: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br></pre></td></tr></table></figure>
 <p>由于 <code>DirectChannel</code> 内部的消息分发器是 <code>UnicastingDispatcher</code> 单播的方式，并且采用轮询的负载均衡策略，所以这里两次的消费分别对应这两个 <code>MessageHandler</code>。控制台打印出：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br></pre></td></tr></table></figure>
 <p>既然存在单播的消息分发器 <code>UnicastingDispatcher</code>，必然也会存在广播的消息分发器，那就是 <code>BroadcastingDispatcher</code>，它被 <code>PublishSubscribeChannel</code> 这个消息通道所使用。广播消息分发器会把消息分发给所有的 <code>MessageHandler</code>：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">SubscribableChannel messageChannel = <span class="keyword">new</span> PublishSubscribeChannel();</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive1: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.subscribe(msg -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">"receive2: "</span> + msg.getPayload());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br><span class="line">messageChannel.send(MessageBuilder.withPayload(<span class="string">"msg from alibaba"</span>).build());</span><br></pre></td></tr></table></figure>
 <p>发送两个消息，都被所有的 <code>MessageHandler</code> 所消费。控制台打印：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive1:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br><span class="line"><span class="attr">receive2:</span> <span class="string">msg</span> <span class="string">from</span> <span class="string">alibaba</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive1: msg <span class="keyword">from</span> alibaba</span><br><span class="line">receive2: msg <span class="keyword">from</span> alibaba</span><br></pre></td></tr></table></figure>
 <h3 id="Spring-Cloud-Stream"><a href="#Spring-Cloud-Stream" class="headerlink" title="Spring Cloud Stream"></a>Spring Cloud Stream</h3><p>SCS 在 Spring Integration 的基础上进行了封装，提出了 <code>Binder</code>, <code>Binding</code>, <code>@EnableBinding</code>, <code>@StreamListener</code> 等概念; 与 Spring Boot Actuator 整合，提供了 <code>/bindings</code>, <code>/channels</code> endpoint; 与 Spring Boot Externalized Configuration 整合，提供了 <code>BindingProperties</code>, <code>BinderProperties</code> 等外部化配置类; 增强了消息发送失败的和消费失败情况下的处理逻辑等功能。</p>
 <p>SCS 是 Spring Integration 的加强，同时与 Spring Boot 体系进行了融合，也是 Spring Cloud Bus 的基础。它屏蔽了底层消息中间件的实现细节，希望以统一的一套 API 来进行消息的发送/消费，底层消息中间件的实现细节由各消息中间件的 Binder 完成。</p>
 <p><img src="https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream/master/docs/src/main/asciidoc/images/SCSt-overview.png" alt=""></p>
@@ -634,12 +634,12 @@
                src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
                alt="Format" />
           <p class="site-author-name" itemprop="name">Format</p>
-          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+          <p class="site-description motion-element" itemprop="description"><a href="https://item.jd.com/13043028.html">《深入理解Spring Cloud与实战》正式开始售卖啦!</a></p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">121</span>
+              <span class="site-state-item-count">122</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -754,7 +754,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

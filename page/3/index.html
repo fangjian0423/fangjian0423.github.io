@@ -86,16 +86,16 @@
 
 
 
-<meta name="description" content="吃饭睡觉撸代码">
+<meta name="description" content="《深入理解Spring Cloud与实战》正式开始售卖啦!">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Format&#39;s Notes">
 <meta property="og:url" content="http://fangjian0423.github.io/page/3/index.html">
 <meta property="og:site_name" content="Format&#39;s Notes">
-<meta property="og:description" content="吃饭睡觉撸代码">
+<meta property="og:description" content="《深入理解Spring Cloud与实战》正式开始售卖啦!">
 <meta property="og:locale" content="zh-Hans">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Format&#39;s Notes">
-<meta name="twitter:description" content="吃饭睡觉撸代码">
+<meta name="twitter:description" content="《深入理解Spring Cloud与实战》正式开始售卖啦!">
 
 
 
@@ -173,7 +173,7 @@
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
-  <p class="site-subtitle">吃饭睡觉撸代码</p>
+  <p class="site-subtitle">分享技术和生活</p>
 </div>
 
 <div class="site-nav-toggle">
@@ -280,6 +280,143 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/22/springboot-embedded-servlet-container/" itemprop="url">
+                  SpringBoot源码分析之内置Servlet容器
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-22T18:35:36+08:00" content="2017-05-22">
+              2017-05-22
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/springboot/" itemprop="url" rel="index">
+                    <span itemprop="name">springboot</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/22/springboot-embedded-servlet-container/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/05/22/springboot-embedded-servlet-container/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/05/22/springboot-embedded-servlet-container/" class="leancloud_visitors" data-flag-title="SpringBoot源码分析之内置Servlet容器">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>SpringBoot内置了Servlet容器，这样项目的发布、部署就不需要额外的Servlet容器，直接启动jar包即可。SpringBoot官方文档上有一个小章节<a href="https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#boot-features-embedded-container" target="_blank" rel="noopener">内置servlet容器支持</a>用于说明内置Servlet的相关问题。</p>
+<p>在<a href="http://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a>文章中我们了解到如果是Web程序，那么会构造AnnotationConfigEmbeddedWebApplicationContext类型的Spring容器，在<a href="http://fangjian0423.github.io/2017/05/10/springboot-context-refresh/">SpringBoot源码分析之Spring容器的refresh过程</a>文章中我们知道AnnotationConfigEmbeddedWebApplicationContext类型的Spring容器在refresh的过程中会在onRefresh方法中创建内置的Servlet容器。</p>
+<p>接下来，我们分析一下内置的Servlet容器相关的知识点。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2017/05/22/springboot-embedded-servlet-container/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -1552,142 +1689,6 @@ org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/13/springboot-enable-annotation/" itemprop="url">
-                  SpringBoot自动化配置的注解开关原理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-11-13T16:22:51+08:00" content="2016-11-13">
-              2016-11-13
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/springboot/" itemprop="url" rel="index">
-                    <span itemprop="name">springboot</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/11/13/springboot-enable-annotation/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/11/13/springboot-enable-annotation/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-             <span id="/2016/11/13/springboot-enable-annotation/" class="leancloud_visitors" data-flag-title="SpringBoot自动化配置的注解开关原理">
-               &nbsp; | &nbsp;
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               <span class="post-meta-item-text">阅读次数 </span>
-               <span class="leancloud-visitors-count"></span>
-              </span>
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>在之前我们分析<a href="http://fangjian0423.github.io/2016/06/12/springboot-autoconfig-analysis/">SpringBoot的自动化配置原理</a>的时候，分析了freemarker的自动化配置类FreeMarkerAutoConfiguration，这个自动化配置类需要classloader中的一些类需要存在并且在其他的一些配置类之后进行加载。</p>
-<p>但是还存在一些自动化配置类，它们需要在使用一些注解开关的情况下才会生效。比如spring-boot-starter-batch里的@EnableBatchProcessing注解、@EnableCaching等。</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2016/11/13/springboot-enable-annotation/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1728,12 +1729,12 @@ org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
                src="https://raw.githubusercontent.com/fangjian0423/blogimages/master/images/avatar.jpg"
                alt="Format" />
           <p class="site-author-name" itemprop="name">Format</p>
-          <p class="site-description motion-element" itemprop="description">吃饭睡觉撸代码</p>
+          <p class="site-description motion-element" itemprop="description"><a href="https://item.jd.com/13043028.html">《深入理解Spring Cloud与实战》正式开始售卖啦!</a></p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">121</span>
+              <span class="site-state-item-count">122</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1837,7 +1838,7 @@ org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
